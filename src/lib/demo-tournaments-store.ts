@@ -1,6 +1,6 @@
 import { getDemoClubIdFallback } from '@/lib/demo-constants';
 import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
-import { generateAccessToken, generateInviteToken, hashToken } from '@/lib/tournament-access';
+import { generateAccessToken, generateInviteToken, hashToken } from '@/lib/tournament-tokens';
 import type {
   Tournament,
   TournamentBundle,

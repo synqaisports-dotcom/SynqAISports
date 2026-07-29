@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ExternalLink, Radio } from 'lucide-react';
-import { mesaUrl } from '@/lib/tournament-access';
+import { mesaUrl } from '@/lib/tournament-urls';
 
 type Props = {
   bundle: TournamentBundle;

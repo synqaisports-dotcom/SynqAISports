@@ -13,12 +13,14 @@ import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
 import {
   delegateUrl,
   gateUrl,
+} from '@/lib/tournament-urls';
+import {
   generateAccessToken,
   generateInviteToken,
   generateQrHash,
   generateQrPayload,
   tokenExpiresAt,
-} from '@/lib/tournament-access';
+} from '@/lib/tournament-tokens';
 import {
   DEFAULT_PLACEMENT_BRACKETS,
   estimateTournamentRevenue,
@@ -79,15 +81,24 @@ function mapTournament(row: Record<string, unknown>): Tournament {
 export async function listTournaments(clubId: string): Promise<Tournament[]> {
   if (await isDemoActive()) {
     const store = getDemoTournamentsStore();
-    return store.tournaments.filter((t) => t.club_id === clubId || clubId === DEMO_TOURNAMENTS_CLUB_ID);
+    const demoClubId = DEMO_TOURNAMENTS_CLUB_ID;
+    return store.tournaments.filter(
+      (t) => t.club_id === clubId || t.club_id === demoClubId || clubId === demoClubId
+    );
   }
 
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('synq_tournaments')
     .select(TOURNAMENT_SELECT)
     .eq('club_id', clubId)
     .order('starts_at', { ascending: false });
+
+  if (error) {
+    console.error('[torneos] listTournaments:', error.message);
+    return [];
+  }
+
   return (data ?? []).map((r) => mapTournament(r as Record<string, unknown>));
 }
 

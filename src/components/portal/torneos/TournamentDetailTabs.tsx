@@ -10,7 +10,7 @@ import {
 } from '@/app/actions/tournaments';
 import { TournamentBracketsPanel } from '@/components/portal/torneos/TournamentBracketsPanel';
 import { TournamentSignagePreview } from '@/components/portal/torneos/TournamentSignagePreview';
-import { publicTournamentUrl } from '@/lib/tournament-access';
+import { publicTournamentUrl } from '@/lib/tournament-urls';
 import {
   TEAM_STATUS_LABELS,
   TOURNAMENT_SPORT_LABELS,

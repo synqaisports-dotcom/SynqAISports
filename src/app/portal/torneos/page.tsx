@@ -1,4 +1,4 @@
-import { ensureTournamentDefaults, listTournaments, loadTournamentBundle } from '@/app/actions/tournaments';
+import { ensureTournamentDefaults, listTournaments } from '@/app/actions/tournaments';
 import {
   aggregateTournamentStats,
   TournamentCard,
