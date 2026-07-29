@@ -2,12 +2,20 @@
 
 ## Rutas
 
-### Portal (staff)
-| Ruta | Descripción |
-|------|-------------|
-| `/portal/torneos` | Landing con resumen |
-| `/portal/torneos/crear` | Wizard crear torneo |
-| `/portal/torneos/[id]` | Detalle con tabs |
+## Portal staff — pestañas del torneo
+
+| Pestaña | Qué configuras / ves |
+|---------|----------------------|
+| **Resumen** | KPIs, guía operativa y accesos rápidos |
+| **Configuración** | Nombre, fechas, sede, reglas, estado · categorías (grupos, equipos/grupo, bandejas Platinum/Gold…) · campos · botón **Generar competición** |
+| **Equipos** | Invitaciones, grupo asignado, enlace delegado |
+| **Horarios** | Calendario por día: hora, campo, categoría, ronda, resultado, enlace mesa |
+| **Cruces** | Clasificación de grupos + árboles eliminatorios por bandeja (Platinum, Gold…) |
+| **Patrocinadores** | Oro / plata / bronce del evento |
+| **Ticketing** | Tipos de entrada y enlace taquilla PWA |
+| **Ingresos** | Estimación ticketing + patrocinio + signage |
+| **Signage** | Preview muro patrocinadores del torneo |
+
 
 ### Públicas (PWA)
 | Ruta | Descripción |

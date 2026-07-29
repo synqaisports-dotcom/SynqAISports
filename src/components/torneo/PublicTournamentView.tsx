@@ -1,21 +1,21 @@
-'use client';
-
+import {
+  fieldLabel,
+  formatMatchDateTime,
+  groupMatchesByDay,
+  roundLabelWithBracket,
+} from '@/lib/tournament-schedule';
 import {
   formatMatchScore,
-  ROUND_KEY_LABELS,
   TOURNAMENT_SPORT_LABELS,
   type TournamentBundle,
 } from '@/lib/tournaments';
 import { Badge } from '@/components/ui/badge';
-import { Radio, Trophy } from 'lucide-react';
+import { CalendarClock, MapPin, Radio, Trophy } from 'lucide-react';
 
 export function PublicTournamentView({ bundle }: { bundle: TournamentBundle }) {
   const { tournament } = bundle;
   const liveMatches = bundle.matches.filter((m) => m.status === 'live');
-  const upcoming = bundle.matches
-    .filter((m) => m.status === 'scheduled')
-    .sort((a, b) => (a.scheduled_at ?? '').localeCompare(b.scheduled_at ?? ''))
-    .slice(0, 8);
+  const days = groupMatchesByDay(bundle.matches.filter((m) => m.status !== 'finished').slice(0, 24));
 
   return (
     <div className="min-h-dvh bg-background">
@@ -49,14 +49,18 @@ export function PublicTournamentView({ bundle }: { bundle: TournamentBundle }) {
         ) : null}
 
         <section>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Próximos partidos
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <CalendarClock className="size-4" />
+            Horarios
           </h2>
-          <div className="space-y-2">
-            {upcoming.map((m) => (
-              <MatchCard key={m.id} match={m} bundle={bundle} />
-            ))}
-          </div>
+          {days.slice(0, 2).map((day) => (
+            <div key={day.dateKey} className="mb-4 space-y-2">
+              <p className="text-xs font-medium capitalize text-cyan-300/80">{day.label}</p>
+              {day.matches.slice(0, 8).map((m) => (
+                <MatchCard key={m.id} match={m} bundle={bundle} />
+              ))}
+            </div>
+          ))}
         </section>
 
         <section>
@@ -68,7 +72,7 @@ export function PublicTournamentView({ bundle }: { bundle: TournamentBundle }) {
               <div key={c.id} className="portal-section-surface rounded-xl p-3 text-sm">
                 <p className="font-medium">{c.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {c.groups_count} grupos · {c.teams_per_group} equipos/grupo
+                  {c.groups_count} grupos · {c.teams_per_group} equipos · Finales Platinum/Silver…
                 </p>
               </div>
             ))}
@@ -108,12 +112,21 @@ function MatchCard({
   const home = bundle.teams.find((t) => t.id === match.home_team_id)?.name ?? '—';
   const away = bundle.teams.find((t) => t.id === match.away_team_id)?.name ?? '—';
   const cat = bundle.categories.find((c) => c.id === match.category_id)?.name;
+  const when = formatMatchDateTime(match.scheduled_at);
+  const bracket = match.bracket_key && match.bracket_key !== 'groups'
+    ? bundle.categories
+        .flatMap((c) => c.placement_brackets_json)
+        .find((b) => b.bracket_key === match.bracket_key)?.name
+    : undefined;
 
   return (
     <div className="portal-section-surface rounded-xl px-4 py-3">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {cat} · {ROUND_KEY_LABELS[match.round_key]}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {cat} · {roundLabelWithBracket(match.round_key, bracket)}
+        </p>
+        <span className="text-xs font-medium tabular-nums text-cyan-300">{when.time}</span>
+      </div>
       <div className="mt-1 flex items-center justify-between gap-3">
         <p className="text-sm font-medium">
           {home} <span className="text-muted-foreground">vs</span> {away}
@@ -122,6 +135,10 @@ function MatchCard({
           {match.status === 'scheduled' ? '—' : formatMatchScore(match)}
         </span>
       </div>
+      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+        <MapPin className="size-3" />
+        {fieldLabel(bundle.fields, match.field_id)}
+      </p>
     </div>
   );
 }

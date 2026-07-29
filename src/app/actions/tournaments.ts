@@ -2,7 +2,6 @@
 
 import { requireClubId } from '@/lib/auth-staff';
 import {
-  DEMO_GATE_TOKEN,
   DEMO_TOURNAMENT_ID,
   DEMO_TOURNAMENTS_CLUB_ID,
   getDemoTournamentBundle,
@@ -373,6 +372,120 @@ export async function addTournamentCategory(
   return { ok: true, id: String(data.id) };
 }
 
+export async function updateTournamentSettings(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const patch = {
+    name: String(formData.get('name') ?? '').trim(),
+    sport_key: String(formData.get('sport_key') ?? 'football') as TournamentSport,
+    status: String(formData.get('status') ?? 'draft') as TournamentStatus,
+    starts_at: String(formData.get('starts_at') ?? '').trim() || null,
+    ends_at: String(formData.get('ends_at') ?? '').trim() || null,
+    venue_name: String(formData.get('venue_name') ?? '').trim() || null,
+    description: String(formData.get('description') ?? '').trim() || null,
+    rules_text: String(formData.get('rules_text') ?? '').trim() || null,
+  };
+
+  if (!patch.name) return { ok: false, message: 'El nombre es obligatorio' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    Object.assign(t, patch, { updated_at: new Date().toISOString() });
+    revalidateTournaments();
+    return { ok: true, message: 'Datos del torneo guardados' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('synq_tournaments').update(patch).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Datos del torneo guardados' };
+}
+
+export async function addTournamentField(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const label = String(formData.get('label') ?? '').trim();
+  const notes = String(formData.get('notes') ?? '').trim() || null;
+  if (!label) return { ok: false, message: 'Nombre del campo obligatorio' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const id = `demo-field-${Date.now()}`;
+    store.fields.push({
+      id,
+      tournament_id: tournamentId,
+      facility_id: null,
+      label,
+      map_url: null,
+      notes,
+      sort_order: store.fields.filter((f) => f.tournament_id === tournamentId).length,
+    });
+    revalidateTournaments();
+    return { ok: true, id, message: 'Campo añadido' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_tournament_fields')
+    .insert({ tournament_id: tournamentId, label, notes })
+    .select('id')
+    .single();
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, id: String(data.id), message: 'Campo añadido' };
+}
+
+export async function addTournamentSponsor(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const name = String(formData.get('name') ?? '').trim();
+  const tier = (String(formData.get('tier') ?? 'silver') as TournamentSponsor['tier']) || 'silver';
+  if (!name) return { ok: false, message: 'Nombre obligatorio' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const id = `demo-ts-${Date.now()}`;
+    store.sponsors.push({
+      id,
+      tournament_id: tournamentId,
+      name,
+      logo_url: null,
+      tier,
+      url: null,
+      notes: null,
+      sort_order: store.sponsors.filter((s) => s.tournament_id === tournamentId).length,
+      active: true,
+    });
+    revalidateTournaments();
+    return { ok: true, id };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_tournament_sponsors')
+    .insert({ tournament_id: tournamentId, name, tier })
+    .select('id')
+    .single();
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, id: String(data.id) };
+}
+
 export async function generateCompetitionStructure(
   tournamentId: string,
   categoryId: string
@@ -380,8 +493,85 @@ export async function generateCompetitionStructure(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'No autorizado' };
 
-  if (await isDemoActive()) {
-    return { ok: true, message: 'Estructura ya generada en demo' };
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const category = store.categories.find((c) => c.id === categoryId);
+    if (!category) return { ok: false, message: 'Categoría no encontrada' };
+
+    const existing = store.matches.filter((m) => m.category_id === categoryId).length;
+    if (existing > 0) {
+      return { ok: true, message: `Competición ya generada (${existing} partidos)` };
+    }
+
+    let counter = 0;
+    const nextId = () => `demo-gen-${categoryId}-${++counter}`;
+    const structure = generateMultifinalCompetition(category, nextId);
+    const phaseIdMap = new Map(structure.phases.map((p) => [p.temp_id, `demo-phase-${categoryId}-${p.bracket_key}-${Date.now()}`]));
+    const groupIdMap = new Map(structure.groups.map((g) => [g.temp_id, `demo-group-${categoryId}-${g.code}`]));
+
+    for (const p of structure.phases) {
+      store.phases.push({
+        id: phaseIdMap.get(p.temp_id)!,
+        tournament_id: tournamentId,
+        category_id: categoryId,
+        phase_type: p.phase_type,
+        bracket_key: p.bracket_key,
+        name: p.name,
+        group_position_source: p.group_position_source,
+        sort_order: p.sort_order,
+      });
+    }
+    for (const g of structure.groups) {
+      store.groups.push({
+        id: groupIdMap.get(g.temp_id)!,
+        phase_id: phaseIdMap.get(g.phase_id)!,
+        tournament_id: tournamentId,
+        category_id: categoryId,
+        code: g.code,
+        name: g.name,
+        sort_order: g.sort_order,
+      });
+    }
+
+    const baseTime = store.tournaments.find((t) => t.id === tournamentId)?.starts_at ?? new Date().toISOString();
+    const start = new Date(baseTime);
+    let matchIdx = 0;
+
+    for (const m of structure.matches) {
+      const scheduled = new Date(start);
+      scheduled.setHours(9 + Math.floor(matchIdx / 4), (matchIdx % 4) * 20, 0, 0);
+      const field = store.fields[matchIdx % Math.max(store.fields.length, 1)];
+      store.matches.push({
+        id: `demo-match-${categoryId}-${matchIdx + 1}`,
+        tournament_id: tournamentId,
+        category_id: categoryId,
+        phase_id: phaseIdMap.get(m.phase_id)!,
+        group_id: m.group_id ? groupIdMap.get(m.group_id) ?? null : null,
+        bracket_key: m.bracket_key,
+        round_key: m.round_key,
+        match_number: m.match_number,
+        home_team_id: null,
+        away_team_id: null,
+        field_id: field?.id ?? null,
+        scheduled_at: scheduled.toISOString(),
+        status: 'scheduled',
+        score_home: 0,
+        score_away: 0,
+        score_penalties_home: null,
+        score_penalties_away: null,
+        went_to_penalties: false,
+        mesa_token: generateAccessToken(),
+        mesa_token_expires_at: tokenExpiresAt(72),
+        live_started_at: null,
+        live_finished_at: null,
+        events_json: [],
+        metadata_json: m.metadata_json,
+      });
+      matchIdx++;
+    }
+
+    revalidateTournaments();
+    return { ok: true, message: `Generados ${matchIdx} partidos` };
   }
 
   const supabase = await createClient();
