@@ -13,6 +13,8 @@ import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
 import {
   delegateUrl,
   gateUrl,
+  mesaUrl,
+  publicTournamentUrl,
 } from '@/lib/tournament-urls';
 import {
   generateAccessToken,
@@ -23,6 +25,7 @@ import {
 } from '@/lib/tournament-tokens';
 import {
   DEFAULT_PLACEMENT_BRACKETS,
+  aggregateTournamentStats,
   estimateTournamentRevenue,
   slugifyTournamentName,
   TOURNAMENT_SELECT,
@@ -102,7 +105,85 @@ export async function listTournaments(clubId: string): Promise<Tournament[]> {
   return (data ?? []).map((r) => mapTournament(r as Record<string, unknown>));
 }
 
+export type TournamentPortalStats = {
+  categoriesCount: number;
+  teamsCount: number;
+  liveMatches: number;
+  teamCountsByTournament: [string, number][];
+};
+
+export async function loadTournamentPortalStats(
+  clubId: string,
+  tournaments: Tournament[]
+): Promise<TournamentPortalStats> {
+  if (await isDemoActive()) {
+    const store = getDemoTournamentsStore();
+    const agg = aggregateTournamentStats(tournaments, store.categories, store.teams, store.matches);
+    const teamCounts = new Map<string, number>();
+    for (const t of store.teams) {
+      teamCounts.set(t.tournament_id, (teamCounts.get(t.tournament_id) ?? 0) + 1);
+    }
+    return { ...agg, teamCountsByTournament: [...teamCounts.entries()] };
+  }
+
+  return {
+    categoriesCount: 0,
+    teamsCount: 0,
+    liveMatches: 0,
+    teamCountsByTournament: [],
+  };
+}
+
+export type DemoTorneoPwaLinks = {
+  tournamentName: string;
+  publicWeb: string;
+  mesa: string;
+  mesaLabel: string;
+  delegado: string;
+  delegadoLabel: string;
+  taquilla: string;
+};
+
+export async function getDemoTorneoPwaLinks(): Promise<DemoTorneoPwaLinks | null> {
+  const store = getDemoTournamentsStore();
+  const tournament = store.tournaments[0];
+  if (!tournament) return null;
+
+  const liveMatch =
+    store.matches.find((m) => m.status === 'live' && m.mesa_token) ??
+    store.matches.find((m) => m.mesa_token);
+  const team = store.teams.find((t) => t.invite_token);
+
+  return {
+    tournamentName: tournament.name,
+    publicWeb: publicTournamentUrl(tournament.slug),
+    mesa: liveMatch?.mesa_token ? mesaUrl(liveMatch.mesa_token) : '/torneo/demo',
+    mesaLabel: liveMatch
+      ? `${store.teams.find((t) => t.id === liveMatch.home_team_id)?.name ?? 'Local'} vs ${store.teams.find((t) => t.id === liveMatch.away_team_id)?.name ?? 'Visitante'}`
+      : 'Sin partido',
+    delegado: team?.invite_token ? delegateUrl(team.invite_token) : '/torneo/demo',
+    delegadoLabel: team?.name ?? 'Equipo invitado',
+    taquilla: gateUrl(store.gateToken),
+  };
+}
+
+function demoBundleById(tournamentId: string): TournamentBundle | null {
+  if (tournamentId === DEMO_TOURNAMENT_ID || tournamentId.startsWith('demo-tournament')) {
+    return getDemoTournamentBundle(tournamentId) ?? getDemoTournamentBundle(DEMO_TOURNAMENT_ID);
+  }
+  return getDemoTournamentBundle(tournamentId);
+}
+
+function demoBundleBySlug(slug: string): TournamentBundle | null {
+  const store = getDemoTournamentsStore();
+  const t = store.tournaments.find((x) => x.slug === slug);
+  return t ? getDemoTournamentBundle(t.id) : null;
+}
+
 export async function loadTournamentBundle(tournamentId: string): Promise<TournamentBundle | null> {
+  const demo = demoBundleById(tournamentId);
+  if (demo) return demo;
+
   if (await isDemoActive()) {
     return getDemoTournamentBundle(tournamentId);
   }
@@ -145,11 +226,8 @@ export async function loadTournamentBundle(tournamentId: string): Promise<Tourna
 }
 
 export async function loadTournamentBySlug(slug: string): Promise<TournamentBundle | null> {
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    const t = store.tournaments.find((x) => x.slug === slug);
-    return t ? getDemoTournamentBundle(t.id) : null;
-  }
+  const demo = demoBundleBySlug(slug);
+  if (demo) return demo;
 
   const supabase = await createClient();
   const { data } = await supabase.from('synq_tournaments').select('id').eq('slug', slug).maybeSingle();
@@ -440,6 +518,15 @@ export async function loadMatchByMesaToken(token: string): Promise<{
   match: TournamentMatch;
   bundle: TournamentBundle;
 } | null> {
+  {
+    const store = getDemoTournamentsStore();
+    const match = store.matches.find((m) => m.mesa_token === token);
+    if (match) {
+      const bundle = getDemoTournamentBundle(match.tournament_id);
+      if (bundle) return { match, bundle };
+    }
+  }
+
   if (await isDemoActive()) {
     const store = getDemoTournamentsStore();
     const match = store.matches.find((m) => m.mesa_token === token);
@@ -461,6 +548,15 @@ export async function loadTeamByInviteToken(token: string): Promise<{
   team: TournamentTeam;
   bundle: TournamentBundle;
 } | null> {
+  {
+    const store = getDemoTournamentsStore();
+    const team = store.teams.find((t) => t.invite_token === token);
+    if (team) {
+      const bundle = getDemoTournamentBundle(team.tournament_id);
+      if (bundle) return { team, bundle };
+    }
+  }
+
   if (await isDemoActive()) {
     const store = getDemoTournamentsStore();
     const team = store.teams.find((t) => t.invite_token === token);
@@ -549,8 +645,10 @@ export async function refreshRevenueEstimates(tournamentId: string): Promise<Tou
 }
 
 export async function getGateAccessUrl(tournamentId: string): Promise<string | null> {
+  if (tournamentId === DEMO_TOURNAMENT_ID || tournamentId.startsWith('demo-tournament')) {
+    return gateUrl(getDemoTournamentsStore().gateToken);
+  }
   if (await isDemoActive()) {
-    if (tournamentId === DEMO_TOURNAMENT_ID) return gateUrl(DEMO_GATE_TOKEN);
     return gateUrl(generateAccessToken());
   }
   return null;
@@ -668,15 +766,16 @@ export async function validateTicketQr(
   gateToken: string,
   qrPayload: string
 ): Promise<TournamentActionState & { ticket?: TournamentTicket }> {
-  if (await isDemoActive()) {
-    if (gateToken !== DEMO_GATE_TOKEN) return { ok: false, message: 'Taquilla no autorizada' };
+  {
     const store = getDemoTournamentsStore();
-    const ticket = store.tickets.find((t) => t.qr_payload === qrPayload);
-    if (!ticket) return { ok: false, message: 'Entrada no válida' };
-    if (ticket.status === 'used') return { ok: false, message: 'Entrada ya utilizada' };
-    ticket.status = 'used';
-    ticket.scanned_at = new Date().toISOString();
-    return { ok: true, ticket, message: `Bienvenido/a, ${ticket.purchaser_name}` };
+    if (gateToken === store.gateToken) {
+      const ticket = store.tickets.find((t) => t.qr_payload === qrPayload);
+      if (!ticket) return { ok: false, message: 'Entrada no válida' };
+      if (ticket.status === 'used') return { ok: false, message: 'Entrada ya utilizada' };
+      ticket.status = 'used';
+      ticket.scanned_at = new Date().toISOString();
+      return { ok: true, ticket, message: `Bienvenido/a, ${ticket.purchaser_name}` };
+    }
   }
 
   const supabase = await createClient();

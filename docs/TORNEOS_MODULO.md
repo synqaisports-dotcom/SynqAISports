@@ -43,9 +43,20 @@ Cada bandeja es independiente: un 1º del grupo A solo compite contra otros 1º 
 6. Ticketing: emitir entradas QR; taquilla valida en puerta
 7. Signage: playlist scoped al torneo con patrocinadores del evento
 
-## Demo
+## Demo / PWA sin portal
 
-Con cookie demo activa, los datos vienen de `demo-tournaments-store.ts` (Torneo Ciudad de Madrid).
+**Hub PWA:** `/torneo/demo` — acceso directo a todas las apps del torneo sin login ni portal.
+
+| App | Ruta |
+|-----|------|
+| Hub instalable | `/torneo/demo` |
+| Web pública | `/torneo/torneo-ciudad-madrid` |
+| Mesa móvil | enlace desde el hub |
+| Portal delegado | enlace desde el hub |
+| Taquilla QR | enlace desde el hub |
+
+Instalar como PWA: menú del navegador → «Añadir a pantalla de inicio» / «Instalar aplicación».
+
 
 ## BBDD
 

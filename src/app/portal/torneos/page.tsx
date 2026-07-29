@@ -1,13 +1,7 @@
-import { ensureTournamentDefaults, listTournaments } from '@/app/actions/tournaments';
-import {
-  aggregateTournamentStats,
-  TournamentCard,
-  TournamentHero,
-} from '@/components/portal/torneos/TournamentHero';
-import { getDemoTournamentsStore } from '@/lib/demo-tournaments-store';
+import { ensureTournamentDefaults, listTournaments, loadTournamentPortalStats } from '@/app/actions/tournaments';
+import { TournamentCard, TournamentHero } from '@/components/portal/torneos/TournamentHero';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
-import { isDemoActive } from '@/lib/demo';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -20,29 +14,9 @@ export default async function PortalTorneosPage() {
 
   await ensureTournamentDefaults(ctx.club.id);
   const tournaments = await listTournaments(ctx.club.id);
+  const stats = await loadTournamentPortalStats(ctx.club.id, tournaments);
 
-  let categories: { tournament_id: string }[] = [];
-  let teams: { tournament_id: string }[] = [];
-  let matches: { tournament_id: string; status: string }[] = [];
-
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    categories = store.categories;
-    teams = store.teams;
-    matches = store.matches;
-  }
-
-  const stats = aggregateTournamentStats(
-    tournaments,
-    categories as Parameters<typeof aggregateTournamentStats>[1],
-    teams as Parameters<typeof aggregateTournamentStats>[2],
-    matches as Parameters<typeof aggregateTournamentStats>[3]
-  );
-
-  const teamCounts = new Map<string, number>();
-  for (const t of teams) {
-    teamCounts.set(t.tournament_id, (teamCounts.get(t.tournament_id) ?? 0) + 1);
-  }
+  const teamCounts = new Map(stats.teamCountsByTournament);
 
   return (
     <div className="space-y-6">
@@ -74,6 +48,18 @@ export default async function PortalTorneosPage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="portal-section-surface rounded-xl p-4 text-sm">
+        <p className="font-medium text-cyan-300">Probar PWA del torneo (sin portal)</p>
+        <p className="mt-1 text-muted-foreground">
+          Accede a la web pública, mesa móvil, portal delegado y taquilla desde el hub demo.
+        </p>
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link href="/torneo/demo" target="_blank">
+            Abrir hub PWA demo
+          </Link>
+        </Button>
       </div>
     </div>
   );

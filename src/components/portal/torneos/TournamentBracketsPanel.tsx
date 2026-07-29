@@ -1,5 +1,3 @@
-'use client';
-
 import {
   MATCH_STATUS_LABELS,
   ROUND_KEY_LABELS,

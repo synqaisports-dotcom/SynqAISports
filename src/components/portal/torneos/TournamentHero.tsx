@@ -151,17 +151,3 @@ export function TournamentCard({ tournament, teamCount }: { tournament: Tourname
     </Link>
   );
 }
-
-export function aggregateTournamentStats(
-  tournaments: Tournament[],
-  categories: TournamentCategory[],
-  teams: TournamentTeam[],
-  matches: TournamentMatch[]
-) {
-  const tournamentIds = new Set(tournaments.map((t) => t.id));
-  return {
-    categoriesCount: categories.filter((c) => tournamentIds.has(c.tournament_id)).length,
-    teamsCount: teams.filter((t) => tournamentIds.has(t.tournament_id)).length,
-    liveMatches: matches.filter((m) => tournamentIds.has(m.tournament_id) && m.status === 'live').length,
-  };
-}

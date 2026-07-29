@@ -1,0 +1,11 @@
+.torneo-pwa {
+  --background: 222 47% 4%;
+  --foreground: 210 40% 96%;
+  --primary: 183 100% 50%;
+  --muted-foreground: 215 20% 65%;
+}
+
+.torneo-pwa .portal-section-surface {
+  border-color: hsl(183 100% 50% / 0.18);
+  background: linear-gradient(145deg, hsl(222 47% 7% / 0.95), hsl(222 47% 4% / 0.98));
+}

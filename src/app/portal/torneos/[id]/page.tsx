@@ -1,15 +1,24 @@
 import { loadTournamentBundle } from '@/app/actions/tournaments';
-import { TournamentDetailTabs } from '@/components/portal/torneos/TournamentDetailTabs';
+import {
+  parseTournamentTab,
+  TournamentDetailView,
+} from '@/components/portal/torneos/TournamentDetailView';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+};
 
-export default async function TournamentDetailPage({ params }: Props) {
+export default async function TournamentDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { tab: tabParam } = await searchParams;
+  const tab = parseTournamentTab(tabParam);
+
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
@@ -26,7 +35,7 @@ export default async function TournamentDetailPage({ params }: Props) {
         <ArrowLeft className="size-4" />
         Volver a torneos
       </Link>
-      <TournamentDetailTabs bundle={bundle} />
+      <TournamentDetailView bundle={bundle} tournamentId={id} tab={tab} />
     </div>
   );
 }

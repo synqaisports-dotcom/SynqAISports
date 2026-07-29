@@ -429,6 +429,20 @@ export function isTournamentPublic(tournament: Pick<Tournament, 'public_enabled'
   return tournament.public_enabled && tournament.status !== 'draft' && tournament.status !== 'cancelled';
 }
 
+export function aggregateTournamentStats(
+  tournaments: Tournament[],
+  categories: TournamentCategory[],
+  teams: TournamentTeam[],
+  matches: TournamentMatch[]
+) {
+  const tournamentIds = new Set(tournaments.map((t) => t.id));
+  return {
+    categoriesCount: categories.filter((c) => tournamentIds.has(c.tournament_id)).length,
+    teamsCount: teams.filter((t) => tournamentIds.has(t.tournament_id)).length,
+    liveMatches: matches.filter((m) => tournamentIds.has(m.tournament_id) && m.status === 'live').length,
+  };
+}
+
 export const TOURNAMENT_SELECT =
   'id, club_id, tenant_type, name, slug, sport_key, status, starts_at, ends_at, description, rules_text, cover_image_url, venue_name, venue_map_url, venue_images_json, format_json, registration_config_json, ticketing_config_json, revenue_estimates_json, public_enabled, created_at, updated_at';
 
