@@ -16,6 +16,7 @@ import {
   Package,
   Smartphone,
   Target,
+  Trophy,
   Tv,
   UserCog,
   Users,
@@ -111,6 +112,17 @@ export const portalNavGroups: PortalNavGroup[] = [
           { title: 'Pantallas', href: '/portal/signage/pantallas', icon: Tv },
           { title: 'Programación', href: '/portal/signage/programacion', icon: CalendarClock },
         ],
+      },
+    ],
+  },
+  {
+    label: 'Eventos',
+    items: [
+      {
+        title: 'Torneos',
+        icon: Trophy,
+        href: '/portal/torneos',
+        exact: true,
       },
     ],
   },
