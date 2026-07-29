@@ -11,6 +11,7 @@ import {
   type TournamentTeam,
 } from '@/lib/tournaments';
 import { cn } from '@/lib/utils';
+import { TournamentOperativaInfoButton } from '@/components/portal/torneos/TournamentOperativaInfoButton';
 import { ArrowRight, Calendar, Layers, Trophy, Users } from 'lucide-react';
 
 type Props = {
@@ -95,6 +96,7 @@ export function TournamentHero({
           <div className="flex items-center gap-2">
             <Trophy className="size-6 text-cyan-300" strokeWidth={1.75} />
             <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Torneos</h1>
+            <TournamentOperativaInfoButton />
           </div>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Organiza torneos de fin de semana con grupos, finales paralelas Platinum/Silver, mesa móvil y ticketing QR.

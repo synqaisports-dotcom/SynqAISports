@@ -1,6 +1,5 @@
 import { ensureTournamentDefaults, listTournaments, loadTournamentPortalStats } from '@/app/actions/tournaments';
 import { TournamentCard, TournamentHero } from '@/components/portal/torneos/TournamentHero';
-import { TournamentOperativaGuide } from '@/components/portal/torneos/TournamentOperativaGuide';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import Link from 'next/link';
@@ -36,22 +35,19 @@ export default async function PortalTorneosPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Tus torneos</h2>
-          {tournaments.length === 0 ? (
-            <div className="portal-section-surface rounded-xl p-8 text-center text-sm text-muted-foreground">
-              Aún no hay torneos. Crea el primero para un fin de semana con varias categorías.
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {tournaments.map((t) => (
-                <TournamentCard key={t.id} tournament={t} teamCount={teamCounts.get(t.id) ?? 0} />
-              ))}
-            </div>
-          )}
-        </div>
-        <TournamentOperativaGuide />
+      <div className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Tus torneos</h2>
+        {tournaments.length === 0 ? (
+          <div className="portal-section-surface rounded-xl p-8 text-center text-sm text-muted-foreground">
+            Aún no hay torneos. Crea el primero para un fin de semana con varias categorías.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {tournaments.map((t) => (
+              <TournamentCard key={t.id} tournament={t} teamCount={teamCounts.get(t.id) ?? 0} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

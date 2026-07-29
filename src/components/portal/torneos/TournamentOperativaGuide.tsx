@@ -1,12 +1,11 @@
-export function TournamentOperativaGuide() {
+export function TournamentOperativaGuideContent() {
   return (
-    <div className="portal-section-surface rounded-xl p-5">
-      <h2 className="font-medium">¿Dónde configuro cada cosa?</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
         Flujo recomendado para un torneo de fin de semana con grupos y finales paralelas (Platinum, Gold…).
       </p>
 
-      <ol className="mt-4 space-y-3 text-sm">
+      <ol className="space-y-3 text-sm">
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
           <p className="font-medium">1. Configuración → Datos del torneo</p>
           <p className="mt-1 text-muted-foreground">
@@ -52,7 +51,7 @@ export function TournamentOperativaGuide() {
         </li>
       </ol>
 
-      <div className="mt-4 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-xs text-cyan-200/90">
+      <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-xs text-cyan-200/90">
         <strong className="text-cyan-100">PWA sin portal:</strong>{' '}
         <code className="text-cyan-300">/torneo/demo</code> — web pública, mesa, delegado y taquilla.
       </div>

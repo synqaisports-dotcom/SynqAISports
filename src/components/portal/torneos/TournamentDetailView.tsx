@@ -3,7 +3,7 @@ import { TournamentConfigPanel } from '@/components/portal/torneos/TournamentCon
 import { TournamentCrucesPanel } from '@/components/portal/torneos/TournamentCrucesPanel';
 import { TournamentDetailActions } from '@/components/portal/torneos/TournamentDetailActions';
 import { TournamentEquiposPanel } from '@/components/portal/torneos/TournamentEquiposPanel';
-import { TournamentOperativaGuide } from '@/components/portal/torneos/TournamentOperativaGuide';
+import { TournamentOperativaInfoButton } from '@/components/portal/torneos/TournamentOperativaInfoButton';
 import { TournamentSchedulePanel } from '@/components/portal/torneos/TournamentSchedulePanel';
 import { TournamentSignagePreview } from '@/components/portal/torneos/TournamentSignagePreview';
 import { TournamentSponsorsPanel } from '@/components/portal/torneos/TournamentSponsorsPanel';
@@ -65,6 +65,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold md:text-2xl">{tournament.name}</h1>
+              <TournamentOperativaInfoButton />
               <Badge variant="outline">{TOURNAMENT_STATUS_LABELS[tournament.status]}</Badge>
               {tournament.public_enabled ? (
                 <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-300">Público</Badge>
@@ -113,17 +114,12 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
       </div>
 
       {tab === 'resumen' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="grid gap-3 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-4">
-            <Stat label="Categorías" value={String(bundle.categories.length)} />
-            <Stat label="Equipos confirmados" value={String(confirmedTeams)} highlight />
-            <Stat label="Partidos" value={String(bundle.matches.length)} />
-            <Stat label="Campos" value={String(bundle.fields.length)} />
-          </div>
-          <div className="lg:col-span-2">
-            <TournamentOperativaGuide />
-          </div>
-          <div className="portal-section-surface rounded-xl p-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat label="Categorías" value={String(bundle.categories.length)} />
+          <Stat label="Equipos confirmados" value={String(confirmedTeams)} highlight />
+          <Stat label="Partidos" value={String(bundle.matches.length)} />
+          <Stat label="Campos" value={String(bundle.fields.length)} />
+          <div className="portal-section-surface rounded-xl p-4 sm:col-span-2 lg:col-span-4">
             <h3 className="flex items-center gap-2 font-medium">
               <MapPin className="size-4 text-primary" />
               Accesos rápidos
