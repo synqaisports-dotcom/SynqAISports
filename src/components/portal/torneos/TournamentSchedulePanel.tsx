@@ -76,7 +76,11 @@ function ScheduleMatchCard({ match, bundle, category }: { match: TournamentMatch
         </p>
         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="size-3 shrink-0" />
-          {fieldLabel(bundle.fields, match.field_id)}
+          {fieldLabel(
+            bundle.fields,
+            match.field_id,
+            (match.metadata_json as { scheduling_division_key?: string })?.scheduling_division_key
+          )}
         </p>
       </div>
 

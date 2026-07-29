@@ -50,7 +50,29 @@ export const DEMO_TOURNAMENT: Tournament = {
   venue_name: 'Polideportivo Municipal Norte',
   venue_map_url: null,
   venue_images_json: [],
-  format_json: { weekend_mode: true, multifinal: true },
+  format_json: {
+    weekend_mode: true,
+    multifinal: true,
+    scheduling: {
+      match_format_preset: 'football_7',
+      periods: 2,
+      period_minutes: 20,
+      break_minutes: 5,
+      turnover_minutes: 8,
+      min_rest_same_team_minutes: 60,
+      day_start: '09:00',
+      day_end: '20:00',
+      lunch_break_enabled: true,
+      lunch_start: '14:00',
+      lunch_end: '15:30',
+      group_strategy: 'group_alternate',
+      knockout_strategy: 'field_first',
+    },
+    field_divisions: {
+      [field1Id]: 'halves_2',
+      [field2Id]: 'full',
+    },
+  },
   registration_config_json: { max_teams_per_category: 24, deadline_days_before: 3 },
   ticketing_config_json: { projected_attendance: 600, gate_enabled: true },
   revenue_estimates_json: {
@@ -89,8 +111,26 @@ export const DEMO_CATEGORIES: TournamentCategory[] = [
 ];
 
 export const DEMO_FIELDS: TournamentField[] = [
-  { id: field1Id, tournament_id: tournamentId, facility_id: null, label: 'Campo 1', map_url: null, notes: 'Césped artificial', sort_order: 0 },
-  { id: field2Id, tournament_id: tournamentId, facility_id: null, label: 'Campo 2', map_url: null, notes: null, sort_order: 1 },
+  {
+    id: field1Id,
+    tournament_id: tournamentId,
+    facility_id: null,
+    label: 'Campo 1 (F11)',
+    map_url: null,
+    notes: 'Césped artificial · 2 mitades F7',
+    sort_order: 0,
+    division_mode: 'halves_2',
+  },
+  {
+    id: field2Id,
+    tournament_id: tournamentId,
+    facility_id: null,
+    label: 'Campo 2',
+    map_url: null,
+    notes: null,
+    sort_order: 1,
+    division_mode: 'full',
+  },
 ];
 
 export const DEMO_SPONSORS: TournamentSponsor[] = [

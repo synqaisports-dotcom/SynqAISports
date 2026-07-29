@@ -10,6 +10,11 @@ import {
 import { isDemoActive } from '@/lib/demo';
 import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
 import {
+  calculateTournamentSchedule,
+  resolveSchedulingConfig,
+  type TournamentSchedulingConfig,
+} from '@/lib/tournament-scheduling';
+import {
   delegateUrl,
   gateUrl,
   mesaUrl,
@@ -30,6 +35,7 @@ import {
   TOURNAMENT_SELECT,
   totalEstimatedRevenueCents,
   type FormatType,
+  type FieldDivisionMode,
   type Tournament,
   type TournamentBundle,
   type TournamentCategory,
@@ -48,6 +54,24 @@ import { revalidatePath } from 'next/cache';
 export type TournamentActionState = { ok: boolean; message?: string; id?: string; slug?: string };
 
 const TOURNAMENT_PATHS = ['/portal/torneos'];
+
+function enrichFieldsWithDivisions(
+  tournament: Tournament,
+  fields: TournamentField[]
+): TournamentField[] {
+  const map = tournament.format_json?.field_divisions as Record<string, FieldDivisionMode> | undefined;
+  return fields.map((f) => ({
+    ...f,
+    division_mode: f.division_mode ?? map?.[f.id] ?? 'full',
+  }));
+}
+
+function enrichBundle(bundle: TournamentBundle): TournamentBundle {
+  return {
+    ...bundle,
+    fields: enrichFieldsWithDivisions(bundle.tournament, bundle.fields),
+  };
+}
 
 function revalidateTournaments() {
   for (const path of TOURNAMENT_PATHS) revalidatePath(path, 'layout');
@@ -168,15 +192,18 @@ export async function getDemoTorneoPwaLinks(): Promise<DemoTorneoPwaLinks | null
 
 function demoBundleById(tournamentId: string): TournamentBundle | null {
   if (tournamentId === DEMO_TOURNAMENT_ID || tournamentId.startsWith('demo-tournament')) {
-    return getDemoTournamentBundle(tournamentId) ?? getDemoTournamentBundle(DEMO_TOURNAMENT_ID);
+    const bundle = getDemoTournamentBundle(tournamentId) ?? getDemoTournamentBundle(DEMO_TOURNAMENT_ID);
+    return bundle ? enrichBundle(bundle) : null;
   }
-  return getDemoTournamentBundle(tournamentId);
+  const bundle = getDemoTournamentBundle(tournamentId);
+  return bundle ? enrichBundle(bundle) : null;
 }
 
 function demoBundleBySlug(slug: string): TournamentBundle | null {
   const store = getDemoTournamentsStore();
   const t = store.tournaments.find((x) => x.slug === slug);
-  return t ? getDemoTournamentBundle(t.id) : null;
+  const bundle = t ? getDemoTournamentBundle(t.id) : null;
+  return bundle ? enrichBundle(bundle) : null;
 }
 
 export async function loadTournamentBundle(tournamentId: string): Promise<TournamentBundle | null> {
@@ -209,7 +236,7 @@ export async function loadTournamentBundle(tournamentId: string): Promise<Tourna
       supabase.from('synq_tournament_tickets').select('*').eq('tournament_id', tournamentId),
     ]);
 
-  return {
+  return enrichBundle({
     tournament: mapTournament(tournament as Record<string, unknown>),
     categories: (categories.data ?? []) as TournamentCategory[],
     fields: (fields.data ?? []) as TournamentField[],
@@ -221,7 +248,7 @@ export async function loadTournamentBundle(tournamentId: string): Promise<Tourna
     dossiers: (dossiers.data ?? []) as TournamentBundle['dossiers'],
     ticketTypes: (ticketTypes.data ?? []) as TournamentTicketType[],
     tickets: (tickets.data ?? []) as TournamentTicket[],
-  };
+  });
 }
 
 export async function loadTournamentBySlug(slug: string): Promise<TournamentBundle | null> {
@@ -417,6 +444,7 @@ export async function addTournamentField(
 
   const label = String(formData.get('label') ?? '').trim();
   const notes = String(formData.get('notes') ?? '').trim() || null;
+  const divisionMode = (String(formData.get('division_mode') ?? 'full') as FieldDivisionMode) || 'full';
   if (!label) return { ok: false, message: 'Nombre del campo obligatorio' };
 
   if (await isDemoActive() || demoBundleById(tournamentId)) {
@@ -430,6 +458,7 @@ export async function addTournamentField(
       map_url: null,
       notes,
       sort_order: store.fields.filter((f) => f.tournament_id === tournamentId).length,
+      division_mode: divisionMode,
     });
     revalidateTournaments();
     return { ok: true, id, message: 'Campo añadido' };
@@ -533,14 +562,9 @@ export async function generateCompetitionStructure(
       });
     }
 
-    const baseTime = store.tournaments.find((t) => t.id === tournamentId)?.starts_at ?? new Date().toISOString();
-    const start = new Date(baseTime);
     let matchIdx = 0;
 
     for (const m of structure.matches) {
-      const scheduled = new Date(start);
-      scheduled.setHours(9 + Math.floor(matchIdx / 4), (matchIdx % 4) * 20, 0, 0);
-      const field = store.fields[matchIdx % Math.max(store.fields.length, 1)];
       store.matches.push({
         id: `demo-match-${categoryId}-${matchIdx + 1}`,
         tournament_id: tournamentId,
@@ -552,8 +576,8 @@ export async function generateCompetitionStructure(
         match_number: m.match_number,
         home_team_id: null,
         away_team_id: null,
-        field_id: field?.id ?? null,
-        scheduled_at: scheduled.toISOString(),
+        field_id: null,
+        scheduled_at: null,
         status: 'scheduled',
         score_home: 0,
         score_away: 0,
@@ -984,4 +1008,169 @@ export async function validateTicketQr(
     .eq('id', ticket.id);
 
   return { ok: true, ticket: ticket as TournamentTicket, message: `Bienvenido/a, ${ticket.purchaser_name}` };
+}
+
+function parseSchedulingFromForm(formData: FormData): TournamentSchedulingConfig {
+  const preset = String(formData.get('match_format_preset') ?? 'football_7') as TournamentSchedulingConfig['match_format_preset'];
+  const raw: Partial<TournamentSchedulingConfig> = {
+    match_format_preset: preset,
+    periods: Number(formData.get('periods') ?? 2) as TournamentSchedulingConfig['periods'],
+    period_minutes: Number(formData.get('period_minutes') ?? 20),
+    break_minutes: Number(formData.get('break_minutes') ?? 5),
+    turnover_minutes: Number(formData.get('turnover_minutes') ?? 8),
+    min_rest_same_team_minutes: Number(formData.get('min_rest_same_team_minutes') ?? 60),
+    day_start: String(formData.get('day_start') ?? '09:00'),
+    day_end: String(formData.get('day_end') ?? '20:00'),
+    lunch_break_enabled: formData.get('lunch_break_enabled') === 'on',
+    lunch_start: String(formData.get('lunch_start') ?? '14:00'),
+    lunch_end: String(formData.get('lunch_end') ?? '15:30'),
+    group_strategy: String(formData.get('group_strategy') ?? 'group_alternate') as TournamentSchedulingConfig['group_strategy'],
+    knockout_strategy: 'field_first',
+  };
+  return resolveSchedulingConfig(raw, preset);
+}
+
+export async function updateTournamentScheduling(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const scheduling = parseSchedulingFromForm(formData);
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    t.format_json = { ...t.format_json, scheduling };
+    t.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: 'Planificación guardada' };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase.from('synq_tournaments').select('format_json').eq('id', tournamentId).maybeSingle();
+  const formatJson = { ...((row?.format_json as Record<string, unknown>) ?? {}), scheduling };
+  const { error } = await supabase
+    .from('synq_tournaments')
+    .update({ format_json: formatJson })
+    .eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Planificación guardada' };
+}
+
+export async function updateTournamentFieldDivision(
+  tournamentId: string,
+  fieldId: string,
+  divisionMode: FieldDivisionMode
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const field = store.fields.find((f) => f.id === fieldId && f.tournament_id === tournamentId);
+    if (!field) return { ok: false, message: 'Campo no encontrado' };
+    field.division_mode = divisionMode;
+    revalidateTournaments();
+    return { ok: true, message: 'División actualizada' };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase.from('synq_tournaments').select('format_json').eq('id', tournamentId).maybeSingle();
+  const formatJson = { ...((row?.format_json as Record<string, unknown>) ?? {}) };
+  const divisions = { ...((formatJson.field_divisions as Record<string, FieldDivisionMode>) ?? {}) };
+  divisions[fieldId] = divisionMode;
+  formatJson.field_divisions = divisions;
+  const { error } = await supabase.from('synq_tournaments').update({ format_json: formatJson }).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'División actualizada' };
+}
+
+function applyScheduleAssignments(
+  store: ReturnType<typeof getDemoTournamentsStore>,
+  tournamentId: string,
+  assignments: ReturnType<typeof calculateTournamentSchedule>['assigned']
+) {
+  for (const a of assignments) {
+    const match = store.matches.find((m) => m.id === a.match_id && m.tournament_id === tournamentId);
+    if (!match || match.status === 'finished' || match.status === 'live') continue;
+    match.field_id = a.field_id;
+    match.scheduled_at = a.scheduled_at;
+    match.metadata_json = {
+      ...match.metadata_json,
+      scheduling_division_key: a.division_key,
+    };
+  }
+}
+
+export async function calculateTournamentSchedules(
+  tournamentId: string
+): Promise<TournamentActionState & { capacitySummary?: string }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    if (!tournament) return { ok: false, message: 'Torneo no encontrado' };
+
+    const fields = enrichFieldsWithDivisions(tournament, store.fields.filter((f) => f.tournament_id === tournamentId));
+    const groups = store.groups.filter((g) => g.tournament_id === tournamentId);
+    const matches = store.matches.filter((m) => m.tournament_id === tournamentId);
+    const result = calculateTournamentSchedule({
+      tournament,
+      fields,
+      groups,
+      matches,
+      onlyUnplayed: true,
+    });
+
+    applyScheduleAssignments(store, tournamentId, result.assigned);
+    revalidateTournaments();
+    return {
+      ok: result.ok,
+      message: result.message,
+      capacitySummary: result.capacity.total_capacity.toString(),
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: tournamentRow } = await supabase.from('synq_tournaments').select('*').eq('id', tournamentId).maybeSingle();
+  if (!tournamentRow) return { ok: false, message: 'Torneo no encontrado' };
+
+  const tournament = mapTournament(tournamentRow as Record<string, unknown>);
+  const [fieldsRes, groupsRes, matchesRes] = await Promise.all([
+    supabase.from('synq_tournament_fields').select('*').eq('tournament_id', tournamentId).order('sort_order'),
+    supabase.from('synq_tournament_groups').select('*').eq('tournament_id', tournamentId),
+    supabase.from('synq_tournament_matches').select('*').eq('tournament_id', tournamentId),
+  ]);
+
+  const fields = enrichFieldsWithDivisions(tournament, (fieldsRes.data ?? []) as TournamentField[]);
+  const groups = (groupsRes.data ?? []) as TournamentBundle['groups'];
+  const matches = (matchesRes.data ?? []) as TournamentMatch[];
+
+  const result = calculateTournamentSchedule({ tournament, fields, groups, matches, onlyUnplayed: true });
+
+  for (const a of result.assigned) {
+    const match = matches.find((m) => m.id === a.match_id);
+    if (!match || match.status === 'finished' || match.status === 'live') continue;
+    await supabase
+      .from('synq_tournament_matches')
+      .update({
+        field_id: a.field_id,
+        scheduled_at: a.scheduled_at,
+        metadata_json: {
+          ...(match.metadata_json ?? {}),
+          scheduling_division_key: a.division_key,
+        },
+      })
+      .eq('id', a.match_id);
+  }
+
+  revalidateTournaments();
+  return { ok: result.ok, message: result.message };
 }

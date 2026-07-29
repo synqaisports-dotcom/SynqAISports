@@ -194,6 +194,9 @@ export type TournamentCategory = {
   sort_order: number;
 };
 
+export const FIELD_DIVISION_MODES = ['full', 'halves_2', 'quarters_4'] as const;
+export type FieldDivisionMode = (typeof FIELD_DIVISION_MODES)[number];
+
 export type TournamentField = {
   id: string;
   tournament_id: string;
@@ -202,6 +205,8 @@ export type TournamentField = {
   map_url: string | null;
   notes: string | null;
   sort_order: number;
+  /** División física del campo (F11 en mitades = 2 pistas F7). */
+  division_mode?: FieldDivisionMode;
 };
 
 export type TournamentSponsor = {

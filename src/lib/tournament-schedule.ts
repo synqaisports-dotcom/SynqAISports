@@ -23,9 +23,18 @@ export function formatMatchDateTime(iso: string | null): { date: string; time: s
   };
 }
 
-export function fieldLabel(fields: TournamentField[], fieldId: string | null): string {
+export function fieldLabel(
+  fields: TournamentField[],
+  fieldId: string | null,
+  divisionKey?: string | null
+): string {
   if (!fieldId) return 'Sin asignar';
-  return fields.find((f) => f.id === fieldId)?.label ?? 'Campo';
+  const base = fields.find((f) => f.id === fieldId)?.label ?? 'Campo';
+  if (!divisionKey || divisionKey === 'full') return base;
+  if (divisionKey === 'half_1') return `${base} · Mitad 1`;
+  if (divisionKey === 'half_2') return `${base} · Mitad 2`;
+  if (divisionKey.startsWith('quarter_')) return `${base} · C${divisionKey.replace('quarter_', '')}`;
+  return base;
 }
 
 export function groupMatchesByDay(matches: TournamentMatch[]): ScheduleDayGroup[] {

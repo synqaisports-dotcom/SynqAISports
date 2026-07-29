@@ -16,6 +16,7 @@ import {
   TOURNAMENT_STATUS_LABELS,
   type TournamentBundle,
 } from '@/lib/tournaments';
+import { TournamentSchedulingSection } from '@/components/portal/torneos/TournamentSchedulingSection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, Settings, Sparkles, Trophy } from 'lucide-react';
@@ -210,7 +211,10 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
             bundle.fields.map((f) => (
               <li key={f.id} className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2 text-sm">
                 <span className="font-medium">{f.label}</span>
-                {f.notes ? <span className="text-xs text-muted-foreground">{f.notes}</span> : null}
+                <span className="text-xs text-muted-foreground">
+                  {f.notes ?? ''}
+                  {f.division_mode && f.division_mode !== 'full' ? ` · ${f.division_mode === 'halves_2' ? '2 mitades' : '4 cuartos'}` : ''}
+                </span>
               </li>
             ))
           )}
@@ -228,10 +232,17 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
           }}
         >
           <input name="label" placeholder="Campo 1" required className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
+          <select name="division_mode" defaultValue="full" className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm">
+            <option value="full">Campo completo</option>
+            <option value="halves_2">2 mitades (F11→2×F7)</option>
+            <option value="quarters_4">4 cuartos</option>
+          </select>
           <input name="notes" placeholder="Notas (césped, pista…)" className="min-w-[160px] flex-1 rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
           <Button type="submit" size="sm" variant="outline" disabled={pending}>Añadir campo</Button>
         </form>
       </section>
+
+      <TournamentSchedulingSection bundle={bundle} />
     </div>
   );
 }
