@@ -1,32 +1,55 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import {
   addTournamentCategory,
   addTournamentField,
   generateCompetitionStructure,
   updateTournamentSettings,
 } from '@/app/actions/tournaments';
+import { SynqDateTimeField } from '@/components/portal/SynqDateTimeField';
+import { SynqSelect } from '@/components/portal/SynqSelect';
+import { TournamentSchedulingSection } from '@/components/portal/torneos/TournamentSchedulingSection';
+import { FIELD_DIVISION_MODE_LABELS } from '@/lib/tournament-scheduling';
+import { PORTAL_FIELD_LABEL_CLASS } from '@/lib/portal-form-styles';
 import {
   DEFAULT_PLACEMENT_BRACKETS,
+  FIELD_DIVISION_MODES,
   FORMAT_TYPE_LABELS,
   TOURNAMENT_SPORTS,
   TOURNAMENT_SPORT_LABELS,
   TOURNAMENT_STATUSES,
   TOURNAMENT_STATUS_LABELS,
+  type FieldDivisionMode,
   type TournamentBundle,
+  type TournamentSport,
+  type TournamentStatus,
 } from '@/lib/tournaments';
-import { TournamentSchedulingSection } from '@/components/portal/torneos/TournamentSchedulingSection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Loader2, MapPin, Settings, Sparkles, Trophy } from 'lucide-react';
 
 const sectionClass = 'portal-section-surface rounded-xl p-4 md:p-5';
+const fieldClass = 'portal-field-surface';
 
 export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) {
   const { tournament } = bundle;
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const [sportKey, setSportKey] = useState<TournamentSport>(tournament.sport_key);
+  const [status, setStatus] = useState<TournamentStatus>(tournament.status);
+  const [startsAt, setStartsAt] = useState(tournament.starts_at?.slice(0, 16) ?? '');
+  const [endsAt, setEndsAt] = useState(tournament.ends_at?.slice(0, 16) ?? '');
+  const [fieldDivisionMode, setFieldDivisionMode] = useState<FieldDivisionMode>('full');
+
+  useEffect(() => {
+    setSportKey(tournament.sport_key);
+    setStatus(tournament.status);
+    setStartsAt(tournament.starts_at?.slice(0, 16) ?? '');
+    setEndsAt(tournament.ends_at?.slice(0, 16) ?? '');
+  }, [tournament.id, tournament.updated_at, tournament.sport_key, tournament.status, tournament.starts_at, tournament.ends_at]);
 
   return (
     <div className="space-y-5">
@@ -50,77 +73,75 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
             });
           }}
         >
-          <label className="space-y-1.5 md:col-span-2">
-            <span className="text-xs font-medium text-muted-foreground">Nombre</span>
-            <input
-              name="name"
-              defaultValue={tournament.name}
-              required
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
+          <input type="hidden" name="sport_key" value={sportKey} readOnly />
+          <input type="hidden" name="status" value={status} readOnly />
+          <input type="hidden" name="starts_at" value={startsAt} readOnly />
+          <input type="hidden" name="ends_at" value={endsAt} readOnly />
+
+          <div className="md:col-span-2">
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Nombre</label>
+            <Input name="name" defaultValue={tournament.name} required className={fieldClass} />
+          </div>
+
+          <div>
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Deporte</label>
+            <SynqSelect
+              value={sportKey}
+              onChange={(value) => setSportKey(value as TournamentSport)}
+              options={TOURNAMENT_SPORTS.map((s) => ({ value: s, label: TOURNAMENT_SPORT_LABELS[s] }))}
             />
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Deporte</span>
-            <select name="sport_key" defaultValue={tournament.sport_key} className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm">
-              {TOURNAMENT_SPORTS.map((s) => (
-                <option key={s} value={s}>{TOURNAMENT_SPORT_LABELS[s]}</option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Estado</span>
-            <select name="status" defaultValue={tournament.status} className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm">
-              {TOURNAMENT_STATUSES.map((s) => (
-                <option key={s} value={s}>{TOURNAMENT_STATUS_LABELS[s]}</option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Inicio</span>
-            <input
-              name="starts_at"
-              type="datetime-local"
-              defaultValue={tournament.starts_at?.slice(0, 16) ?? ''}
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
+          </div>
+
+          <div>
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Estado</label>
+            <SynqSelect
+              value={status}
+              onChange={(value) => setStatus(value as TournamentStatus)}
+              options={TOURNAMENT_STATUSES.map((s) => ({ value: s, label: TOURNAMENT_STATUS_LABELS[s] }))}
             />
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Fin</span>
-            <input
-              name="ends_at"
-              type="datetime-local"
-              defaultValue={tournament.ends_at?.slice(0, 16) ?? ''}
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="space-y-1.5 md:col-span-2">
-            <span className="text-xs font-medium text-muted-foreground">Sede</span>
-            <input
+          </div>
+
+          <div>
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Inicio</label>
+            <SynqDateTimeField value={startsAt} onChange={setStartsAt} />
+          </div>
+
+          <div>
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Fin</label>
+            <SynqDateTimeField value={endsAt} onChange={setEndsAt} />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Sede</label>
+            <Input
               name="venue_name"
               defaultValue={tournament.venue_name ?? ''}
               placeholder="Polideportivo Municipal"
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
+              className={fieldClass}
             />
-          </label>
-          <label className="space-y-1.5 md:col-span-2">
-            <span className="text-xs font-medium text-muted-foreground">Descripción</span>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Descripción</label>
             <textarea
               name="description"
               rows={2}
               defaultValue={tournament.description ?? ''}
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
+              className={`flex w-full rounded-md border px-3 py-2 text-sm ${fieldClass}`}
             />
-          </label>
-          <label className="space-y-1.5 md:col-span-2">
-            <span className="text-xs font-medium text-muted-foreground">Reglas</span>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Reglas</label>
             <textarea
               name="rules_text"
               rows={3}
               defaultValue={tournament.rules_text ?? ''}
               placeholder="Duración partidos, penaltis, plantilla máxima…"
-              className="w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm"
+              className={`flex w-full rounded-md border px-3 py-2 text-sm ${fieldClass}`}
             />
-          </label>
+          </div>
+
           <div className="md:col-span-2">
             <Button type="submit" size="sm" disabled={pending}>
               {pending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
@@ -189,9 +210,9 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
             });
           }}
         >
-          <input name="name" placeholder="Sub-10" required className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
-          <input name="groups_count" type="number" min={1} max={16} defaultValue={6} placeholder="Grupos" className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
-          <input name="teams_per_group" type="number" min={2} max={8} defaultValue={4} placeholder="Equipos/grupo" className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
+          <Input name="name" placeholder="Sub-10" required className={fieldClass} />
+          <Input name="groups_count" type="number" min={1} max={16} defaultValue={6} placeholder="Grupos" className={fieldClass} />
+          <Input name="teams_per_group" type="number" min={2} max={8} defaultValue={4} placeholder="Equipos/grupo" className={fieldClass} />
           <input type="hidden" name="format_type" value="groups_multifinal" />
           <Button type="submit" size="sm" disabled={pending} className="md:col-span-2">
             Añadir categoría
@@ -220,7 +241,7 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
           )}
         </ul>
         <form
-          className="mt-4 flex flex-wrap gap-2"
+          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_12rem_1fr_auto]"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -228,17 +249,26 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
               const res = await addTournamentField(tournament.id, fd);
               setMessage(res.message ?? (res.ok ? 'Campo añadido' : 'Error'));
               e.currentTarget.reset();
+              setFieldDivisionMode('full');
             });
           }}
         >
-          <input name="label" placeholder="Campo 1" required className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
-          <select name="division_mode" defaultValue="full" className="rounded-lg border border-border bg-background/50 px-3 py-2 text-sm">
-            <option value="full">Campo completo</option>
-            <option value="halves_2">2 mitades (F11→2×F7)</option>
-            <option value="quarters_4">4 cuartos</option>
-          </select>
-          <input name="notes" placeholder="Notas (césped, pista…)" className="min-w-[160px] flex-1 rounded-lg border border-border bg-background/50 px-3 py-2 text-sm" />
-          <Button type="submit" size="sm" variant="outline" disabled={pending}>Añadir campo</Button>
+          <input type="hidden" name="division_mode" value={fieldDivisionMode} readOnly />
+          <Input name="label" placeholder="Campo 1" required className={fieldClass} />
+          <div>
+            <label className={PORTAL_FIELD_LABEL_CLASS}>División</label>
+            <SynqSelect
+              value={fieldDivisionMode}
+              onChange={(value) => setFieldDivisionMode(value as FieldDivisionMode)}
+              options={FIELD_DIVISION_MODES.map((m) => ({ value: m, label: FIELD_DIVISION_MODE_LABELS[m] }))}
+            />
+          </div>
+          <Input name="notes" placeholder="Notas (césped, pista…)" className={fieldClass} />
+          <div className="flex items-end">
+            <Button type="submit" size="sm" variant="outline" disabled={pending}>
+              Añadir campo
+            </Button>
+          </div>
         </form>
       </section>
 
