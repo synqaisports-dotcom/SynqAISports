@@ -43,7 +43,9 @@ export type DossierFieldSection = {
 };
 
 export type DossierSponsorLine = {
+  id: string;
   name: string;
+  logo_url: string | null;
   tier: string;
 };
 
@@ -162,7 +164,12 @@ export function buildTournamentDossier(bundle: TournamentBundle): TournamentDoss
 
   const sponsors: DossierSponsorLine[] = bundle.sponsors
     .filter((s) => s.active)
-    .map((s) => ({ name: s.name, tier: s.tier }));
+    .sort((a, b) => {
+      const order = { gold: 0, silver: 1, bronze: 2 } as const;
+      const tierDiff = (order[a.tier] ?? 9) - (order[b.tier] ?? 9);
+      return tierDiff !== 0 ? tierDiff : a.sort_order - b.sort_order;
+    })
+    .map((s) => ({ id: s.id, name: s.name, logo_url: s.logo_url, tier: s.tier }));
 
   const completeness = [
     { label: 'Portada del torneo', ok: !!tournament.cover_image_url },
@@ -172,6 +179,10 @@ export function buildTournamentDossier(bundle: TournamentBundle): TournamentDoss
     { label: 'Campos / instalación', ok: bundle.fields.length > 0 },
     { label: 'Plano o mapa de acceso', ok: !!(tournament.venue_map_url || fields.some((f) => f.map_url)) },
     { label: 'Precios de taquilla', ok: tickets.length > 0 || config.hide_ticketing !== true },
+    {
+      label: 'Logos de patrocinadores',
+      ok: sponsors.length === 0 || sponsors.every((s) => !!s.logo_url),
+    },
   ];
 
   return {

@@ -1,5 +1,11 @@
 import { SponsorWallSlide } from '@/components/portal/signage/SponsorWallSlide';
-import type { SignageSponsor } from '@/lib/signage';
+import { TournamentSignageControls } from '@/components/portal/torneos/TournamentSignageControls';
+import {
+  getTournamentSignageScreenToken,
+  isTournamentClubSignageEligible,
+  tournamentSignageScreenPath,
+  tournamentSponsorsToSignageSponsors,
+} from '@/lib/tournament-signage';
 import type { TournamentBundle } from '@/lib/tournaments';
 import { totalEstimatedRevenueCents } from '@/lib/tournaments';
 
@@ -9,20 +15,8 @@ type Props = {
 
 /** Vista signage scoped al torneo con estimador de ingresos publicitario. */
 export function TournamentSignagePreview({ bundle }: Props) {
-  const sponsors: SignageSponsor[] = bundle.sponsors
-    .filter((s) => s.active)
-    .map((s) => ({
-      id: s.id,
-      name: s.name,
-      logo_url: s.logo_url,
-      tier: s.tier,
-      url: s.url,
-      default_duration_sec: s.tier === 'gold' ? 45 : s.tier === 'silver' ? 30 : 20,
-      active_from: null,
-      active_until: null,
-      notes: s.notes,
-      active: true,
-    }));
+  const sponsors = tournamentSponsorsToSignageSponsors(bundle.sponsors);
+  const activeSponsors = bundle.sponsors.filter((s) => s.active);
 
   const revenue = totalEstimatedRevenueCents(bundle.tournament.revenue_estimates_json);
   const signageCents =
@@ -30,13 +24,23 @@ export function TournamentSignagePreview({ bundle }: Props) {
       (bundle.tournament.revenue_estimates_json.signage?.cpm_cents ?? 0)) /
     1000;
 
+  const token = getTournamentSignageScreenToken(bundle.tournament);
+  const screenPath = token ? tournamentSignageScreenPath(token) : null;
+
   return (
     <div className="space-y-4">
+      <TournamentSignageControls
+        tournamentId={bundle.tournament.id}
+        screenPath={screenPath}
+        hasClubSignage={isTournamentClubSignageEligible(bundle.tournament)}
+        sponsorCount={activeSponsors.length}
+      />
+
       <div className="portal-section-surface overflow-hidden rounded-xl">
         <SponsorWallSlide
           sponsors={sponsors}
           clubName={bundle.tournament.name}
-          clubLogoUrl={null}
+          clubLogoUrl={bundle.tournament.cover_image_url}
           entrance="stagger-fade"
         />
       </div>

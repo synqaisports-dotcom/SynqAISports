@@ -1,7 +1,7 @@
 'use client';
 
 import type { TournamentDossierViewModel } from '@/lib/tournament-dossier';
-import { cn } from '@/lib/utils';
+import { DossierSponsorLogoGrid } from '@/components/print/DossierSponsorLogoGrid';
 import { MapPin, Printer } from 'lucide-react';
 
 type Props = {
@@ -208,13 +208,7 @@ export function TournamentInvitationDossierPrint({ dossier }: Props) {
       {dossier.sponsors.length > 0 ? (
         <section className="dossier-page p-10">
           <SectionTitle number="07" title="Patrocinadores" />
-          <div className="mt-6 flex flex-wrap gap-3">
-            {dossier.sponsors.map((s) => (
-              <span key={s.name} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium">
-                {s.name}
-              </span>
-            ))}
-          </div>
+          <DossierSponsorLogoGrid sponsors={dossier.sponsors} />
         </section>
       ) : null}
 

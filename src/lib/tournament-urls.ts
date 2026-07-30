@@ -8,6 +8,10 @@ export function delegateUrl(token: string): string {
   return `/torneo/equipo/${token}`;
 }
 
+export function tournamentSignageScreenPath(token: string): string {
+  return `/torneo/pantallas/${token}`;
+}
+
 export function gateUrl(token: string): string {
   return `/torneo/taquilla/${token}`;
 }

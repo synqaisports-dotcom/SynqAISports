@@ -28,6 +28,12 @@ import {
   publicTournamentUrl,
 } from '@/lib/tournament-urls';
 import {
+  buildTournamentSignageFormatPatch,
+  createTournamentSignageScreenToken,
+  getTournamentSignageScreenToken,
+  tournamentSignageScreenPath,
+} from '@/lib/tournament-signage';
+import {
   generateAccessToken,
   generateInviteToken,
   generateQrHash,
@@ -275,6 +281,70 @@ export async function loadTournamentBySlug(slug: string): Promise<TournamentBund
   const { data } = await supabase.from('synq_tournaments').select('id').eq('slug', slug).maybeSingle();
   if (!data) return null;
   return loadTournamentBundle(String(data.id));
+}
+
+export async function loadTournamentBySignageToken(token: string): Promise<TournamentBundle | null> {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+
+  const store = getDemoTournamentsStore();
+  const demoTournament = store.tournaments.find((t) => getTournamentSignageScreenToken(t) === trimmed);
+  if (demoTournament) return loadTournamentBundle(demoTournament.id);
+
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from('synq_tournaments')
+    .select('id, format_json')
+    .contains('format_json', { signage: { screen_token: trimmed } });
+
+  const row = rows?.find(
+    (r) => getTournamentSignageScreenToken({ format_json: (r.format_json as Record<string, unknown>) ?? {} }) === trimmed
+  );
+  if (!row) return null;
+  return loadTournamentBundle(String(row.id));
+}
+
+export async function ensureTournamentSignageScreenToken(
+  tournamentId: string
+): Promise<{ ok: boolean; path?: string; message?: string }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    let screenToken = getTournamentSignageScreenToken(t);
+    if (!screenToken) {
+      screenToken = createTournamentSignageScreenToken();
+      t.format_json = buildTournamentSignageFormatPatch(t, screenToken);
+      t.updated_at = new Date().toISOString();
+    }
+    revalidateTournaments();
+    return { ok: true, path: tournamentSignageScreenPath(screenToken) };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase
+    .from('synq_tournaments')
+    .select('format_json')
+    .eq('id', tournamentId)
+    .maybeSingle();
+  if (!row) return { ok: false, message: 'Torneo no encontrado' };
+
+  const formatJson = (row.format_json as Record<string, unknown>) ?? {};
+  let screenToken = getTournamentSignageScreenToken({ format_json: formatJson });
+  if (!screenToken) {
+    screenToken = createTournamentSignageScreenToken();
+    const { error } = await supabase
+      .from('synq_tournaments')
+      .update({ format_json: buildTournamentSignageFormatPatch({ format_json: formatJson }, screenToken) })
+      .eq('id', tournamentId);
+    if (error) return { ok: false, message: error.message };
+  }
+
+  revalidateTournaments();
+  return { ok: true, path: tournamentSignageScreenPath(screenToken) };
 }
 
 export async function ensureTournamentDefaults(clubId: string): Promise<void> {

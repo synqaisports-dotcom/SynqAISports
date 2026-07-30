@@ -33,6 +33,8 @@ const weekendEnd = new Date(weekendStart);
 weekendEnd.setDate(weekendEnd.getDate() + 1);
 weekendEnd.setHours(20, 0, 0, 0);
 
+export const DEMO_SIGNAGE_SCREEN_TOKEN = generateAccessToken();
+
 export const DEMO_TOURNAMENT: Tournament = {
   id: tournamentId,
   club_id: clubId,
@@ -85,6 +87,9 @@ export const DEMO_TOURNAMENT: Tournament = {
         day_end: '14:00',
         lunch_break_enabled: false,
       },
+    },
+    signage: {
+      screen_token: DEMO_SIGNAGE_SCREEN_TOKEN,
     },
   },
   registration_config_json: { max_teams_per_category: 24, deadline_days_before: 3 },
@@ -149,9 +154,9 @@ export const DEMO_FIELDS: TournamentField[] = [
 ];
 
 export const DEMO_SPONSORS: TournamentSponsor[] = [
-  { id: 'demo-ts-1', tournament_id: tournamentId, name: 'Deportes López', logo_url: null, tier: 'gold', url: 'https://demo.test', notes: 'Patrocinador principal', amount_cents: 150_000, sort_order: 0, active: true },
-  { id: 'demo-ts-2', tournament_id: tournamentId, name: 'Agua Pura', logo_url: null, tier: 'silver', url: null, notes: null, amount_cents: 60_000, sort_order: 1, active: true },
-  { id: 'demo-ts-3', tournament_id: tournamentId, name: 'Panadería Gol', logo_url: null, tier: 'bronze', url: null, notes: null, amount_cents: 25_000, sort_order: 2, active: true },
+  { id: 'demo-ts-1', tournament_id: tournamentId, name: 'Deportes López', logo_url: '/demo/sponsors/deportes-lopez.svg', tier: 'gold', url: 'https://demo.test', notes: 'Patrocinador principal', amount_cents: 150_000, sort_order: 0, active: true },
+  { id: 'demo-ts-2', tournament_id: tournamentId, name: 'Agua Pura', logo_url: '/demo/sponsors/agua-pura.svg', tier: 'silver', url: null, notes: null, amount_cents: 60_000, sort_order: 1, active: true },
+  { id: 'demo-ts-3', tournament_id: tournamentId, name: 'Panadería Gol', logo_url: '/demo/sponsors/panaderia-gol.svg', tier: 'bronze', url: null, notes: null, amount_cents: 25_000, sort_order: 2, active: true },
 ];
 
 function buildDemoTeams(categoryId: string, prefix: string, groupsCount: number): TournamentTeam[] {
