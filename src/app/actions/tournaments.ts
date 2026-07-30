@@ -1768,6 +1768,52 @@ export async function updateTournamentRevenueEstimates(
   return { ok: true, message: 'Estimación guardada' };
 }
 
+export async function updateTournamentTeamLogo(
+  teamId: string,
+  formData: FormData
+): Promise<TournamentActionState & { url?: string }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const file = formData.get('file');
+  const logoUrlInput = String(formData.get('logo_url') ?? '').trim();
+  let logoUrl: string | null = logoUrlInput || null;
+
+  if (file instanceof File && file.size > 0) {
+    if (await isDemoActive() || getDemoTournamentsStore().teams.some((t) => t.id === teamId)) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      logoUrl = `data:${file.type || 'image/jpeg'};base64,${buffer.toString('base64')}`;
+    } else {
+      const supabase = await createClient();
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `${clubId}/tournaments/teams/${teamId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('club-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+      });
+      if (uploadError) return { ok: false, message: uploadError.message };
+      const { data: urlData } = supabase.storage.from('club-media').getPublicUrl(path);
+      logoUrl = urlData.publicUrl;
+    }
+  }
+
+  if (await isDemoActive() || getDemoTournamentsStore().teams.some((t) => t.id === teamId)) {
+    const store = getDemoTournamentsStore();
+    const team = store.teams.find((t) => t.id === teamId);
+    if (!team) return { ok: false, message: 'Equipo no encontrado' };
+    team.logo_url = logoUrl;
+    revalidateTournaments();
+    return { ok: true, url: logoUrl ?? undefined, message: 'Escudo actualizado' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('synq_tournament_teams').update({ logo_url: logoUrl }).eq('id', teamId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, url: logoUrl ?? undefined, message: 'Escudo actualizado' };
+}
+
 export async function updateTeamStatus(
   teamId: string,
   status: TournamentTeam['status']

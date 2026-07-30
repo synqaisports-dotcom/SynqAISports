@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { groupStandings } from '@/lib/tournament-brackets';
 import { TournamentBracketsSheet } from '@/components/portal/torneos/TournamentBracketsSheet';
+import { TournamentTeamLogo } from '@/components/portal/torneos/TournamentTeamLogo';
 import {
   placementBracketsForCategory,
   type TournamentBundle,
@@ -51,7 +52,12 @@ function GroupStandingsTable({
           {standings.map((row, i) => (
             <tr key={row.team.id} className="border-t border-border/30">
               <td className="px-3 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
-              <td className="max-w-[140px] truncate px-3 py-2 font-medium">{row.team.name}</td>
+              <td className="max-w-[180px] px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <TournamentTeamLogo team={row.team} size="sm" />
+                  <span className="truncate font-medium">{row.team.name}</span>
+                </div>
+              </td>
               <td className="px-3 py-2 text-center tabular-nums">{row.played}</td>
               <td className="px-3 py-2 text-center tabular-nums font-semibold text-cyan-300">{row.pts}</td>
               <td className="px-3 py-2 text-center tabular-nums">{row.gf - row.ga}</td>

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ExternalLink, MapPin, Radio } from 'lucide-react';
 import { mesaUrl } from '@/lib/tournament-urls';
+import { TournamentMatchTeams } from '@/components/portal/torneos/TournamentMatchTeams';
 
 type BucketMeta = {
   id: string;
@@ -30,11 +31,6 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-
-function teamName(bundle: TournamentBundle, id: string | null) {
-  if (!id) return '—';
-  return bundle.teams.find((t) => t.id === id)?.name ?? '—';
-}
 
 function bracketName(bundle: TournamentBundle, match: TournamentMatch) {
   if (!match.bracket_key || match.bracket_key === 'groups') return undefined;
@@ -87,10 +83,14 @@ export function TournamentScheduleSheet({ bundle, bucket, open, onOpenChange }: 
                         )}
                       >
                         <td className="px-3 py-2 font-semibold tabular-nums text-cyan-300">{when.time}</td>
-                        <td className="max-w-[200px] px-3 py-2">
-                          <p className="truncate font-medium">
-                            {teamName(bundle, match.home_team_id)} vs {teamName(bundle, match.away_team_id)}
-                          </p>
+                        <td className="max-w-[240px] px-3 py-2">
+                          <div className="font-medium">
+                            <TournamentMatchTeams
+                              bundle={bundle}
+                              homeTeamId={match.home_team_id}
+                              awayTeamId={match.away_team_id}
+                            />
+                          </div>
                           <p className="truncate text-[10px] text-muted-foreground">
                             {fieldLabel(
                               bundle.fields,

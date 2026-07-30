@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { addTournamentCategory, inviteTeam, updateTeamStatus } from '@/app/actions/tournaments';
+import { addTournamentCategory, inviteTeam, updateTeamStatus, updateTournamentTeamLogo } from '@/app/actions/tournaments';
+import { uploadSignageMedia } from '@/app/actions/signage';
 import { analyzeCategoryCapacity } from '@/lib/tournament-category-scheduling';
 import { delegateUrl } from '@/lib/tournament-urls';
+import { TournamentTeamLogo } from '@/components/portal/torneos/TournamentTeamLogo';
 import {
   TEAM_STATUS_LABELS,
   type TournamentBundle,
@@ -13,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Copy, ExternalLink, Mail, UserCheck } from 'lucide-react';
+import { Check, Copy, ExternalLink, ImagePlus, Loader2, Mail, Shield, UserCheck } from 'lucide-react';
 
 function teamsByGroup(teams: TournamentTeam[]): Map<string, TournamentTeam[]> {
   const map = new Map<string, TournamentTeam[]>();
@@ -28,16 +30,55 @@ function teamsByGroup(teams: TournamentTeam[]): Map<string, TournamentTeam[]> {
 
 function TeamRow({ team }: { team: TournamentTeam }) {
   const [pending, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const delegateLink = team.invite_token ? delegateUrl(team.invite_token) : null;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/20 px-3 py-2 text-sm">
-      <div className="min-w-0">
-        <p className="font-medium">{team.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {team.external_club_name ?? '—'}
-          {team.contact_name ? ` · ${team.contact_name}` : ''}
-        </p>
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          title="Subir escudo"
+          className="group relative shrink-0"
+          disabled={uploading || pending}
+          onClick={() => fileRef.current?.click()}
+        >
+          <TournamentTeamLogo team={team} size="md" />
+          <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+            {uploading ? <Loader2 className="size-4 animate-spin text-white" /> : <ImagePlus className="size-4 text-white" />}
+          </span>
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setUploading(true);
+            startTransition(async () => {
+              const fd = new FormData();
+              fd.set('file', file);
+              const uploaded = await uploadSignageMedia(fd);
+              if (uploaded.ok && uploaded.url) {
+                const logoFd = new FormData();
+                logoFd.set('logo_url', uploaded.url);
+                await updateTournamentTeamLogo(team.id, logoFd);
+              }
+              setUploading(false);
+              e.target.value = '';
+            });
+          }}
+        />
+        <div className="min-w-0">
+          <p className="font-medium">{team.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {team.external_club_name ?? '—'}
+            {team.contact_name ? ` · ${team.contact_name}` : ''}
+          </p>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge
@@ -102,12 +143,26 @@ export function TournamentEquiposPanel({ bundle }: { bundle: TournamentBundle })
 
   const stats = useMemo(() => {
     const confirmed = bundle.teams.filter((t) => t.status === 'confirmed').length;
-    return { total: bundle.teams.length, confirmed };
+    const withLogo = bundle.teams.filter((t) => t.logo_url).length;
+    return { total: bundle.teams.length, confirmed, withLogo };
   }, [bundle.teams]);
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="portal-section-surface rounded-xl p-4">
+        <h3 className="flex items-center gap-2 font-medium">
+          <Shield className="size-4 text-cyan-300" />
+          Escudos de equipos
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sube el logo de cada equipo. Se mostrará en clasificación, horarios y cruces del torneo.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {stats.withLogo}/{stats.total} equipos con escudo configurado
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
         <div className="portal-section-surface rounded-xl px-4 py-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Equipos</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">{stats.total}</p>
@@ -115,6 +170,10 @@ export function TournamentEquiposPanel({ bundle }: { bundle: TournamentBundle })
         <div className="portal-section-surface rounded-xl px-4 py-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Confirmados</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums text-cyan-300">{stats.confirmed}</p>
+        </div>
+        <div className="portal-section-surface rounded-xl px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Con escudo</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-cyan-300">{stats.withLogo}</p>
         </div>
       </div>
 

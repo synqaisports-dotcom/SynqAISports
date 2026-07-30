@@ -8,22 +8,20 @@ import { TournamentOperativaInfoButton } from '@/components/portal/torneos/Tourn
 import { TournamentRevenuePanel } from '@/components/portal/torneos/TournamentRevenuePanel';
 import { TournamentSchedulePanel } from '@/components/portal/torneos/TournamentSchedulePanel';
 import { TournamentSignagePreview } from '@/components/portal/torneos/TournamentSignagePreview';
+import { TournamentSummaryPanel } from '@/components/portal/torneos/TournamentSummaryPanel';
 import { TournamentSponsorsPanel } from '@/components/portal/torneos/TournamentSponsorsPanel';
 import {
   TOURNAMENT_SPORT_LABELS,
   TOURNAMENT_STATUS_LABELS,
-  totalEstimatedRevenueCents,
   type TournamentBundle,
 } from '@/lib/tournaments';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   BarChart3,
   CalendarClock,
   FileText,
   Globe,
-  Layers,
   ListOrdered,
   Megaphone,
   Settings,
@@ -54,9 +52,7 @@ type Props = {
 
 export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
   const { tournament } = bundle;
-  const confirmedTeams = bundle.teams.filter((t) => t.status === 'confirmed').length;
   const liveMatches = bundle.matches.filter((m) => m.status === 'live').length;
-  const revenue = totalEstimatedRevenueCents(tournament.revenue_estimates_json);
 
   return (
     <div className="space-y-4">
@@ -98,34 +94,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
         </nav>
       </div>
 
-      {tab === 'resumen' ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Categorías" value={String(bundle.categories.length)} />
-          <Stat label="Equipos confirmados" value={String(confirmedTeams)} highlight />
-          <Stat label="Partidos" value={String(bundle.matches.length)} />
-          <Stat label="Ingresos est." value={`${(revenue / 100).toFixed(0)} €`} highlight />
-          <div className="portal-section-surface rounded-xl p-4 sm:col-span-2 lg:col-span-4">
-            <h3 className="flex items-center gap-2 font-medium">
-              <Layers className="size-4 text-primary" />
-              Accesos rápidos
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=ajustes`}>Ajustes del torneo</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=horarios`}>Ver horarios</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=clasificacion`}>Clasificación</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=dossier`}>Dossier participantes</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {tab === 'resumen' ? <TournamentSummaryPanel bundle={bundle} tournamentId={tournamentId} /> : null}
 
       {tab === 'ajustes' ? <TournamentConfigPanel bundle={bundle} /> : null}
       {tab === 'equipos' ? <TournamentEquiposPanel bundle={bundle} /> : null}
@@ -161,17 +130,6 @@ function TabLink({
       <Icon className="size-4" />
       {label}
     </Link>
-  );
-}
-
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="portal-section-surface rounded-xl p-4">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={cn('mt-1 text-2xl font-semibold tabular-nums', highlight ? 'text-cyan-300' : 'text-primary')}>
-        {value}
-      </p>
-    </div>
   );
 }
 

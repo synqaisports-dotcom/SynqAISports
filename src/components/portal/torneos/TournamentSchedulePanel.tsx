@@ -7,6 +7,7 @@ import {
   TournamentScheduleSheet,
   type BucketMeta,
 } from '@/components/portal/torneos/TournamentScheduleSheet';
+import { TournamentMatchTeams } from '@/components/portal/torneos/TournamentMatchTeams';
 import {
   formatMatchScore,
   type TournamentBundle,
@@ -27,10 +28,25 @@ type Props = {
   categoryId?: string;
 };
 
-function teamShort(bundle: TournamentBundle, id: string | null) {
-  if (!id) return '—';
-  const name = bundle.teams.find((t) => t.id === id)?.name ?? '—';
-  return name.length > 14 ? `${name.slice(0, 12)}…` : name;
+function MatchTeamsCell({
+  bundle,
+  match,
+}: {
+  bundle: TournamentBundle;
+  match: TournamentMatch;
+}) {
+  return (
+    <div className="max-w-0 px-2 py-1.5">
+      <p className="truncate font-medium">
+        <TournamentMatchTeams
+          bundle={bundle}
+          homeTeamId={match.home_team_id}
+          awayTeamId={match.away_team_id}
+          compact
+        />
+      </p>
+    </div>
+  );
 }
 
 function ScheduleBucketCard({
@@ -77,11 +93,7 @@ function ScheduleBucketCard({
                     className={cn('border-t border-border/25', isLive && 'bg-cyan-400/5')}
                   >
                     <td className="px-2 py-1.5 font-semibold tabular-nums text-cyan-300">{when.time}</td>
-                    <td className="max-w-0 px-2 py-1.5">
-                      <p className="truncate font-medium">
-                        {teamShort(bundle, match.home_team_id)} vs {teamShort(bundle, match.away_team_id)}
-                      </p>
-                    </td>
+                    <MatchTeamsCell bundle={bundle} match={match} />
                     <td className="px-2 py-1.5 text-center tabular-nums">
                       {isLive ? (
                         <Radio className="mx-auto size-3 animate-pulse text-cyan-300" />
