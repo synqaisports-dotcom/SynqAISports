@@ -144,8 +144,7 @@ export function singleEliminationRounds(
     }
     current = [
       ...byeTeams.map((t) => ({ ...t, label: `${t.label} (bye)` })),
-      ...playInPairings.flat().map((t, i) => ({
-        ...t,
+      ...playInPairings.map((_, i) => ({
         team_id: null,
         label: 'Por determinar',
         seed: byeTeams.length + i + 1,
