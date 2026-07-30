@@ -32,7 +32,7 @@ import type { LucideIcon } from 'lucide-react';
 
 export const TOURNAMENT_TABS = [
   { id: 'resumen', label: 'Resumen', icon: Trophy },
-  { id: 'configuracion', label: 'Configuración', icon: Settings },
+  { id: 'ajustes', label: 'Ajustes', icon: Settings },
   { id: 'equipos', label: 'Equipos', icon: Users },
   { id: 'horarios', label: 'Horarios', icon: CalendarClock },
   { id: 'clasificacion', label: 'Clasificación', icon: ListOrdered },
@@ -108,7 +108,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
             </h3>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=configuracion`}>Configurar torneo</Link>
+                <Link href={`/portal/torneos/${tournamentId}?tab=ajustes`}>Ajustes del torneo</Link>
               </Button>
               <Button asChild size="sm" variant="outline">
                 <Link href={`/portal/torneos/${tournamentId}?tab=horarios`}>Ver horarios</Link>
@@ -124,7 +124,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
         </div>
       ) : null}
 
-      {tab === 'configuracion' ? <TournamentConfigPanel bundle={bundle} /> : null}
+      {tab === 'ajustes' ? <TournamentConfigPanel bundle={bundle} /> : null}
       {tab === 'equipos' ? <TournamentEquiposPanel bundle={bundle} /> : null}
       {tab === 'horarios' ? <TournamentSchedulePanel bundle={bundle} /> : null}
       {tab === 'clasificacion' ? <TournamentClasificacionPanel bundle={bundle} /> : null}
@@ -173,6 +173,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
 
 export function parseTournamentTab(value: string | undefined): TournamentTabId {
   const ids = TOURNAMENT_TABS.map((t) => t.id);
+  if (value === 'configuracion') return 'ajustes';
   if (value === 'cruces') return 'clasificacion';
   if (value === 'ticketing') return 'ingresos';
   if (value && ids.includes(value as TournamentTabId)) return value as TournamentTabId;

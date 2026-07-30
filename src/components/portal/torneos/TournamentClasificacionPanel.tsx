@@ -120,7 +120,7 @@ export function TournamentClasificacionPanel({ bundle, categoryId }: Props) {
     return (
       <div className="portal-section-surface rounded-xl p-8 text-center text-sm text-muted-foreground">
         <Trophy className="mx-auto mb-2 size-8 text-primary/50" />
-        Genera la competición en Configuración para ver la clasificación.
+        Genera la competición en Ajustes para ver la clasificación.
       </div>
     );
   }

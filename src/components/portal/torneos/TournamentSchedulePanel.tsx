@@ -197,7 +197,7 @@ export function TournamentSchedulePanel({ bundle, categoryId }: Props) {
     return (
       <div className="portal-section-surface rounded-xl p-8 text-center text-sm text-muted-foreground">
         <CalendarClock className="mx-auto mb-2 size-8 text-primary/50" />
-        Genera la competición en Configuración y calcula horarios para ver el calendario.
+        Genera la competición en Ajustes y calcula horarios para ver el calendario.
       </div>
     );
   }

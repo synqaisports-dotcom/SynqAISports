@@ -1,5 +1,6 @@
 import { ensureTournamentDefaults, listTournaments, loadTournamentPortalStats } from '@/app/actions/tournaments';
-import { TournamentCard, TournamentHero } from '@/components/portal/torneos/TournamentHero';
+import { TournamentHero } from '@/components/portal/torneos/TournamentHero';
+import { TournamentListCard } from '@/components/portal/torneos/TournamentListCard';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import Link from 'next/link';
@@ -44,7 +45,7 @@ export default async function PortalTorneosPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {tournaments.map((t) => (
-              <TournamentCard key={t.id} tournament={t} teamCount={teamCounts.get(t.id) ?? 0} />
+              <TournamentListCard key={t.id} tournament={t} teamCount={teamCounts.get(t.id) ?? 0} />
             ))}
           </div>
         )}

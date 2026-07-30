@@ -362,6 +362,266 @@ export async function createTournament(formData: FormData): Promise<TournamentAc
   return { ok: true, id: String(data.id), slug: String(data.slug) };
 }
 
+export type { CreateTournamentWizardPayload } from '@/lib/tournament-create-wizard';
+
+export async function createTournamentFull(
+  payload: import('@/lib/tournament-create-wizard').CreateTournamentWizardPayload
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (!payload.name.trim()) return { ok: false, message: 'El nombre es obligatorio' };
+  if (payload.categories.length === 0) return { ok: false, message: 'Añade al menos una categoría' };
+  if (payload.fields.length === 0) return { ok: false, message: 'Añade al menos un campo' };
+
+  const slug = `${slugifyTournamentName(payload.name)}-${Date.now().toString(36).slice(-4)}`;
+  const scheduling = resolveSchedulingConfig(payload.scheduling);
+
+  const draftCategories = payload.categories.map((c, i) => ({
+    tempId: c.tempId,
+    name: c.name.trim(),
+    groups_count: c.groups_count,
+    teams_per_group: c.teams_per_group,
+    format_type: c.format_type,
+    sort_order: i,
+  }));
+
+  if (draftCategories.some((c) => !c.name)) {
+    return { ok: false, message: 'Todas las categorías necesitan nombre' };
+  }
+
+  const draftFields = payload.fields.map((f, i) => ({
+    tempId: f.tempId,
+    label: f.label.trim(),
+    division_mode: f.division_mode,
+    notes: f.notes.trim() || null,
+    sort_order: i,
+  }));
+
+  if (draftFields.some((f) => !f.label)) {
+    return { ok: false, message: 'Todos los campos necesitan nombre' };
+  }
+
+  if (await isDemoActive()) {
+    const store = getDemoTournamentsStore();
+    const tournamentId = `demo-tournament-${Date.now()}`;
+    const mockTournament: Pick<Tournament, 'starts_at' | 'ends_at' | 'format_json'> = {
+      starts_at: payload.starts_at,
+      ends_at: payload.ends_at,
+      format_json: { scheduling },
+    };
+
+    const mockCategories: TournamentCategory[] = draftCategories.map((c) => ({
+      id: c.tempId,
+      tournament_id: tournamentId,
+      name: c.name,
+      sport_key: payload.sport_key,
+      groups_count: c.groups_count,
+      teams_per_group: c.teams_per_group,
+      format_type: c.format_type,
+      placement_brackets_json: DEFAULT_PLACEMENT_BRACKETS.filter((b) => b.position <= c.teams_per_group),
+      sort_order: c.sort_order,
+    }));
+
+    const mockFields: TournamentField[] = draftFields.map((f) => ({
+      id: f.tempId,
+      tournament_id: tournamentId,
+      facility_id: null,
+      label: f.label,
+      map_url: null,
+      notes: f.notes,
+      sort_order: f.sort_order,
+      division_mode: f.division_mode,
+    }));
+
+    const suggestedWindows = suggestCategoryWindows({
+      categories: mockCategories,
+      tournament: mockTournament,
+      fields: mockFields,
+      config: scheduling,
+    });
+
+    const categoryIdMap = new Map<string, string>();
+    const fieldDivisions: Record<string, FieldDivisionMode> = {};
+
+    store.tournaments.unshift({
+      id: tournamentId,
+      club_id: clubId,
+      tenant_type: 'club',
+      name: payload.name.trim(),
+      slug,
+      sport_key: payload.sport_key,
+      status: 'draft',
+      starts_at: payload.starts_at,
+      ends_at: payload.ends_at,
+      description: payload.description,
+      rules_text: payload.rules_text,
+      cover_image_url: null,
+      venue_name: payload.venue_name,
+      venue_map_url: null,
+      venue_images_json: [],
+      format_json: {
+        weekend_mode: true,
+        multifinal: true,
+        scheduling,
+        category_scheduling: {},
+        field_divisions: {},
+      },
+      registration_config_json: {},
+      ticketing_config_json: { projected_attendance: 400 },
+      revenue_estimates_json: {},
+      public_enabled: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    const tournament = store.tournaments.find((t) => t.id === tournamentId)!;
+    const categoryScheduling: Record<string, CategorySchedulingWindow> = {};
+
+    for (const c of draftCategories) {
+      const catId = `demo-cat-${tournamentId}-${c.tempId}`;
+      categoryIdMap.set(c.tempId, catId);
+      store.categories.push({
+        id: catId,
+        tournament_id: tournamentId,
+        name: c.name,
+        sport_key: payload.sport_key,
+        groups_count: c.groups_count,
+        teams_per_group: c.teams_per_group,
+        format_type: c.format_type,
+        placement_brackets_json: DEFAULT_PLACEMENT_BRACKETS.filter((b) => b.position <= c.teams_per_group),
+        sort_order: c.sort_order,
+      });
+      const window = suggestedWindows[c.tempId];
+      if (window) categoryScheduling[catId] = window;
+    }
+
+    for (const f of draftFields) {
+      const fieldId = `demo-field-${tournamentId}-${f.tempId}`;
+      fieldDivisions[fieldId] = f.division_mode;
+      store.fields.push({
+        id: fieldId,
+        tournament_id: tournamentId,
+        facility_id: null,
+        label: f.label,
+        map_url: null,
+        notes: f.notes,
+        sort_order: f.sort_order,
+        division_mode: f.division_mode,
+      });
+    }
+
+    tournament.format_json = {
+      ...tournament.format_json,
+      category_scheduling: categoryScheduling,
+      field_divisions: fieldDivisions,
+    };
+
+    revalidateTournaments();
+    return { ok: true, id: tournamentId, slug, message: 'Torneo creado con categorías, campos y planificación' };
+  }
+
+  const supabase = await createClient();
+  const { data: tRow, error: tErr } = await supabase
+    .from('synq_tournaments')
+    .insert({
+      club_id: clubId,
+      name: payload.name.trim(),
+      slug,
+      sport_key: payload.sport_key,
+      venue_name: payload.venue_name,
+      starts_at: payload.starts_at,
+      ends_at: payload.ends_at,
+      description: payload.description,
+      rules_text: payload.rules_text,
+      format_json: { weekend_mode: true, multifinal: true, scheduling },
+    })
+    .select('id, slug')
+    .single();
+
+  if (tErr || !tRow) return { ok: false, message: tErr?.message ?? 'Error al crear torneo' };
+
+  const tournamentId = String(tRow.id);
+  const categoryScheduling: Record<string, CategorySchedulingWindow> = {};
+  const fieldDivisions: Record<string, FieldDivisionMode> = {};
+  const createdCategories: TournamentCategory[] = [];
+
+  for (const c of draftCategories) {
+    const { data: catRow, error: catErr } = await supabase
+      .from('synq_tournament_categories')
+      .insert({
+        tournament_id: tournamentId,
+        name: c.name,
+        groups_count: c.groups_count,
+        teams_per_group: c.teams_per_group,
+        format_type: c.format_type,
+        placement_brackets_json: DEFAULT_PLACEMENT_BRACKETS.filter((b) => b.position <= c.teams_per_group),
+        sort_order: c.sort_order,
+      })
+      .select('*')
+      .single();
+    if (catErr || !catRow) return { ok: false, message: catErr?.message ?? 'Error al crear categoría' };
+    const cat = catRow as TournamentCategory;
+    createdCategories.push(cat);
+  }
+
+  const mockTournament: Pick<Tournament, 'starts_at' | 'ends_at' | 'format_json'> = {
+    starts_at: payload.starts_at,
+    ends_at: payload.ends_at,
+    format_json: { scheduling },
+  };
+
+  const mockFieldsForSuggest: TournamentField[] = [];
+  for (const f of draftFields) {
+    const { data: fieldRow, error: fieldErr } = await supabase
+      .from('synq_tournament_fields')
+      .insert({ tournament_id: tournamentId, label: f.label, notes: f.notes, sort_order: f.sort_order })
+      .select('id')
+      .single();
+    if (fieldErr || !fieldRow) return { ok: false, message: fieldErr?.message ?? 'Error al crear campo' };
+    const fieldId = String(fieldRow.id);
+    fieldDivisions[fieldId] = f.division_mode;
+    mockFieldsForSuggest.push({
+      id: fieldId,
+      tournament_id: tournamentId,
+      facility_id: null,
+      label: f.label,
+      map_url: null,
+      notes: f.notes,
+      sort_order: f.sort_order,
+      division_mode: f.division_mode,
+    });
+  }
+
+  const suggestedWindows = suggestCategoryWindows({
+    categories: createdCategories,
+    tournament: mockTournament,
+    fields: mockFieldsForSuggest,
+    config: scheduling,
+  });
+
+  for (const cat of createdCategories) {
+    const window = suggestedWindows[cat.id];
+    if (window) categoryScheduling[cat.id] = window;
+  }
+
+  await supabase
+    .from('synq_tournaments')
+    .update({
+      format_json: {
+        weekend_mode: true,
+        multifinal: true,
+        scheduling,
+        category_scheduling: categoryScheduling,
+        field_divisions: fieldDivisions,
+      },
+    })
+    .eq('id', tournamentId);
+
+  revalidateTournaments();
+  return { ok: true, id: tournamentId, slug: String(tRow.slug), message: 'Torneo creado' };
+}
+
 export async function addTournamentCategory(
   tournamentId: string,
   formData: FormData

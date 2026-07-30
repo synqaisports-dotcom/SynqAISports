@@ -1,4 +1,4 @@
-import { CreateTournamentForm } from '@/components/portal/torneos/CreateTournamentForm';
+import { CreateTournamentWizard } from '@/components/portal/torneos/CreateTournamentWizard';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ export default async function CrearTorneoPage() {
         <ArrowLeft className="size-4" />
         Volver a torneos
       </Link>
-      <CreateTournamentForm />
+      <CreateTournamentWizard />
     </div>
   );
 }

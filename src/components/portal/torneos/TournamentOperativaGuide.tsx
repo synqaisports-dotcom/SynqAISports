@@ -7,22 +7,21 @@ export function TournamentOperativaGuideContent() {
 
       <ol className="space-y-3 text-sm">
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium">1. Configuración → Datos del torneo</p>
+          <p className="font-medium">1. Crear torneo (asistente)</p>
           <p className="mt-1 text-muted-foreground">
-            Nombre, fechas, sede, deporte, reglas y estado (borrador → inscripción → en juego).
+            Define datos, categorías, campos y planificación horaria antes de crear. Cada categoría recibe su franja exclusiva.
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium">2. Configuración → Categorías</p>
+          <p className="font-medium">2. Ajustes → Generar competición</p>
           <p className="mt-1 text-muted-foreground">
-            Sub-10, Sub-12… con número de grupos, equipos por grupo y nombres de bandejas (Platinum, Silver, Bronze…).
-            Pulsa <strong>Generar competición</strong> para crear grupos, cruces y partidos.
+            Por cada categoría, pulsa <strong>Generar competición</strong> para crear grupos, cruces y partidos.
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium">3. Configuración → Campos</p>
+          <p className="font-medium">3. Ajustes → Planificación</p>
           <p className="mt-1 text-muted-foreground">
-            Campo 1, Campo 2… Los horarios se asignan en la pestaña <strong>Horarios</strong>.
+            Revisa ventanas por categoría y pulsa <strong>Calcular horarios</strong>.
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
