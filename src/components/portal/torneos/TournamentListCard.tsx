@@ -8,7 +8,7 @@ import {
   type Tournament,
 } from '@/lib/tournaments';
 import { cn } from '@/lib/utils';
-import { ArrowRight, Settings } from 'lucide-react';
+import { ArrowRight, FileText, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const cardSurfaceClass =
@@ -60,6 +60,12 @@ export function TournamentListCard({ tournament, teamCount }: Props) {
           <Link href={`/portal/torneos/${tournament.id}?tab=ajustes`}>
             <Settings className="size-3.5" />
             Ajustes
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5 text-xs text-muted-foreground">
+          <Link href={`/portal/torneos/${tournament.id}?tab=dossier`}>
+            <FileText className="size-3.5" />
+            Dossier
           </Link>
         </Button>
         <TournamentHeaderActions tournament={tournament} />

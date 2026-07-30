@@ -157,6 +157,14 @@ export type SquadPlayer = {
   position?: string;
 };
 
+export type TournamentDossierConfig = {
+  welcome_message?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  include_sponsors?: boolean;
+  hide_ticketing?: boolean;
+};
+
 export type Tournament = {
   id: string;
   club_id: string | null;

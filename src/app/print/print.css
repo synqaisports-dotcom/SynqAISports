@@ -33,9 +33,19 @@
     page-break-after: always;
   }
 
-  .training-schedule-print-section:last-child {
+  .dossier-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .dossier-page:last-child {
     break-after: auto;
     page-break-after: auto;
+  }
+
+  .dossier-cover {
+    break-after: page;
+    page-break-after: always;
   }
 }
 

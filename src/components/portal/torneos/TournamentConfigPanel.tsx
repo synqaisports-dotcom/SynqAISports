@@ -124,6 +124,16 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
           </div>
 
           <div className="md:col-span-2">
+            <label className={PORTAL_FIELD_LABEL_CLASS}>Mapa / enlace de acceso a la sede</label>
+            <Input
+              name="venue_map_url"
+              defaultValue={tournament.venue_map_url ?? ''}
+              placeholder="https://maps.google.com/…"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="md:col-span-2">
             <label className={PORTAL_FIELD_LABEL_CLASS}>Descripción</label>
             <textarea
               name="description"
@@ -283,6 +293,7 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
             />
           </div>
           <Input name="notes" placeholder="Notas (césped, pista…)" className={fieldClass} />
+          <Input name="map_url" placeholder="Enlace plano / mapa del campo" className={fieldClass} />
           <div className="flex items-end">
             <Button type="submit" size="sm" variant="outline" disabled={pending}>
               Añadir campo

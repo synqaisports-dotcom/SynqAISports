@@ -46,6 +46,7 @@ import {
   type Tournament,
   type TournamentBundle,
   type TournamentCategory,
+  type TournamentDossierConfig,
   type TournamentField,
   type TournamentMatch,
   type TournamentSponsor,
@@ -702,6 +703,7 @@ export async function updateTournamentSettings(
     starts_at: String(formData.get('starts_at') ?? '').trim() || null,
     ends_at: String(formData.get('ends_at') ?? '').trim() || null,
     venue_name: String(formData.get('venue_name') ?? '').trim() || null,
+    venue_map_url: String(formData.get('venue_map_url') ?? '').trim() || null,
     description: String(formData.get('description') ?? '').trim() || null,
     rules_text: String(formData.get('rules_text') ?? '').trim() || null,
   };
@@ -724,6 +726,39 @@ export async function updateTournamentSettings(
   return { ok: true, message: 'Datos del torneo guardados' };
 }
 
+export async function updateTournamentDossierConfig(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const dossier: TournamentDossierConfig = {
+    welcome_message: String(formData.get('welcome_message') ?? '').trim() || undefined,
+    contact_email: String(formData.get('contact_email') ?? '').trim() || undefined,
+    contact_phone: String(formData.get('contact_phone') ?? '').trim() || undefined,
+    include_sponsors: formData.get('include_sponsors') === 'true',
+  };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    t.format_json = { ...t.format_json, dossier };
+    t.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: 'Textos del dossier guardados' };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase.from('synq_tournaments').select('format_json').eq('id', tournamentId).maybeSingle();
+  const formatJson = { ...((row?.format_json as Record<string, unknown>) ?? {}), dossier };
+  const { error } = await supabase.from('synq_tournaments').update({ format_json: formatJson }).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Textos del dossier guardados' };
+}
+
 export async function addTournamentField(
   tournamentId: string,
   formData: FormData
@@ -733,6 +768,7 @@ export async function addTournamentField(
 
   const label = String(formData.get('label') ?? '').trim();
   const notes = String(formData.get('notes') ?? '').trim() || null;
+  const mapUrl = String(formData.get('map_url') ?? '').trim() || null;
   const divisionMode = (String(formData.get('division_mode') ?? 'full') as FieldDivisionMode) || 'full';
   if (!label) return { ok: false, message: 'Nombre del campo obligatorio' };
 
@@ -744,7 +780,7 @@ export async function addTournamentField(
       tournament_id: tournamentId,
       facility_id: null,
       label,
-      map_url: null,
+      map_url: mapUrl,
       notes,
       sort_order: store.fields.filter((f) => f.tournament_id === tournamentId).length,
       division_mode: divisionMode,
@@ -756,7 +792,7 @@ export async function addTournamentField(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('synq_tournament_fields')
-    .insert({ tournament_id: tournamentId, label, notes })
+    .insert({ tournament_id: tournamentId, label, notes, map_url: mapUrl })
     .select('id')
     .single();
   if (error) return { ok: false, message: error.message };

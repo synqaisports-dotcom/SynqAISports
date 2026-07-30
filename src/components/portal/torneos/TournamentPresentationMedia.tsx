@@ -32,7 +32,7 @@ export function TournamentPresentationMedia({ bundle }: Props) {
     <section className="portal-section-surface rounded-xl p-4 md:p-5">
       <h3 className="font-medium">Imágenes para dossier y presentación</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Portada y galería para el documento de invitación a clubs y familias (web pública y PDF futuro).
+        Portada y galería para el dossier de participantes (imprimir / PDF desde la pestaña Dossier).
       </p>
 
       {message ? <p className="mt-2 text-sm text-cyan-200">{message}</p> : null}

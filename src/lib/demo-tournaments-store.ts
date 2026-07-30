@@ -48,7 +48,7 @@ export const DEMO_TOURNAMENT: Tournament = {
   rules_text: 'Partidos de 2×20 min. Empate en eliminatorias: penaltis. Máximo 12 jugadores por plantilla.',
   cover_image_url: null,
   venue_name: 'Polideportivo Municipal Norte',
-  venue_map_url: null,
+  venue_map_url: 'https://maps.google.com/?q=Polideportivo+Municipal+Norte+Madrid',
   venue_images_json: [],
   format_json: {
     weekend_mode: true,
@@ -131,7 +131,7 @@ export const DEMO_FIELDS: TournamentField[] = [
     tournament_id: tournamentId,
     facility_id: null,
     label: 'Campo 1 (F11)',
-    map_url: null,
+    map_url: 'https://maps.google.com/?q=Campo+1+Polideportivo+Norte',
     notes: 'Césped artificial · 2 mitades F7',
     sort_order: 0,
     division_mode: 'halves_2',

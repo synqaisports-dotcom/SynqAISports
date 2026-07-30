@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { TournamentClasificacionPanel } from '@/components/portal/torneos/TournamentClasificacionPanel';
 import { TournamentConfigPanel } from '@/components/portal/torneos/TournamentConfigPanel';
+import { TournamentDossierPanel } from '@/components/portal/torneos/TournamentDossierPanel';
 import { TournamentEquiposPanel } from '@/components/portal/torneos/TournamentEquiposPanel';
 import { TournamentHeaderActions } from '@/components/portal/torneos/TournamentHeaderActions';
 import { TournamentOperativaInfoButton } from '@/components/portal/torneos/TournamentOperativaInfoButton';
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils';
 import {
   BarChart3,
   CalendarClock,
+  FileText,
   Globe,
   Layers,
   ListOrdered,
@@ -38,6 +40,7 @@ export const TOURNAMENT_TABS = [
   { id: 'clasificacion', label: 'Clasificación', icon: ListOrdered },
   { id: 'patrocinadores', label: 'Patrocinadores', icon: Megaphone },
   { id: 'ingresos', label: 'Ingresos', icon: BarChart3 },
+  { id: 'dossier', label: 'Dossier', icon: FileText },
   { id: 'signage', label: 'Signage', icon: Globe },
 ] as const;
 
@@ -117,7 +120,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
                 <Link href={`/portal/torneos/${tournamentId}?tab=clasificacion`}>Clasificación</Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link href={`/portal/torneos/${tournamentId}?tab=ingresos`}>Estimación ingresos</Link>
+                <Link href={`/portal/torneos/${tournamentId}?tab=dossier`}>Dossier participantes</Link>
               </Button>
             </div>
           </div>
@@ -130,6 +133,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
       {tab === 'clasificacion' ? <TournamentClasificacionPanel bundle={bundle} /> : null}
       {tab === 'patrocinadores' ? <TournamentSponsorsPanel bundle={bundle} /> : null}
       {tab === 'ingresos' ? <TournamentRevenuePanel bundle={bundle} /> : null}
+      {tab === 'dossier' ? <TournamentDossierPanel bundle={bundle} tournamentId={tournamentId} /> : null}
       {tab === 'signage' ? <TournamentSignagePreview bundle={bundle} /> : null}
     </div>
   );
