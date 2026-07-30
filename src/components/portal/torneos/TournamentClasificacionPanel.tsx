@@ -9,8 +9,11 @@ import {
   type TournamentCategory,
 } from '@/lib/tournaments';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { GitBranch, Trophy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const BRACKETS_ICON_CLASS =
+  'inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-cyan-400 transition-colors hover:bg-cyan-400/10 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50';
 
 type Props = {
   bundle: TournamentBundle;
@@ -86,10 +89,15 @@ function CategoryClasificacion({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{groupMatches.length} partidos de grupos</Badge>
-          <Button size="sm" variant="outline" onClick={onOpenBrackets}>
-            <GitBranch className="mr-1.5 size-4" />
-            Ver cruces
-          </Button>
+          <button
+            type="button"
+            className={cn(BRACKETS_ICON_CLASS)}
+            onClick={onOpenBrackets}
+            aria-label="Ver cruces eliminatorios"
+            title="Ver cruces"
+          >
+            <GitBranch className="size-[1.125rem]" strokeWidth={1.75} />
+          </button>
         </div>
       </div>
 
