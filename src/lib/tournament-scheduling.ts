@@ -4,12 +4,15 @@
  */
 
 import type {
+  CategorySchedulingWindow,
   FieldDivisionMode,
   Tournament,
+  TournamentCategory,
   TournamentField,
   TournamentGroup,
   TournamentMatch,
 } from '@/lib/tournaments';
+import { getCategorySchedulingMap } from '@/lib/tournaments';
 
 export type { FieldDivisionMode };
 export { FIELD_DIVISION_MODES } from '@/lib/tournaments';
@@ -221,7 +224,7 @@ export function buildScheduleSlots(
   return slots;
 }
 
-function tournamentDayKeys(tournament: Pick<Tournament, 'starts_at' | 'ends_at'>): string[] {
+export function tournamentDayKeys(tournament: Pick<Tournament, 'starts_at' | 'ends_at'>): string[] {
   if (!tournament.starts_at) {
     const today = new Date();
     return [today.toISOString().slice(0, 10)];
@@ -372,6 +375,56 @@ export function orderMatchesForScheduling(
 
 type PhysicalSlot = ScheduleSlot & { time: TimeSlot };
 
+function resolveCategoryWindow(
+  categoryId: string,
+  tournament: Pick<Tournament, 'starts_at' | 'ends_at' | 'format_json'>,
+  config: TournamentSchedulingConfig
+): CategorySchedulingWindow {
+  const saved = getCategorySchedulingMap(tournament)[categoryId];
+  if (saved?.day_date) return saved;
+  const days = tournamentDayKeys(tournament);
+  return {
+    day_date: days[0]!,
+    day_start: config.day_start,
+    day_end: config.day_end,
+    lunch_break_enabled: config.lunch_break_enabled,
+    lunch_start: config.lunch_start,
+    lunch_end: config.lunch_end,
+  };
+}
+
+function windowSchedulingConfig(
+  window: CategorySchedulingWindow,
+  base: TournamentSchedulingConfig
+): TournamentSchedulingConfig {
+  return {
+    ...base,
+    day_start: window.day_start,
+    day_end: window.day_end,
+    lunch_break_enabled: window.lunch_break_enabled ?? base.lunch_break_enabled,
+    lunch_start: window.lunch_start ?? base.lunch_start,
+    lunch_end: window.lunch_end ?? base.lunch_end,
+  };
+}
+
+function buildPhysicalSlotsForWindow(
+  window: CategorySchedulingWindow,
+  fields: TournamentField[],
+  tournament: Pick<Tournament, 'format_json'>,
+  config: TournamentSchedulingConfig
+): PhysicalSlot[] {
+  const scheduleSlots = buildScheduleSlots(fields, tournament);
+  const windowConfig = windowSchedulingConfig(window, config);
+  const times = generateDayTimeSlots(window.day_date, windowConfig);
+  const physical: PhysicalSlot[] = [];
+  for (const time of times) {
+    for (const slot of scheduleSlots) {
+      physical.push({ ...slot, time });
+    }
+  }
+  return physical;
+}
+
 function buildPhysicalSlots(
   tournament: Pick<Tournament, 'starts_at' | 'ends_at' | 'format_json'>,
   fields: TournamentField[],
@@ -398,47 +451,13 @@ function teamIdsForMatch(match: TournamentMatch): string[] {
   return ids;
 }
 
-export function calculateTournamentSchedule(input: {
-  tournament: Tournament;
-  fields: TournamentField[];
-  groups: TournamentGroup[];
-  matches: TournamentMatch[];
-  config?: TournamentSchedulingConfig;
-  /** Si true, solo reprograma partidos en estado scheduled */
-  onlyUnplayed?: boolean;
-}): ScheduleValidationResult {
-  const config = input.config ?? getSchedulingConfig(input.tournament);
-  const toSchedule = input.matches.filter((m) =>
-    input.onlyUnplayed ? m.status === 'scheduled' : m.status !== 'finished' && m.status !== 'live'
-  );
-
-  if (input.fields.length === 0) {
-    return {
-      ok: false,
-      assigned: [],
-      unassigned_match_ids: toSchedule.map((m) => m.id),
-      capacity: estimateScheduleCapacity({
-        tournament: input.tournament,
-        fields: input.fields,
-        matchCount: toSchedule.length,
-        config,
-      }),
-      message: 'Añade al menos un campo antes de calcular horarios.',
-    };
-  }
-
-  const capacity = estimateScheduleCapacity({
-    tournament: input.tournament,
-    fields: input.fields,
-    matchCount: toSchedule.length,
-    config,
-  });
-
-  const ordered = orderMatchesForScheduling(toSchedule, input.groups, config);
-  const physicalSlots = buildPhysicalSlots(input.tournament, input.fields, config);
+function assignMatchesToSlots(
+  ordered: TournamentMatch[],
+  physicalSlots: PhysicalSlot[],
+  config: TournamentSchedulingConfig
+): { assigned: ScheduleAssignment[]; unassigned: string[] } {
   const slotDurMs = slotDurationMinutes(config) * 60_000;
   const minRestMs = config.min_rest_same_team_minutes * 60_000;
-
   const occupied = new Set<string>();
   const teamLastEnd = new Map<string, number>();
   const assigned: ScheduleAssignment[] = [];
@@ -479,10 +498,117 @@ export function calculateTournamentSchedule(input: {
     if (!placed) unassigned.push(match.id);
   }
 
+  return { assigned, unassigned };
+}
+
+export function calculateTournamentSchedule(input: {
+  tournament: Tournament;
+  fields: TournamentField[];
+  groups: TournamentGroup[];
+  matches: TournamentMatch[];
+  categories?: TournamentCategory[];
+  config?: TournamentSchedulingConfig;
+  /** Si true, solo reprograma partidos en estado scheduled */
+  onlyUnplayed?: boolean;
+}): ScheduleValidationResult {
+  const config = input.config ?? getSchedulingConfig(input.tournament);
+  const toSchedule = input.matches.filter((m) =>
+    input.onlyUnplayed ? m.status === 'scheduled' : m.status !== 'finished' && m.status !== 'live'
+  );
+
+  if (input.fields.length === 0) {
+    return {
+      ok: false,
+      assigned: [],
+      unassigned_match_ids: toSchedule.map((m) => m.id),
+      capacity: estimateScheduleCapacity({
+        tournament: input.tournament,
+        fields: input.fields,
+        matchCount: toSchedule.length,
+        config,
+      }),
+      message: 'Añade al menos un campo antes de calcular horarios.',
+    };
+  }
+
+  const categories = input.categories ?? [];
+  const usePerCategory = categories.length > 0;
+
+  if (!usePerCategory) {
+    const capacity = estimateScheduleCapacity({
+      tournament: input.tournament,
+      fields: input.fields,
+      matchCount: toSchedule.length,
+      config,
+    });
+    const ordered = orderMatchesForScheduling(toSchedule, input.groups, config);
+    const physicalSlots = buildPhysicalSlots(input.tournament, input.fields, config);
+    const { assigned, unassigned } = assignMatchesToSlots(ordered, physicalSlots, config);
+    const ok = unassigned.length === 0;
+    return {
+      ok,
+      assigned,
+      unassigned_match_ids: unassigned,
+      capacity,
+      message: ok
+        ? `Programados ${assigned.length} partidos en ${capacity.tournament_days} día(s) · ${capacity.parallel_slots} pista(s) paralela(s).`
+        : `No caben todos los partidos: faltan ${unassigned.length} hueco(s). Capacidad: ${capacity.total_capacity} slots, necesarios: ${toSchedule.length}.`,
+    };
+  }
+
+  const assigned: ScheduleAssignment[] = [];
+  const unassigned: string[] = [];
+  const categoryMessages: string[] = [];
+  let totalCapacity = 0;
+
+  for (const category of [...categories].sort((a, b) => a.sort_order - b.sort_order)) {
+    const catMatches = toSchedule.filter((m) => m.category_id === category.id);
+    if (catMatches.length === 0) continue;
+
+    const window = resolveCategoryWindow(category.id, input.tournament, config);
+
+    const catGroups = input.groups.filter((g) => g.category_id === category.id);
+    const ordered = orderMatchesForScheduling(catMatches, catGroups, config);
+    const physicalSlots = buildPhysicalSlotsForWindow(window, input.fields, input.tournament, config);
+    const { assigned: catAssigned, unassigned: catUnassigned } = assignMatchesToSlots(
+      ordered,
+      physicalSlots,
+      config
+    );
+
+    assigned.push(...catAssigned);
+    unassigned.push(...catUnassigned);
+    totalCapacity += physicalSlots.length;
+
+    if (catUnassigned.length > 0) {
+      categoryMessages.push(
+        `${category.name}: faltan ${catUnassigned.length} huecos (ventana ${window.day_start}–${window.day_end})`
+      );
+    }
+  }
+
+  const orphanMatches = toSchedule.filter((m) => !categories.some((c) => c.id === m.category_id));
+  if (orphanMatches.length > 0) {
+    unassigned.push(...orphanMatches.map((m) => m.id));
+  }
+
+  const capacity: ScheduleCapacityEstimate = {
+    slot_duration_minutes: slotDurationMinutes(config),
+    parallel_slots: buildScheduleSlots(input.fields, input.tournament).length,
+    slots_per_day: totalCapacity,
+    tournament_days: categories.length,
+    total_capacity: totalCapacity,
+    match_count: toSchedule.length,
+    fits: unassigned.length === 0,
+    overflow: unassigned.length,
+  };
+
   const ok = unassigned.length === 0;
   const message = ok
-    ? `Programados ${assigned.length} partidos en ${capacity.tournament_days} día(s) · ${capacity.parallel_slots} pista(s) paralela(s).`
-    : `No caben todos los partidos: faltan ${unassigned.length} hueco(s). Capacidad estimada: ${capacity.total_capacity} slots, necesarios: ${toSchedule.length}.`;
+    ? `Programados ${assigned.length} partidos en ${categories.length} categoría(s) con ventanas exclusivas.`
+    : categoryMessages.length > 0
+      ? categoryMessages.join(' · ')
+      : `No caben ${unassigned.length} partido(s) en las ventanas asignadas.`;
 
   return { ok, assigned, unassigned_match_ids: unassigned, capacity, message };
 }

@@ -10,10 +10,17 @@ import {
 import { isDemoActive } from '@/lib/demo';
 import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
 import {
+  analyzeCategoryCapacity,
+  suggestCategoryWindows,
+  validateCategoryWindows,
+} from '@/lib/tournament-category-scheduling';
+import {
   calculateTournamentSchedule,
   resolveSchedulingConfig,
   type TournamentSchedulingConfig,
 } from '@/lib/tournament-scheduling';
+import type { CategorySchedulingWindow } from '@/lib/tournaments';
+import { getCategorySchedulingMap } from '@/lib/tournaments';
 import {
   delegateUrl,
   gateUrl,
@@ -372,7 +379,8 @@ export async function addTournamentCategory(
   if (await isDemoActive()) {
     const store = getDemoTournamentsStore();
     const id = `demo-cat-${Date.now()}`;
-    store.categories.push({
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    const newCategory = {
       id,
       tournament_id: tournamentId,
       name,
@@ -382,7 +390,20 @@ export async function addTournamentCategory(
       format_type: formatType,
       placement_brackets_json: DEFAULT_PLACEMENT_BRACKETS.filter((b) => b.position <= teamsPerGroup),
       sort_order: store.categories.filter((c) => c.tournament_id === tournamentId).length,
-    });
+    };
+    store.categories.push(newCategory);
+
+    if (tournament) {
+      const fields = store.fields.filter((f) => f.tournament_id === tournamentId);
+      const suggested = suggestCategoryWindows({
+        categories: store.categories.filter((c) => c.tournament_id === tournamentId),
+        tournament,
+        fields,
+      });
+      tournament.format_json = { ...tournament.format_json, category_scheduling: suggested };
+      tournament.updated_at = new Date().toISOString();
+    }
+
     revalidateTournaments();
     return { ok: true, id };
   }
@@ -539,6 +560,23 @@ export async function generateCompetitionStructure(
     const store = getDemoTournamentsStore();
     const category = store.categories.find((c) => c.id === categoryId);
     if (!category) return { ok: false, message: 'Categoría no encontrada' };
+
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    if (!tournament) return { ok: false, message: 'Torneo no encontrado' };
+
+    const fields = enrichFieldsWithDivisions(tournament, store.fields.filter((f) => f.tournament_id === tournamentId));
+    const analysis = analyzeCategoryCapacity({
+      category,
+      tournament,
+      fields,
+      teamsRegistered: store.teams.filter((t) => t.category_id === categoryId).length,
+    });
+    if (!analysis.fits_structure) {
+      return {
+        ok: false,
+        message: `No se puede generar: ${category.name} necesita ${analysis.match_count} partidos pero su ventana solo tiene ${analysis.capacity?.total_capacity ?? 0} huecos.`,
+      };
+    }
 
     const existing = store.matches.filter((m) => m.category_id === categoryId).length;
     if (existing > 0) {
@@ -900,6 +938,36 @@ export async function inviteTeam(
 
   if (!name) return { ok: false, message: 'Nombre del equipo obligatorio' };
 
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    const category = store.categories.find((c) => c.id === categoryId);
+    if (!tournament || !category) return { ok: false, message: 'Categoría no encontrada' };
+
+    const fields = enrichFieldsWithDivisions(tournament, store.fields.filter((f) => f.tournament_id === tournamentId));
+    const teamsInCategory = store.teams.filter((t) => t.category_id === categoryId);
+    const analysis = analyzeCategoryCapacity({
+      category,
+      tournament,
+      fields,
+      teamsRegistered: teamsInCategory.length,
+    });
+
+    if (teamsInCategory.length >= analysis.team_slots) {
+      return {
+        ok: false,
+        message: `Plazas agotadas en ${category.name} (${analysis.team_slots} equipos máx. para ${category.groups_count}×${category.teams_per_group}).`,
+      };
+    }
+
+    if (!analysis.fits_structure) {
+      return {
+        ok: false,
+        message: `La estructura de ${category.name} no cabe en su ventana horaria (faltan ~${analysis.overflow_matches} huecos). Amplía la franja o reduce grupos/equipos.`,
+      };
+    }
+  }
+
   const inviteToken = generateInviteToken();
 
   if (await isDemoActive()) {
@@ -1107,6 +1175,99 @@ export async function updateTournamentFieldDivision(
   return { ok: true, message: 'División actualizada' };
 }
 
+export async function updateCategoryScheduling(
+  tournamentId: string,
+  categoryId: string,
+  window: CategorySchedulingWindow
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (!window.day_date || !window.day_start || !window.day_end) {
+    return { ok: false, message: 'Día y horario obligatorios' };
+  }
+
+  if (parseTimeMinutes(window.day_start) >= parseTimeMinutes(window.day_end)) {
+    return { ok: false, message: 'La hora de fin debe ser posterior al inicio' };
+  }
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    const category = store.categories.find((c) => c.id === categoryId);
+    if (!tournament || !category) return { ok: false, message: 'Categoría no encontrada' };
+
+    const scheduling = { ...getCategorySchedulingMap(tournament), [categoryId]: window };
+    const validation = validateCategoryWindows(
+      store.categories.filter((c) => c.tournament_id === tournamentId),
+      scheduling
+    );
+    if (!validation.ok) {
+      return { ok: false, message: validation.conflicts[0] ?? 'Ventanas solapadas' };
+    }
+
+    tournament.format_json = { ...tournament.format_json, category_scheduling: scheduling };
+    tournament.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: `Ventana de ${category.name} guardada` };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase.from('synq_tournaments').select('format_json').eq('id', tournamentId).maybeSingle();
+  const formatJson = { ...((row?.format_json as Record<string, unknown>) ?? {}) };
+  const scheduling = { ...((formatJson.category_scheduling as Record<string, CategorySchedulingWindow>) ?? {}), [categoryId]: window };
+  formatJson.category_scheduling = scheduling;
+  const { error } = await supabase.from('synq_tournaments').update({ format_json: formatJson }).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Ventana guardada' };
+}
+
+export async function suggestCategoryWindowsAction(tournamentId: string): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const tournament = store.tournaments.find((t) => t.id === tournamentId);
+    if (!tournament) return { ok: false, message: 'Torneo no encontrado' };
+
+    const categories = store.categories.filter((c) => c.tournament_id === tournamentId);
+    const fields = enrichFieldsWithDivisions(tournament, store.fields.filter((f) => f.tournament_id === tournamentId));
+    const suggested = suggestCategoryWindows({ categories, tournament, fields });
+
+    tournament.format_json = { ...tournament.format_json, category_scheduling: suggested };
+    tournament.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: `Repartidas ${categories.length} ventanas sin solapamiento` };
+  }
+
+  const supabase = await createClient();
+  const { data: tournamentRow } = await supabase.from('synq_tournaments').select('*').eq('id', tournamentId).maybeSingle();
+  if (!tournamentRow) return { ok: false, message: 'Torneo no encontrado' };
+
+  const tournament = mapTournament(tournamentRow as Record<string, unknown>);
+  const [categoriesRes, fieldsRes] = await Promise.all([
+    supabase.from('synq_tournament_categories').select('*').eq('tournament_id', tournamentId).order('sort_order'),
+    supabase.from('synq_tournament_fields').select('*').eq('tournament_id', tournamentId).order('sort_order'),
+  ]);
+
+  const categories = (categoriesRes.data ?? []) as TournamentCategory[];
+  const fields = enrichFieldsWithDivisions(tournament, (fieldsRes.data ?? []) as TournamentField[]);
+  const suggested = suggestCategoryWindows({ categories, tournament, fields });
+
+  const formatJson = { ...(tournament.format_json ?? {}), category_scheduling: suggested };
+  const { error } = await supabase.from('synq_tournaments').update({ format_json: formatJson }).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: `Repartidas ${categories.length} ventanas sin solapamiento` };
+}
+
+function parseTimeMinutes(time: string): number {
+  const [h, m] = time.split(':').map((x) => parseInt(x, 10));
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
 function applyScheduleAssignments(
   store: ReturnType<typeof getDemoTournamentsStore>,
   tournamentId: string,
@@ -1138,11 +1299,13 @@ export async function calculateTournamentSchedules(
     const fields = enrichFieldsWithDivisions(tournament, store.fields.filter((f) => f.tournament_id === tournamentId));
     const groups = store.groups.filter((g) => g.tournament_id === tournamentId);
     const matches = store.matches.filter((m) => m.tournament_id === tournamentId);
+    const categories = store.categories.filter((c) => c.tournament_id === tournamentId);
     const result = calculateTournamentSchedule({
       tournament,
       fields,
       groups,
       matches,
+      categories,
       onlyUnplayed: true,
     });
 
@@ -1160,17 +1323,19 @@ export async function calculateTournamentSchedules(
   if (!tournamentRow) return { ok: false, message: 'Torneo no encontrado' };
 
   const tournament = mapTournament(tournamentRow as Record<string, unknown>);
-  const [fieldsRes, groupsRes, matchesRes] = await Promise.all([
+  const [fieldsRes, groupsRes, matchesRes, categoriesRes] = await Promise.all([
     supabase.from('synq_tournament_fields').select('*').eq('tournament_id', tournamentId).order('sort_order'),
     supabase.from('synq_tournament_groups').select('*').eq('tournament_id', tournamentId),
     supabase.from('synq_tournament_matches').select('*').eq('tournament_id', tournamentId),
+    supabase.from('synq_tournament_categories').select('*').eq('tournament_id', tournamentId).order('sort_order'),
   ]);
 
   const fields = enrichFieldsWithDivisions(tournament, (fieldsRes.data ?? []) as TournamentField[]);
   const groups = (groupsRes.data ?? []) as TournamentBundle['groups'];
   const matches = (matchesRes.data ?? []) as TournamentMatch[];
+  const categories = (categoriesRes.data ?? []) as TournamentCategory[];
 
-  const result = calculateTournamentSchedule({ tournament, fields, groups, matches, onlyUnplayed: true });
+  const result = calculateTournamentSchedule({ tournament, fields, groups, matches, categories, onlyUnplayed: true });
 
   for (const a of result.assigned) {
     const match = matches.find((m) => m.id === a.match_id);

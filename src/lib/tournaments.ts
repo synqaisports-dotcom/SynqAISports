@@ -182,6 +182,24 @@ export type Tournament = {
   updated_at: string;
 };
 
+export type CategorySchedulingWindow = {
+  /** Fecha concreta dentro del torneo (YYYY-MM-DD) */
+  day_date: string;
+  day_start: string;
+  day_end: string;
+  lunch_break_enabled?: boolean;
+  lunch_start?: string;
+  lunch_end?: string;
+};
+
+export function getCategorySchedulingMap(
+  tournament: Pick<Tournament, 'format_json'>
+): Record<string, CategorySchedulingWindow> {
+  const raw = tournament.format_json?.category_scheduling;
+  if (!raw || typeof raw !== 'object') return {};
+  return raw as Record<string, CategorySchedulingWindow>;
+}
+
 export type TournamentCategory = {
   id: string;
   tournament_id: string;

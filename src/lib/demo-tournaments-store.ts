@@ -72,6 +72,20 @@ export const DEMO_TOURNAMENT: Tournament = {
       [field1Id]: 'halves_2',
       [field2Id]: 'full',
     },
+    category_scheduling: {
+      [categorySub10Id]: {
+        day_date: weekendStart.toISOString().slice(0, 10),
+        day_start: '17:00',
+        day_end: '22:00',
+        lunch_break_enabled: false,
+      },
+      [categorySub12Id]: {
+        day_date: weekendEnd.toISOString().slice(0, 10),
+        day_start: '09:00',
+        day_end: '14:00',
+        lunch_break_enabled: false,
+      },
+    },
   },
   registration_config_json: { max_teams_per_category: 24, deadline_days_before: 3 },
   ticketing_config_json: { projected_attendance: 600, gate_enabled: true },

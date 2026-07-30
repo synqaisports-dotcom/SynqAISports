@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { addTournamentCategory, inviteTeam, updateTeamStatus } from '@/app/actions/tournaments';
+import { analyzeCategoryCapacity } from '@/lib/tournament-category-scheduling';
 import { delegateUrl } from '@/lib/tournament-urls';
 import {
   TEAM_STATUS_LABELS,
@@ -120,12 +121,47 @@ export function TournamentEquiposPanel({ bundle }: { bundle: TournamentBundle })
       {bundle.categories.map((cat) => {
         const catTeams = bundle.teams.filter((t) => t.category_id === cat.id);
         const byGroup = teamsByGroup(catTeams);
+        const analysis = analyzeCategoryCapacity({
+          category: cat,
+          tournament: bundle.tournament,
+          fields: bundle.fields,
+          teamsRegistered: catTeams.length,
+        });
 
         return (
           <div key={cat.id} className="portal-section-surface rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-medium">{cat.name}</h3>
-              <AddTeamForm tournamentId={bundle.tournament.id} categoryId={cat.id} />
+              <div>
+                <h3 className="font-medium">{cat.name}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {analysis.window_label} · {analysis.match_count} partidos · {analysis.teams_registered}/
+                  {analysis.team_slots} equipos
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={
+                    analysis.fits_structure
+                      ? 'border-emerald-400/40 text-emerald-300'
+                      : 'border-amber-400/40 text-amber-300'
+                  }
+                >
+                  {analysis.fits_structure ? 'Capacidad OK' : `Faltan ${analysis.overflow_matches} huecos`}
+                </Badge>
+                <AddTeamForm
+                  tournamentId={bundle.tournament.id}
+                  categoryId={cat.id}
+                  disabled={!analysis.can_invite_more}
+                  disabledReason={
+                    analysis.invites_remaining <= 0
+                      ? 'Plazas agotadas'
+                      : !analysis.fits_structure
+                        ? 'La categoría no cabe en su ventana horaria'
+                        : undefined
+                  }
+                />
+              </div>
             </div>
 
             <div className="mt-4 space-y-4">
@@ -154,13 +190,24 @@ export function TournamentEquiposPanel({ bundle }: { bundle: TournamentBundle })
   );
 }
 
-function AddTeamForm({ tournamentId, categoryId }: { tournamentId: string; categoryId: string }) {
+function AddTeamForm({
+  tournamentId,
+  categoryId,
+  disabled,
+  disabledReason,
+}: {
+  tournamentId: string;
+  categoryId: string;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const [pending, startTransition] = useTransition();
   return (
     <form
       className="flex flex-wrap gap-2"
       onSubmit={(e) => {
         e.preventDefault();
+        if (disabled) return;
         const fd = new FormData(e.currentTarget);
         startTransition(async () => {
           await inviteTeam(tournamentId, categoryId, fd);
@@ -168,11 +215,23 @@ function AddTeamForm({ tournamentId, categoryId }: { tournamentId: string; categ
         });
       }}
     >
-      <Input name="name" placeholder="Nombre equipo" required className="portal-field-surface h-8 text-xs" />
-      <Input name="contact_email" type="email" placeholder="Email delegado" className="portal-field-surface h-8 text-xs" />
-      <Button type="submit" size="sm" variant="outline" disabled={pending}>
+      <Input
+        name="name"
+        placeholder="Nombre equipo"
+        required
+        disabled={disabled || pending}
+        className="portal-field-surface h-8 text-xs"
+      />
+      <Input
+        name="contact_email"
+        type="email"
+        placeholder="Email delegado"
+        disabled={disabled || pending}
+        className="portal-field-surface h-8 text-xs"
+      />
+      <Button type="submit" size="sm" variant="outline" disabled={pending || disabled} title={disabledReason}>
         <Mail className="mr-1 size-3.5" />
-        Invitar
+        {disabled ? (disabledReason ?? 'No disponible') : 'Invitar'}
       </Button>
     </form>
   );

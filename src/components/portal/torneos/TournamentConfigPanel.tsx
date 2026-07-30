@@ -11,6 +11,7 @@ import { SynqDateTimeField } from '@/components/portal/SynqDateTimeField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { TournamentSchedulingSection } from '@/components/portal/torneos/TournamentSchedulingSection';
 import { TournamentPresentationMedia } from '@/components/portal/torneos/TournamentPresentationMedia';
+import { analyzeCategoryCapacity } from '@/lib/tournament-category-scheduling';
 import { FIELD_DIVISION_MODE_LABELS } from '@/lib/tournament-scheduling';
 import { PORTAL_FIELD_LABEL_CLASS } from '@/lib/portal-form-styles';
 import {
@@ -162,13 +163,29 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
         </p>
 
         <div className="mt-4 space-y-3">
-          {bundle.categories.map((cat) => (
+          {bundle.categories.map((cat) => {
+            const analysis = analyzeCategoryCapacity({
+              category: cat,
+              tournament: bundle.tournament,
+              fields: bundle.fields,
+              teamsRegistered: bundle.teams.filter((t) => t.category_id === cat.id).length,
+            });
+
+            return (
             <div key={cat.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold">{cat.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {cat.groups_count} grupos × {cat.teams_per_group} equipos · {FORMAT_TYPE_LABELS[cat.format_type]}
+                  </p>
+                  <p className="mt-1 text-xs text-cyan-300/80">
+                    {analysis.window_label} · {analysis.match_count} partidos ·{' '}
+                    {analysis.fits_structure ? (
+                      <span className="text-emerald-300">{analysis.capacity?.total_capacity} huecos</span>
+                    ) : (
+                      <span className="text-amber-300">faltan {analysis.overflow_matches} huecos</span>
+                    )}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {(cat.placement_brackets_json.length ? cat.placement_brackets_json : DEFAULT_PLACEMENT_BRACKETS)
@@ -196,7 +213,8 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <form

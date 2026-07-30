@@ -10,6 +10,10 @@ import { SynqSelect } from '@/components/portal/SynqSelect';
 import { SynqTimeField } from '@/components/portal/SynqTimeField';
 import { SynqNumericStepper } from '@/components/portal/SynqNumericStepper';
 import { PORTAL_FIELD_LABEL_CLASS } from '@/lib/portal-form-styles';
+import { TournamentCategorySchedulingPanel } from '@/components/portal/torneos/TournamentCategorySchedulingPanel';
+import {
+  analyzeAllCategories,
+} from '@/lib/tournament-category-scheduling';
 import {
   estimateScheduleCapacity,
   formatCapacitySummary,
@@ -42,6 +46,18 @@ export function TournamentSchedulingSection({ bundle }: Props) {
     setConfig(savedConfig);
   }, [savedConfig, tournament.updated_at]);
 
+  const categoryAnalyses = useMemo(
+    () =>
+      analyzeAllCategories({
+        categories: bundle.categories,
+        tournament,
+        fields: bundle.fields,
+        teams: bundle.teams,
+        config,
+      }),
+    [bundle.categories, bundle.fields, bundle.teams, tournament, config]
+  );
+
   const schedulableCount = bundle.matches.filter((m) => m.status === 'scheduled').length;
   const capacity = useMemo(
     () =>
@@ -70,7 +86,7 @@ export function TournamentSchedulingSection({ bundle }: Props) {
         Planificación y horarios
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Define duración de partidos, ventana horaria y estrategia de asignación. Luego calcula los horarios automáticamente.
+        Define duración de partidos y estrategia de asignación. Cada categoría tiene su propia franja horaria exclusiva.
       </p>
 
       {message ? (
@@ -81,12 +97,14 @@ export function TournamentSchedulingSection({ bundle }: Props) {
         <Badge variant="outline" className="text-[10px]">
           {formatCapacitySummary(capacity)}
         </Badge>
-        <Badge
-          variant="outline"
-          className={capacity.fits ? 'border-emerald-400/40 text-emerald-300' : 'border-amber-400/40 text-amber-300'}
-        >
-          {capacity.fits ? 'Capacidad suficiente' : `Faltan ~${capacity.overflow} huecos`}
+        <Badge variant="outline" className="text-[10px]">
+          {bundle.categories.length} categoría(s) · ventanas exclusivas
         </Badge>
+        {categoryAnalyses.some((a) => !a.fits_structure) ? (
+          <Badge variant="outline" className="border-amber-400/40 text-amber-300">
+            Alguna categoría excede capacidad
+          </Badge>
+        ) : null}
       </div>
 
       <form
@@ -278,6 +296,8 @@ export function TournamentSchedulingSection({ bundle }: Props) {
           ))}
         </div>
       ) : null}
+
+      <TournamentCategorySchedulingPanel bundle={bundle} />
     </section>
   );
 }
