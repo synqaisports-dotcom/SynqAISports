@@ -58,3 +58,9 @@ export function sponsorAmountCents(sponsor: { amount_cents?: number | null; tier
   if (sponsor.amount_cents != null && sponsor.amount_cents > 0) return sponsor.amount_cents;
   return TOURNAMENT_SPONSOR_TIER_META[sponsor.tier].suggestedAmountCents;
 }
+
+export function sumActiveSponsorCents(
+  sponsors: { active: boolean; amount_cents?: number | null; tier: TournamentSponsorTier }[]
+): number {
+  return sponsors.filter((s) => s.active).reduce((sum, s) => sum + sponsorAmountCents(s), 0);
+}

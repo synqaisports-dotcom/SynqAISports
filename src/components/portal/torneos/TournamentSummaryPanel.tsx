@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { TournamentChartTooltip } from '@/components/portal/torneos/TournamentChartTooltip';
 import {
   buildTournamentOperationsChart,
   buildTournamentProjectionChart,
@@ -18,6 +19,7 @@ import {
   buildTournamentSummaryMetrics,
 } from '@/lib/tournament-summary';
 import type { TournamentBundle } from '@/lib/tournaments';
+import { SYNQ_CHART_CURSOR } from '@/components/portal/SynqChartPrimitives';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Users } from 'lucide-react';
 
@@ -64,14 +66,7 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(183 100% 50% / 0.12)" />
               <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
               <YAxis allowDecimals={false} tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
-              <Tooltip
-                formatter={(v: number) => [v, 'Total']}
-                contentStyle={{
-                  background: 'hsl(210 42% 8%)',
-                  border: '1px solid hsl(183 100% 50% / 0.3)',
-                  borderRadius: 8,
-                }}
-              />
+              <Tooltip cursor={SYNQ_CHART_CURSOR} content={<TournamentChartTooltip />} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {operationsChart.map((entry) => (
                   <Cell key={entry.key} fill={entry.fill} />
@@ -81,24 +76,13 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Proyección del evento" subtitle="Acompañantes estimados e ingresos totales">
+        <ChartCard title="Público y taquilla" subtitle="Padres/acompañantes estimados e ingreso por entradas">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={projectionChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(183 100% 50% / 0.12)" />
               <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
               <YAxis tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
-              <Tooltip
-                formatter={(v: number, _name, item) => {
-                  const key = (item as { payload?: { key?: string } }).payload?.key;
-                  if (key === 'revenue') return [euroFormatter(v), 'Ingresos'];
-                  return [v, 'Personas'];
-                }}
-                contentStyle={{
-                  background: 'hsl(210 42% 8%)',
-                  border: '1px solid hsl(183 100% 50% / 0.3)',
-                  borderRadius: 8,
-                }}
-              />
+              <Tooltip cursor={SYNQ_CHART_CURSOR} content={<TournamentChartTooltip />} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {projectionChart.map((entry) => (
                   <Cell key={entry.key} fill={entry.fill} />
@@ -110,21 +94,14 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <ChartCard title="Desglose de ingresos" subtitle="Por fuente de ingreso estimada">
+        <ChartCard title="Desglose de ingresos" subtitle="Por fuente de ingreso estimada (€)">
           {revenueChart.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(183 100% 50% / 0.12)" />
                 <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
-                <YAxis tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} unit=" €" />
-                <Tooltip
-                  formatter={(v: number) => [euroFormatter(v), 'Estimado']}
-                  contentStyle={{
-                    background: 'hsl(210 42% 8%)',
-                    border: '1px solid hsl(183 100% 50% / 0.3)',
-                    borderRadius: 8,
-                  }}
-                />
+                <YAxis tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
+                <Tooltip cursor={SYNQ_CHART_CURSOR} content={<TournamentChartTooltip />} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {revenueChart.map((entry) => (
                     <Cell key={entry.key} fill={entry.fill} />

@@ -6,10 +6,12 @@ export type TournamentSummaryMetrics = {
   totalMatches: number;
   revenueEur: number;
   parentsEstimate: number;
+  spectatorRevenueEur: number;
 };
 
 export function buildTournamentSummaryMetrics(bundle: TournamentBundle): TournamentSummaryMetrics {
   const est = bundle.tournament.revenue_estimates_json;
+  const breakdown = revenueBreakdownCents(est);
   const parentsEstimate =
     est.spectators?.count ?? est.ticketing?.projected_attendance ?? 0;
 
@@ -19,6 +21,7 @@ export function buildTournamentSummaryMetrics(bundle: TournamentBundle): Tournam
     totalMatches: bundle.matches.length,
     revenueEur: totalEstimatedRevenueCents(est) / 100,
     parentsEstimate,
+    spectatorRevenueEur: breakdown.spectators / 100,
   };
 }
 
@@ -32,8 +35,8 @@ export function buildTournamentOperationsChart(metrics: TournamentSummaryMetrics
 
 export function buildTournamentProjectionChart(metrics: TournamentSummaryMetrics) {
   return [
-    { key: 'parents', name: 'Padres est.', value: metrics.parentsEstimate, fill: '#fbbf24' },
-    { key: 'revenue', name: 'Ingresos €', value: metrics.revenueEur, fill: '#f472b6' },
+    { key: 'parents', name: 'Padres / acompañantes', value: metrics.parentsEstimate, fill: '#fbbf24' },
+    { key: 'spectatorRevenue', name: 'Taquilla est.', value: metrics.spectatorRevenueEur, fill: '#f472b6' },
   ];
 }
 

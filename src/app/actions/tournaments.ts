@@ -900,6 +900,7 @@ export async function addTournamentSponsor(
       sort_order: store.sponsors.filter((s) => s.tournament_id === tournamentId).length,
       active: true,
     });
+    await syncTournamentSponsorshipRevenue(tournamentId);
     revalidateTournaments();
     return { ok: true, id };
   }
@@ -907,12 +908,100 @@ export async function addTournamentSponsor(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('synq_tournament_sponsors')
-    .insert({ tournament_id: tournamentId, name, tier })
+    .insert({
+      tournament_id: tournamentId,
+      name,
+      tier,
+      logo_url: logoUrl,
+      url,
+      notes,
+      amount_cents: amountCents,
+      active: true,
+    })
     .select('id')
     .single();
   if (error) return { ok: false, message: error.message };
+  await syncTournamentSponsorshipRevenue(tournamentId);
   revalidateTournaments();
   return { ok: true, id: String(data.id) };
+}
+
+export async function updateTournamentSponsor(
+  sponsorId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const name = String(formData.get('name') ?? '').trim();
+  const tier = (String(formData.get('tier') ?? 'silver') as TournamentSponsor['tier']) || 'silver';
+  const logoUrl = String(formData.get('logo_url') ?? '').trim() || null;
+  const url = String(formData.get('url') ?? '').trim() || null;
+  const notes = String(formData.get('notes') ?? '').trim() || null;
+  const amountCents = Number(formData.get('amount_cents') ?? 0) || null;
+  if (!name) return { ok: false, message: 'Nombre obligatorio' };
+
+  if (await isDemoActive() || getDemoTournamentsStore().sponsors.some((s) => s.id === sponsorId)) {
+    const store = getDemoTournamentsStore();
+    const sponsor = store.sponsors.find((s) => s.id === sponsorId);
+    if (!sponsor) return { ok: false, message: 'Patrocinador no encontrado' };
+    sponsor.name = name;
+    sponsor.tier = tier;
+    sponsor.logo_url = logoUrl;
+    sponsor.url = url;
+    sponsor.notes = notes;
+    sponsor.amount_cents = amountCents;
+    await syncTournamentSponsorshipRevenue(sponsor.tournament_id);
+    revalidateTournaments();
+    return { ok: true, message: 'Patrocinador actualizado' };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase
+    .from('synq_tournament_sponsors')
+    .select('tournament_id')
+    .eq('id', sponsorId)
+    .maybeSingle();
+  if (!row) return { ok: false, message: 'Patrocinador no encontrado' };
+
+  const { error } = await supabase
+    .from('synq_tournament_sponsors')
+    .update({
+      name,
+      tier,
+      logo_url: logoUrl,
+      url,
+      notes,
+      amount_cents: amountCents,
+    })
+    .eq('id', sponsorId);
+  if (error) return { ok: false, message: error.message };
+
+  await syncTournamentSponsorshipRevenue(String(row.tournament_id));
+  revalidateTournaments();
+  return { ok: true, message: 'Patrocinador actualizado' };
+}
+
+async function syncTournamentSponsorshipRevenue(tournamentId: string): Promise<void> {
+  const bundle = await loadTournamentBundle(tournamentId);
+  if (!bundle) return;
+
+  const { sumActiveSponsorCents } = await import('@/lib/tournament-sponsors');
+  const sponsorshipTotal = sumActiveSponsorCents(bundle.sponsors);
+  const estimates = {
+    ...bundle.tournament.revenue_estimates_json,
+    sponsorship: { total_cents: sponsorshipTotal },
+  };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (t) t.revenue_estimates_json = estimates;
+    return;
+  }
+
+  const supabase = await createClient();
+  await supabase.from('synq_tournaments').update({ revenue_estimates_json: estimates }).eq('id', tournamentId);
 }
 
 export async function generateCompetitionStructure(

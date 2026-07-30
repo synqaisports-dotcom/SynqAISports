@@ -36,16 +36,14 @@ function MatchTeamsCell({
   match: TournamentMatch;
 }) {
   return (
-    <div className="max-w-0 px-2 py-1.5">
-      <p className="truncate font-medium">
-        <TournamentMatchTeams
-          bundle={bundle}
-          homeTeamId={match.home_team_id}
-          awayTeamId={match.away_team_id}
-          compact
-        />
-      </p>
-    </div>
+    <td className="min-w-[10rem] px-2 py-1.5">
+      <TournamentMatchTeams
+        bundle={bundle}
+        homeTeamId={match.home_team_id}
+        awayTeamId={match.away_team_id}
+        compact
+      />
+    </td>
   );
 }
 

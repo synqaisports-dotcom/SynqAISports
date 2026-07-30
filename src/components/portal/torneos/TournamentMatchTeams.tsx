@@ -31,10 +31,11 @@ function TeamInline({
 
 export function TournamentMatchTeams({ bundle, homeTeamId, awayTeamId, compact }: Props) {
   return (
-    <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
+    <div className="flex min-w-0 flex-col gap-0.5 text-xs font-medium sm:flex-row sm:flex-wrap sm:items-center sm:gap-1">
       <TeamInline bundle={bundle} teamId={homeTeamId} compact={compact} />
-      <span className="text-muted-foreground">vs</span>
+      <span className="hidden text-muted-foreground sm:inline">vs</span>
+      <span className="text-[10px] text-muted-foreground sm:hidden">vs</span>
       <TeamInline bundle={bundle} teamId={awayTeamId} compact={compact} />
-    </span>
+    </div>
   );
 }

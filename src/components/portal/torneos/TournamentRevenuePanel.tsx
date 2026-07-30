@@ -12,7 +12,10 @@ import {
   YAxis,
 } from 'recharts';
 import { refreshRevenueEstimates, updateTournamentRevenueEstimates } from '@/app/actions/tournaments';
+import { TournamentChartTooltip } from '@/components/portal/torneos/TournamentChartTooltip';
 import { PORTAL_FIELD_LABEL_CLASS } from '@/lib/portal-form-styles';
+import { SYNQ_CHART_CURSOR } from '@/components/portal/SynqChartPrimitives';
+import { sumActiveSponsorCents } from '@/lib/tournament-sponsors';
 import {
   revenueBreakdownCents,
   totalEstimatedRevenueCents,
@@ -29,11 +32,17 @@ type Props = {
   bundle: TournamentBundle;
 };
 
+function euro(value: number) {
+  return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
 export function TournamentRevenuePanel({ bundle }: Props) {
   const { tournament } = bundle;
   const est = tournament.revenue_estimates_json;
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+
+  const sponsorTotalCents = sumActiveSponsorCents(bundle.sponsors);
 
   const [spectatorsCount, setSpectatorsCount] = useState(
     est.spectators?.count ?? est.ticketing?.projected_attendance ?? 0
@@ -43,28 +52,25 @@ export function TournamentRevenuePanel({ bundle }: Props) {
   );
   const [bonosCount, setBonosCount] = useState(est.bonos?.count ?? 0);
   const [bonosUnit, setBonosUnit] = useState((est.bonos?.unit_cents ?? 1500) / 100);
-  const [sponsorTotal, setSponsorTotal] = useState(
-    (est.sponsorship?.total_cents ?? bundle.sponsors.filter((s) => s.active).reduce((sum, s) => sum + (s.amount_cents ?? 0), 0)) / 100
-  );
 
   const previewEstimates = useMemo(
     () => ({
       spectators: { count: spectatorsCount, unit_cents: Math.round(spectatorsUnit * 100) },
       bonos: { count: bonosCount, unit_cents: Math.round(bonosUnit * 100) },
-      sponsorship: { total_cents: Math.round(sponsorTotal * 100) },
+      sponsorship: { total_cents: sponsorTotalCents },
       signage: est.signage,
     }),
-    [spectatorsCount, spectatorsUnit, bonosCount, bonosUnit, sponsorTotal, est.signage]
+    [spectatorsCount, spectatorsUnit, bonosCount, bonosUnit, sponsorTotalCents, est.signage]
   );
 
   const breakdown = revenueBreakdownCents(previewEstimates);
   const total = totalEstimatedRevenueCents(previewEstimates);
 
   const chartData = [
-    { name: 'Público', value: breakdown.spectators / 100, key: 'spectators' },
-    { name: 'Bonos', value: breakdown.bonos / 100, key: 'bonos' },
-    { name: 'Patrocinio', value: breakdown.sponsorship / 100, key: 'sponsorship' },
-    { name: 'Signage', value: breakdown.signage / 100, key: 'signage' },
+    { key: 'spectators', name: 'Taquilla', value: breakdown.spectators / 100, fill: CHART_COLORS[0] },
+    { key: 'bonos', name: 'Bonos', value: breakdown.bonos / 100, fill: CHART_COLORS[1] },
+    { key: 'sponsorship', name: 'Patrocinio', value: breakdown.sponsorship / 100, fill: CHART_COLORS[2] },
+    { key: 'signage', name: 'Signage', value: breakdown.signage / 100, fill: CHART_COLORS[3] },
   ].filter((d) => d.value > 0);
 
   return (
@@ -77,17 +83,20 @@ export function TournamentRevenuePanel({ bundle }: Props) {
               Estimación de ingresos del evento
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Proyección para el organizador. Los ingresos de patrocinio y módulo SynqAI se gestionan vía Admon (costes micro-app), no en la tesorería del club.
+              Taquilla y bonos los defines aquí. El patrocinio se suma automáticamente desde las fichas de la pestaña Patrocinadores.
             </p>
           </div>
-          <p className="text-3xl font-semibold tabular-nums text-cyan-300">
-            {total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-          </p>
+          <p className="text-3xl font-semibold tabular-nums text-cyan-300">{euro(total / 100)}</p>
         </div>
 
-        {message ? (
-          <p className="mt-3 text-sm text-cyan-200">{message}</p>
-        ) : null}
+        {message ? <p className="mt-3 text-sm text-cyan-200">{message}</p> : null}
+
+        <div className="mt-4 grid gap-2 rounded-lg border border-border/40 bg-background/20 p-3 text-xs sm:grid-cols-2">
+          <CalcRow label="Taquilla" value={`${spectatorsCount} × ${euro(spectatorsUnit)} = ${euro(breakdown.spectators / 100)}`} />
+          <CalcRow label="Bonos" value={`${bonosCount} × ${euro(bonosUnit)} = ${euro(breakdown.bonos / 100)}`} />
+          <CalcRow label="Patrocinio (fichas)" value={euro(breakdown.sponsorship / 100)} />
+          <CalcRow label="Signage estimado" value={euro(breakdown.signage / 100)} />
+        </div>
 
         <div className="mt-6 h-56 w-full">
           {chartData.length > 0 ? (
@@ -95,18 +104,11 @@ export function TournamentRevenuePanel({ bundle }: Props) {
               <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(183 100% 50% / 0.12)" />
                 <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
-                <YAxis tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} unit=" €" />
-                <Tooltip
-                  formatter={(v: number) => [`${v.toFixed(0)} €`, 'Estimado']}
-                  contentStyle={{
-                    background: 'hsl(210 42% 8%)',
-                    border: '1px solid hsl(183 100% 50% / 0.3)',
-                    borderRadius: 8,
-                  }}
-                />
+                <YAxis tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
+                <Tooltip cursor={SYNQ_CHART_CURSOR} content={<TournamentChartTooltip />} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={entry.key} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  {chartData.map((entry) => (
+                    <Cell key={entry.key} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
@@ -134,13 +136,14 @@ export function TournamentRevenuePanel({ bundle }: Props) {
         <input type="hidden" name="spectators_unit_eur" value={spectatorsUnit} readOnly />
         <input type="hidden" name="bonos_count" value={bonosCount} readOnly />
         <input type="hidden" name="bonos_unit_eur" value={bonosUnit} readOnly />
-        <input type="hidden" name="sponsorship_total_eur" value={sponsorTotal} readOnly />
+        <input type="hidden" name="sponsorship_total_eur" value={sponsorTotalCents / 100} readOnly />
         <input type="hidden" name="signage_impressions" value={est.signage?.impressions_per_day ?? 0} readOnly />
         <input type="hidden" name="signage_cpm_eur" value={(est.signage?.cpm_cents ?? 0) / 100} readOnly />
 
         <div>
-          <label className={PORTAL_FIELD_LABEL_CLASS}>Acompañantes / público estimado</label>
+          <label className={PORTAL_FIELD_LABEL_CLASS}>Padres / acompañantes en grada (personas)</label>
           <SynqNumericStepper name="sc" value={spectatorsCount} onChange={(v) => setSpectatorsCount(v ?? 0)} min={0} max={99999} />
+          <p className="mt-1 text-[11px] text-muted-foreground">Número de personas, no euros.</p>
         </div>
         <div>
           <label className={PORTAL_FIELD_LABEL_CLASS}>Precio medio entrada (€)</label>
@@ -152,13 +155,16 @@ export function TournamentRevenuePanel({ bundle }: Props) {
             onChange={(e) => setSpectatorsUnit(Number(e.target.value) || 0)}
             className="portal-field-surface"
           />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Ej.: 600 personas × 5 € = {euro(spectatorsCount * spectatorsUnit)}
+          </p>
         </div>
         <div>
-          <label className={PORTAL_FIELD_LABEL_CLASS}>Bonos / abonos vendidos</label>
+          <label className={PORTAL_FIELD_LABEL_CLASS}>Bonos / abonos vendidos (unidades)</label>
           <SynqNumericStepper name="bc" value={bonosCount} onChange={(v) => setBonosCount(v ?? 0)} min={0} max={9999} />
         </div>
         <div>
-          <label className={PORTAL_FIELD_LABEL_CLASS}>Importe medio bono (€)</label>
+          <label className={PORTAL_FIELD_LABEL_CLASS}>Precio medio bono (€)</label>
           <Input
             type="number"
             step="0.5"
@@ -167,19 +173,16 @@ export function TournamentRevenuePanel({ bundle }: Props) {
             onChange={(e) => setBonosUnit(Number(e.target.value) || 0)}
             className="portal-field-surface"
           />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Ej.: 40 bonos × 15 € = {euro(bonosCount * bonosUnit)}
+          </p>
         </div>
-        <div className="md:col-span-2">
-          <label className={PORTAL_FIELD_LABEL_CLASS}>Patrocinio total estimado (€) — SynqAI Admon</label>
-          <Input
-            type="number"
-            step="50"
-            min={0}
-            value={sponsorTotal}
-            onChange={(e) => setSponsorTotal(Number(e.target.value) || 0)}
-            className="portal-field-surface"
-          />
+        <div className="md:col-span-2 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3">
+          <p className={PORTAL_FIELD_LABEL_CLASS}>Patrocinio (suma automática)</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-cyan-300">{euro(sponsorTotalCents / 100)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Suma de fichas de patrocinadores o importe manual. Cubre costes del módulo torneos.
+            Suma de las fichas activas en Patrocinadores ({bundle.sponsors.filter((s) => s.active).length} patrocinadores).
+            Edita cada ficha para cambiar su importe.
           </p>
         </div>
 
@@ -201,10 +204,19 @@ export function TournamentRevenuePanel({ bundle }: Props) {
             }}
           >
             <RefreshCw className="mr-1.5 size-4" />
-            Recalcular desde patrocinadores
+            Recalcular signage y taquilla
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function CalcRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums text-foreground">{value}</span>
     </div>
   );
 }
