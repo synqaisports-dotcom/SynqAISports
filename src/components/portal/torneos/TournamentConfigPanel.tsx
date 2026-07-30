@@ -10,6 +10,7 @@ import {
 import { SynqDateTimeField } from '@/components/portal/SynqDateTimeField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { TournamentSchedulingSection } from '@/components/portal/torneos/TournamentSchedulingSection';
+import { TournamentPresentationMedia } from '@/components/portal/torneos/TournamentPresentationMedia';
 import { FIELD_DIVISION_MODE_LABELS } from '@/lib/tournament-scheduling';
 import { PORTAL_FIELD_LABEL_CLASS } from '@/lib/portal-form-styles';
 import {
@@ -271,6 +272,8 @@ export function TournamentConfigPanel({ bundle }: { bundle: TournamentBundle }) 
           </div>
         </form>
       </section>
+
+      <TournamentPresentationMedia bundle={bundle} />
 
       <TournamentSchedulingSection bundle={bundle} />
     </div>

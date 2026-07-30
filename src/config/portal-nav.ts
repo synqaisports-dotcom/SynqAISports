@@ -14,6 +14,7 @@ import {
   Megaphone,
   Network,
   Package,
+  Plus,
   Smartphone,
   Target,
   Trophy,
@@ -123,6 +124,10 @@ export const portalNavGroups: PortalNavGroup[] = [
         icon: Trophy,
         href: '/portal/torneos',
         exact: true,
+        children: [
+          { title: 'Mis torneos', href: '/portal/torneos', icon: Trophy, exact: true },
+          { title: 'Crear torneo', href: '/portal/torneos/crear', icon: Plus },
+        ],
       },
     ],
   },

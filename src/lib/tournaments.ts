@@ -217,6 +217,7 @@ export type TournamentSponsor = {
   tier: TournamentSponsorTier;
   url: string | null;
   notes: string | null;
+  amount_cents: number | null;
   sort_order: number;
   active: boolean;
 };
@@ -341,9 +342,15 @@ export type TournamentTicket = {
 };
 
 export type RevenueEstimates = {
-  ticketing?: { projected_attendance: number; avg_ticket_cents: number };
-  sponsorship?: { gold_slots: number; silver_slots: number; bronze_slots: number; estimated_total_cents: number };
+  /** Acompañantes / público estimado × precio medio */
+  spectators?: { count: number; unit_cents: number };
+  /** Bonos o abonos vendidos */
+  bonos?: { count: number; unit_cents: number };
+  /** Suma de patrocinadores (gestión SynqAI / costes micro-app) */
+  sponsorship?: { total_cents: number };
   signage?: { impressions_per_day: number; cpm_cents: number };
+  /** @deprecated usar spectators */
+  ticketing?: { projected_attendance: number; avg_ticket_cents: number };
 };
 
 export type TournamentBundle = {
@@ -389,41 +396,68 @@ export function formatMatchScore(match: Pick<TournamentMatch, 'score_home' | 'sc
 
 export function estimateTournamentRevenue(
   sponsors: TournamentSponsor[],
-  ticketTypes: TournamentTicketType[],
-  ticketingConfig: Record<string, unknown>
+  _ticketTypes: TournamentTicketType[],
+  ticketingConfig: Record<string, unknown>,
+  existing?: RevenueEstimates
 ): RevenueEstimates {
-  const projectedAttendance = Number(ticketingConfig.projected_attendance ?? 400);
-  const activeTickets = ticketTypes.filter((t) => t.active);
-  const avgTicketCents =
-    activeTickets.length > 0
-      ? Math.round(activeTickets.reduce((s, t) => s + t.price_cents, 0) / activeTickets.length)
-      : 500;
+  const sponsorshipTotal = sponsors
+    .filter((s) => s.active)
+    .reduce((sum, s) => {
+      const amount =
+        s.amount_cents ??
+        ({ gold: 150_000, silver: 60_000, bronze: 25_000 } as const)[s.tier];
+      return sum + amount;
+    }, 0);
 
-  const gold = sponsors.filter((s) => s.active && s.tier === 'gold').length;
-  const silver = sponsors.filter((s) => s.active && s.tier === 'silver').length;
-  const bronze = sponsors.filter((s) => s.active && s.tier === 'bronze').length;
-
-  const sponsorshipCents = gold * 150000 + silver * 60000 + bronze * 25000;
+  const spectatorCount = Number(
+    existing?.spectators?.count ??
+      ticketingConfig.projected_attendance ??
+      existing?.ticketing?.projected_attendance ??
+      400
+  );
+  const spectatorUnit = Number(
+    existing?.spectators?.unit_cents ??
+      existing?.ticketing?.avg_ticket_cents ??
+      500
+  );
 
   return {
-    ticketing: { projected_attendance: projectedAttendance, avg_ticket_cents: avgTicketCents },
-    sponsorship: {
-      gold_slots: gold,
-      silver_slots: silver,
-      bronze_slots: bronze,
-      estimated_total_cents: sponsorshipCents,
+    spectators: { count: spectatorCount, unit_cents: spectatorUnit },
+    bonos: existing?.bonos ?? { count: 0, unit_cents: 1500 },
+    sponsorship: { total_cents: sponsorshipTotal },
+    signage: existing?.signage ?? {
+      impressions_per_day: spectatorCount * 3,
+      cpm_cents: 800,
     },
-    signage: { impressions_per_day: projectedAttendance * 3, cpm_cents: 800 },
   };
 }
 
 export function totalEstimatedRevenueCents(estimates: RevenueEstimates): number {
-  const ticket =
-    (estimates.ticketing?.projected_attendance ?? 0) * (estimates.ticketing?.avg_ticket_cents ?? 0);
-  const sponsor = estimates.sponsorship?.estimated_total_cents ?? 0;
+  const spectators =
+    (estimates.spectators?.count ?? estimates.ticketing?.projected_attendance ?? 0) *
+    (estimates.spectators?.unit_cents ?? estimates.ticketing?.avg_ticket_cents ?? 0);
+  const bonos = (estimates.bonos?.count ?? 0) * (estimates.bonos?.unit_cents ?? 0);
+  const sponsor = estimates.sponsorship?.total_cents ?? 0;
   const signage =
     ((estimates.signage?.impressions_per_day ?? 0) * (estimates.signage?.cpm_cents ?? 0)) / 1000;
-  return Math.round(ticket + sponsor + signage);
+  return Math.round(spectators + bonos + sponsor + signage);
+}
+
+export function revenueBreakdownCents(estimates: RevenueEstimates): {
+  spectators: number;
+  bonos: number;
+  sponsorship: number;
+  signage: number;
+} {
+  return {
+    spectators:
+      (estimates.spectators?.count ?? estimates.ticketing?.projected_attendance ?? 0) *
+      (estimates.spectators?.unit_cents ?? estimates.ticketing?.avg_ticket_cents ?? 0),
+    bonos: (estimates.bonos?.count ?? 0) * (estimates.bonos?.unit_cents ?? 0),
+    sponsorship: estimates.sponsorship?.total_cents ?? 0,
+    signage:
+      ((estimates.signage?.impressions_per_day ?? 0) * (estimates.signage?.cpm_cents ?? 0)) / 1000,
+  };
 }
 
 export function isTournamentLive(status: TournamentStatus): boolean {

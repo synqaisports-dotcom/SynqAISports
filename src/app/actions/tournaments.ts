@@ -167,27 +167,35 @@ export type DemoTorneoPwaLinks = {
   taquilla: string;
 };
 
-export async function getDemoTorneoPwaLinks(): Promise<DemoTorneoPwaLinks | null> {
-  const store = getDemoTournamentsStore();
-  const tournament = store.tournaments[0];
-  if (!tournament) return null;
+export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoTorneoPwaLinks | null> {
+  const bundle = await loadTournamentBundle(tournamentId);
+  if (!bundle) return null;
 
+  const { tournament, matches, teams } = bundle;
   const liveMatch =
-    store.matches.find((m) => m.status === 'live' && m.mesa_token) ??
-    store.matches.find((m) => m.mesa_token);
-  const team = store.teams.find((t) => t.invite_token);
+    matches.find((m) => m.status === 'live' && m.mesa_token) ?? matches.find((m) => m.mesa_token);
+  const team = teams.find((t) => t.invite_token);
+
+  let taquilla = '/torneo/demo';
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    taquilla = gateUrl(getDemoTournamentsStore().gateToken);
+  }
 
   return {
     tournamentName: tournament.name,
     publicWeb: publicTournamentUrl(tournament.slug),
-    mesa: liveMatch?.mesa_token ? mesaUrl(liveMatch.mesa_token) : '/torneo/demo',
+    mesa: liveMatch?.mesa_token ? mesaUrl(liveMatch.mesa_token) : publicTournamentUrl(tournament.slug),
     mesaLabel: liveMatch
-      ? `${store.teams.find((t) => t.id === liveMatch.home_team_id)?.name ?? 'Local'} vs ${store.teams.find((t) => t.id === liveMatch.away_team_id)?.name ?? 'Visitante'}`
-      : 'Sin partido',
-    delegado: team?.invite_token ? delegateUrl(team.invite_token) : '/torneo/demo',
+      ? `${teams.find((t) => t.id === liveMatch.home_team_id)?.name ?? 'Local'} vs ${teams.find((t) => t.id === liveMatch.away_team_id)?.name ?? 'Visitante'}`
+      : 'Sin partido asignado',
+    delegado: team?.invite_token ? delegateUrl(team.invite_token) : publicTournamentUrl(tournament.slug),
     delegadoLabel: team?.name ?? 'Equipo invitado',
-    taquilla: gateUrl(store.gateToken),
+    taquilla,
   };
+}
+
+export async function getDemoTorneoPwaLinks(): Promise<DemoTorneoPwaLinks | null> {
+  return getTournamentPwaLinks(DEMO_TOURNAMENT_ID);
 }
 
 function demoBundleById(tournamentId: string): TournamentBundle | null {
@@ -484,6 +492,10 @@ export async function addTournamentSponsor(
 
   const name = String(formData.get('name') ?? '').trim();
   const tier = (String(formData.get('tier') ?? 'silver') as TournamentSponsor['tier']) || 'silver';
+  const logoUrl = String(formData.get('logo_url') ?? '').trim() || null;
+  const url = String(formData.get('url') ?? '').trim() || null;
+  const notes = String(formData.get('notes') ?? '').trim() || null;
+  const amountCents = Number(formData.get('amount_cents') ?? 0) || null;
   if (!name) return { ok: false, message: 'Nombre obligatorio' };
 
   if (await isDemoActive() || demoBundleById(tournamentId)) {
@@ -493,10 +505,11 @@ export async function addTournamentSponsor(
       id,
       tournament_id: tournamentId,
       name,
-      logo_url: null,
+      logo_url: logoUrl,
       tier,
-      url: null,
-      notes: null,
+      url,
+      notes,
+      amount_cents: amountCents,
       sort_order: store.sponsors.filter((s) => s.tournament_id === tournamentId).length,
       active: true,
     });
@@ -840,11 +853,15 @@ export async function refreshRevenueEstimates(tournamentId: string): Promise<Tou
   const estimates = estimateTournamentRevenue(
     bundle.sponsors,
     bundle.ticketTypes,
-    bundle.tournament.ticketing_config_json
+    bundle.tournament.ticketing_config_json,
+    bundle.tournament.revenue_estimates_json
   );
 
   if (await isDemoActive()) {
-    bundle.tournament.revenue_estimates_json = estimates;
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (t) t.revenue_estimates_json = estimates;
+    revalidateTournaments();
     return { ok: true, message: `Estimación: ${(totalEstimatedRevenueCents(estimates) / 100).toFixed(0)} €` };
   }
 
@@ -1173,4 +1190,152 @@ export async function calculateTournamentSchedules(
 
   revalidateTournaments();
   return { ok: result.ok, message: result.message };
+}
+
+export async function updateTournamentRevenueEstimates(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const estimates = {
+    spectators: {
+      count: Number(formData.get('spectators_count') ?? 0),
+      unit_cents: Math.round(Number(formData.get('spectators_unit_eur') ?? 0) * 100),
+    },
+    bonos: {
+      count: Number(formData.get('bonos_count') ?? 0),
+      unit_cents: Math.round(Number(formData.get('bonos_unit_eur') ?? 0) * 100),
+    },
+    sponsorship: {
+      total_cents: Math.round(Number(formData.get('sponsorship_total_eur') ?? 0) * 100),
+    },
+    signage: {
+      impressions_per_day: Number(formData.get('signage_impressions') ?? 0),
+      cpm_cents: Math.round(Number(formData.get('signage_cpm_eur') ?? 0) * 100),
+    },
+  };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    t.revenue_estimates_json = estimates;
+    t.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: 'Estimación guardada' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_tournaments')
+    .update({ revenue_estimates_json: estimates })
+    .eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Estimación guardada' };
+}
+
+export async function updateTeamStatus(
+  teamId: string,
+  status: TournamentTeam['status']
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive()) {
+    const store = getDemoTournamentsStore();
+    const team = store.teams.find((t) => t.id === teamId);
+    if (!team) return { ok: false, message: 'Equipo no encontrado' };
+    team.status = status;
+    if (status === 'confirmed') team.confirmed_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, message: 'Estado actualizado' };
+  }
+
+  const supabase = await createClient();
+  const patch: Record<string, unknown> = { status };
+  if (status === 'confirmed') patch.confirmed_at = new Date().toISOString();
+  const { error } = await supabase.from('synq_tournament_teams').update(patch).eq('id', teamId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Estado actualizado' };
+}
+
+export async function uploadTournamentMedia(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState & { url?: string }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const file = formData.get('file');
+  const kind = String(formData.get('kind') ?? 'gallery');
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: 'Archivo no válido' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const base64 = `data:${file.type || 'image/jpeg'};base64,${buffer.toString('base64')}`;
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    if (kind === 'cover') {
+      t.cover_image_url = base64;
+    } else {
+      t.venue_images_json = [...t.venue_images_json, base64];
+    }
+    t.updated_at = new Date().toISOString();
+    revalidateTournaments();
+    return { ok: true, url: base64, message: 'Imagen subida' };
+  }
+
+  const supabase = await createClient();
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const path = `${clubId}/tournaments/${tournamentId}/${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from('club-media').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+    contentType: file.type || 'image/jpeg',
+  });
+  if (uploadError) return { ok: false, message: uploadError.message };
+
+  const { data: urlData } = supabase.storage.from('club-media').getPublicUrl(path);
+  const publicUrl = urlData.publicUrl;
+
+  const { data: row } = await supabase.from('synq_tournaments').select('cover_image_url, venue_images_json').eq('id', tournamentId).maybeSingle();
+  const patch =
+    kind === 'cover'
+      ? { cover_image_url: publicUrl }
+      : { venue_images_json: [...((row?.venue_images_json as string[]) ?? []), publicUrl] };
+
+  const { error } = await supabase.from('synq_tournaments').update(patch).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, url: publicUrl, message: 'Imagen subida' };
+}
+
+export async function removeTournamentGalleryImage(
+  tournamentId: string,
+  imageUrl: string
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const t = store.tournaments.find((x) => x.id === tournamentId);
+    if (!t) return { ok: false, message: 'Torneo no encontrado' };
+    t.venue_images_json = t.venue_images_json.filter((u) => u !== imageUrl);
+    revalidateTournaments();
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { data: row } = await supabase.from('synq_tournaments').select('venue_images_json').eq('id', tournamentId).maybeSingle();
+  const next = ((row?.venue_images_json as string[]) ?? []).filter((u) => u !== imageUrl);
+  const { error } = await supabase.from('synq_tournaments').update({ venue_images_json: next }).eq('id', tournamentId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true };
 }

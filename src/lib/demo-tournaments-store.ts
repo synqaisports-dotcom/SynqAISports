@@ -76,8 +76,9 @@ export const DEMO_TOURNAMENT: Tournament = {
   registration_config_json: { max_teams_per_category: 24, deadline_days_before: 3 },
   ticketing_config_json: { projected_attendance: 600, gate_enabled: true },
   revenue_estimates_json: {
-    ticketing: { projected_attendance: 600, avg_ticket_cents: 500 },
-    sponsorship: { gold_slots: 2, silver_slots: 4, bronze_slots: 6, estimated_total_cents: 510000 },
+    spectators: { count: 600, unit_cents: 500 },
+    bonos: { count: 40, unit_cents: 1500 },
+    sponsorship: { total_cents: 510_000 },
     signage: { impressions_per_day: 1800, cpm_cents: 800 },
   },
   public_enabled: true,
@@ -134,9 +135,9 @@ export const DEMO_FIELDS: TournamentField[] = [
 ];
 
 export const DEMO_SPONSORS: TournamentSponsor[] = [
-  { id: 'demo-ts-1', tournament_id: tournamentId, name: 'Deportes López', logo_url: null, tier: 'gold', url: null, notes: null, sort_order: 0, active: true },
-  { id: 'demo-ts-2', tournament_id: tournamentId, name: 'Agua Pura', logo_url: null, tier: 'silver', url: null, notes: null, sort_order: 1, active: true },
-  { id: 'demo-ts-3', tournament_id: tournamentId, name: 'Panadería Gol', logo_url: null, tier: 'bronze', url: null, notes: null, sort_order: 2, active: true },
+  { id: 'demo-ts-1', tournament_id: tournamentId, name: 'Deportes López', logo_url: null, tier: 'gold', url: 'https://demo.test', notes: 'Patrocinador principal', amount_cents: 150_000, sort_order: 0, active: true },
+  { id: 'demo-ts-2', tournament_id: tournamentId, name: 'Agua Pura', logo_url: null, tier: 'silver', url: null, notes: null, amount_cents: 60_000, sort_order: 1, active: true },
+  { id: 'demo-ts-3', tournament_id: tournamentId, name: 'Panadería Gol', logo_url: null, tier: 'bronze', url: null, notes: null, amount_cents: 25_000, sort_order: 2, active: true },
 ];
 
 function buildDemoTeams(categoryId: string, prefix: string, groupsCount: number): TournamentTeam[] {

@@ -1,3 +1,6 @@
+'use client';
+
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   fieldLabel,
@@ -5,6 +8,7 @@ import {
   groupMatchesByDay,
   roundLabelWithBracket,
 } from '@/lib/tournament-schedule';
+import { groupMatchesByField, groupMatchesByGroupCode } from '@/lib/tournament-schedule-views';
 import {
   formatMatchScore,
   MATCH_STATUS_LABELS,
@@ -16,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, ExternalLink, MapPin, Radio } from 'lucide-react';
 import { mesaUrl } from '@/lib/tournament-urls';
+
+type ViewMode = 'field' | 'group' | 'day';
 
 type Props = {
   bundle: TournamentBundle;
@@ -37,7 +43,17 @@ function bracketNameForMatch(bundle: TournamentBundle, match: TournamentMatch): 
   return undefined;
 }
 
-function ScheduleMatchCard({ match, bundle, category }: { match: TournamentMatch; bundle: TournamentBundle; category?: TournamentCategory }) {
+function ScheduleMatchCard({
+  match,
+  bundle,
+  category,
+  compact,
+}: {
+  match: TournamentMatch;
+  bundle: TournamentBundle;
+  category?: TournamentCategory;
+  compact?: boolean;
+}) {
   const when = formatMatchDateTime(match.scheduled_at);
   const isLive = match.status === 'live';
   const bracket = bracketNameForMatch(bundle, match);
@@ -45,19 +61,19 @@ function ScheduleMatchCard({ match, bundle, category }: { match: TournamentMatch
   return (
     <div
       className={cn(
-        'grid gap-3 rounded-xl border border-border/60 p-3 transition-colors sm:grid-cols-[auto_1fr_auto]',
-        isLive && 'border-cyan-400/40 bg-cyan-400/5 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]'
+        'grid gap-2 rounded-xl border border-border/60 p-3 transition-colors',
+        compact ? 'sm:grid-cols-[auto_1fr]' : 'sm:grid-cols-[auto_1fr_auto]',
+        isLive && 'border-cyan-400/40 bg-cyan-400/5'
       )}
     >
-      <div className="flex min-w-[4.5rem] flex-col items-center justify-center rounded-lg bg-background/40 px-2 py-1.5 text-center">
-        <span className="text-lg font-bold tabular-nums text-cyan-300">{when.time}</span>
-        {category ? (
-          <span className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{category.name}</span>
+      <div className="flex min-w-[4rem] flex-col justify-center text-center">
+        <span className="text-base font-bold tabular-nums text-cyan-300">{when.time}</span>
+        {!compact && category ? (
+          <span className="text-[10px] uppercase text-muted-foreground">{category.name}</span>
         ) : null}
       </div>
-
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="outline" className="text-[10px]">
             {roundLabelWithBracket(match.round_key, bracket)}
           </Badge>
@@ -70,11 +86,11 @@ function ScheduleMatchCard({ match, bundle, category }: { match: TournamentMatch
             <span className="text-[10px] text-muted-foreground">{MATCH_STATUS_LABELS[match.status]}</span>
           )}
         </div>
-        <p className="mt-1.5 font-medium leading-snug">
+        <p className="mt-1 text-sm font-medium leading-snug">
           {teamName(bundle, match.home_team_id)}{' '}
           <span className="font-normal text-muted-foreground">vs</span> {teamName(bundle, match.away_team_id)}
         </p>
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="size-3 shrink-0" />
           {fieldLabel(
             bundle.fields,
@@ -83,33 +99,46 @@ function ScheduleMatchCard({ match, bundle, category }: { match: TournamentMatch
           )}
         </p>
       </div>
-
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-center">
-        <span className="text-xl font-bold tabular-nums text-primary">
-          {match.status === 'scheduled' ? '—' : formatMatchScore(match)}
-        </span>
-        {match.mesa_token ? (
-          <Link
-            href={mesaUrl(match.mesa_token)}
-            target="_blank"
-            className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:underline"
-          >
-            Mesa <ExternalLink className="size-3" />
-          </Link>
-        ) : null}
-      </div>
+      {!compact ? (
+        <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-center">
+          <span className="text-lg font-bold tabular-nums text-primary">
+            {match.status === 'scheduled' ? '—' : formatMatchScore(match)}
+          </span>
+          {match.mesa_token ? (
+            <Link href={mesaUrl(match.mesa_token)} target="_blank" className="text-xs text-cyan-300 hover:underline">
+              Mesa <ExternalLink className="inline size-3" />
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
 
+const viewTabs: { id: ViewMode; label: string }[] = [
+  { id: 'field', label: 'Por campo' },
+  { id: 'group', label: 'Por grupo' },
+  { id: 'day', label: 'Por día' },
+];
+
 export function TournamentSchedulePanel({ bundle, categoryId }: Props) {
+  const [view, setView] = useState<ViewMode>('field');
+
   const categories = categoryId
     ? bundle.categories.filter((c) => c.id === categoryId)
     : bundle.categories;
-
   const categoryIds = new Set(categories.map((c) => c.id));
-  const matches = bundle.matches.filter((m) => categoryIds.has(m.category_id));
-  const days = groupMatchesByDay(matches);
+  const matches = useMemo(
+    () => bundle.matches.filter((m) => categoryIds.has(m.category_id)),
+    [bundle.matches, categoryIds]
+  );
+
+  const fieldGroups = useMemo(() => groupMatchesByField(matches, bundle.fields), [matches, bundle.fields]);
+  const groupBuckets = useMemo(
+    () => groupMatchesByGroupCode(matches, bundle.groups, bundle),
+    [matches, bundle.groups, bundle]
+  );
+  const days = useMemo(() => groupMatchesByDay(matches), [matches]);
 
   const liveCount = matches.filter((m) => m.status === 'live').length;
   const scheduledCount = matches.filter((m) => m.scheduled_at).length;
@@ -131,30 +160,91 @@ export function TournamentSchedulePanel({ bundle, categoryId }: Props) {
         </div>
       </div>
 
-      {days.length === 0 ? (
+      <div className="flex gap-1 rounded-lg border border-border/50 p-1">
+        {viewTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setView(tab.id)}
+            className={cn(
+              'flex-1 rounded-md px-3 py-1.5 text-sm transition-colors',
+              view === tab.id ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {matches.length === 0 ? (
         <div className="portal-section-surface rounded-xl p-8 text-center text-sm text-muted-foreground">
           <CalendarClock className="mx-auto mb-2 size-8 text-primary/50" />
           Genera la competición en Configuración para ver el calendario.
         </div>
-      ) : (
-        days.map((day) => (
-          <section key={day.dateKey} className="space-y-3">
-            <h3 className="flex items-center gap-2 text-sm font-medium capitalize">
-              <CalendarClock className="size-4 text-cyan-300" />
-              {day.label}
-              <span className="text-muted-foreground">({day.matches.length})</span>
-            </h3>
-            <div className="space-y-2">
-              {day.matches.map((match) => {
-                const cat = bundle.categories.find((c) => c.id === match.category_id);
-                return (
-                  <ScheduleMatchCard key={match.id} match={match} bundle={bundle} category={cat} />
-                );
-              })}
-            </div>
-          </section>
-        ))
-      )}
+      ) : null}
+
+      {view === 'field' && matches.length > 0 ? (
+        <div className="space-y-4">
+          {fieldGroups.map((fg) => (
+            <section key={`${fg.fieldId}-${fg.label}`} className="space-y-2">
+              <h3 className="flex items-center gap-2 text-sm font-medium">
+                <MapPin className="size-4 text-cyan-300" />
+                {fg.label}
+                <span className="text-muted-foreground">({fg.matches.length})</span>
+              </h3>
+              <div className="space-y-2">
+                {fg.matches.map((match) => {
+                  const cat = bundle.categories.find((c) => c.id === match.category_id);
+                  return (
+                    <ScheduleMatchCard key={match.id} match={match} bundle={bundle} category={cat} compact />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : null}
+
+      {view === 'group' && matches.length > 0 ? (
+        <div className="space-y-4">
+          {groupBuckets.map((bucket) => (
+            <section key={bucket.groupCode} className="space-y-2">
+              <h3 className="text-sm font-medium text-cyan-300/90">
+                {bucket.groupName}
+                <span className="ml-2 text-muted-foreground">({bucket.matches.length})</span>
+              </h3>
+              <div className="space-y-2">
+                {bucket.matches.map((match) => {
+                  const cat = bundle.categories.find((c) => c.id === match.category_id);
+                  return (
+                    <ScheduleMatchCard key={match.id} match={match} bundle={bundle} category={cat} compact />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : null}
+
+      {view === 'day' && matches.length > 0 ? (
+        <div className="space-y-4">
+          {days.map((day) => (
+            <section key={day.dateKey} className="space-y-2">
+              <h3 className="flex items-center gap-2 text-sm font-medium capitalize">
+                <CalendarClock className="size-4 text-cyan-300" />
+                {day.label}
+                <span className="text-muted-foreground">({day.matches.length})</span>
+              </h3>
+              <div className="space-y-2">
+                {day.matches.map((match) => {
+                  const cat = bundle.categories.find((c) => c.id === match.category_id);
+                  return <ScheduleMatchCard key={match.id} match={match} bundle={bundle} category={cat} />;
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
