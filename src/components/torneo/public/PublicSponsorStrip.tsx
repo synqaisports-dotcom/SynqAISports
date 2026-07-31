@@ -29,7 +29,7 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
         variant === 'footer' ? 'py-8' : 'py-4'
       )}
     >
-      <div className="mx-auto max-w-6xl px-4">
+      <div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400/70">
             Patrocinadores del torneo
@@ -42,7 +42,7 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
         </div>
 
         {gold.length > 0 ? (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <div className="mt-3 flex flex-wrap items-center justify-start gap-4 sm:gap-6">
             {gold.map((s) => (
               <SponsorLogo key={s.id} sponsor={s} sizeClass={TIER_SIZE.gold} featured />
             ))}
@@ -52,7 +52,7 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
         {others.length > 0 ? (
           <div
             className={cn(
-              'flex flex-wrap items-center justify-center gap-3 sm:gap-4',
+              'flex flex-wrap items-center justify-start gap-3 sm:gap-4',
               gold.length > 0 ? 'mt-3 border-t border-white/5 pt-3' : 'mt-3'
             )}
           >

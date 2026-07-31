@@ -3,6 +3,17 @@
   --foreground: 210 40% 96%;
   --primary: 183 100% 50%;
   --muted-foreground: 215 20% 65%;
+  --synq-navy: #060a12;
+}
+
+.torneo-pwa.synq-mesh-bg {
+  background-color: var(--synq-navy);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='24.25' viewBox='0 0 28 24.25'%3E%3Cpath d='M14 0 L28 8.25 L28 24.75 L14 33 L0 24.75 L0 8.25 Z' fill='none' stroke='%2300E5FF' stroke-opacity='0.05' stroke-width='0.6'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(0, 229, 255, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(0, 229, 255, 0.08), transparent),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(10, 21, 34, 0.95), transparent);
+  background-size: 42px 36px, auto, auto, auto;
 }
 
 .torneo-pwa .portal-section-surface {

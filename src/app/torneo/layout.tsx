@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function TorneoPwaLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="torneo-pwa dark min-h-dvh bg-[#060a12] text-foreground antialiased">
+    <div className="torneo-pwa synq-mesh-bg dark min-h-dvh text-foreground antialiased">
       {children}
     </div>
   );
