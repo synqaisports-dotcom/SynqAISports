@@ -274,13 +274,8 @@ export async function loadTournamentBundle(tournamentId: string): Promise<Tourna
 }
 
 export async function loadTournamentBySlug(slug: string): Promise<TournamentBundle | null> {
-  const demo = demoBundleBySlug(slug);
-  if (demo) return demo;
-
-  const supabase = await createClient();
-  const { data } = await supabase.from('synq_tournaments').select('id').eq('slug', slug).maybeSingle();
-  if (!data) return null;
-  return loadTournamentBundle(String(data.id));
+  const { loadPublicTournamentBySlug } = await import('@/lib/tournament-loader');
+  return loadPublicTournamentBySlug(slug);
 }
 
 export async function loadTournamentBySignageToken(token: string): Promise<TournamentBundle | null> {

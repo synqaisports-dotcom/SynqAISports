@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TournamentClasificacionPanel } from '@/components/portal/torneos/TournamentClasificacionPanel';
 import { TournamentSchedulePanel } from '@/components/portal/torneos/TournamentSchedulePanel';
 import { PublicBracketsPanel } from '@/components/torneo/public/PublicBracketsPanel';
@@ -42,10 +42,11 @@ type Props = {
 
 export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab');
-  const parsedTab = parsePublicTournamentTab(tabParam ?? initialTab);
-  const [tab, setTab] = useState<PublicTournamentTabId>(parsedTab);
+  const [tab, setTab] = useState<PublicTournamentTabId>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const { tournament } = bundle;
   const liveMatches = bundle.matches.filter((m) => m.status === 'live');
