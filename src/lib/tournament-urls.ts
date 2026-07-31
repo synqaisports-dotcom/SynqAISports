@@ -4,6 +4,10 @@ export function mesaUrl(token: string): string {
   return `/torneo/mesa/${token}`;
 }
 
+export function mesaHubUrl(token: string): string {
+  return `/torneo/mesa/hub/${token}`;
+}
+
 export function delegateUrl(token: string): string {
   return `/torneo/equipo/${token}`;
 }

@@ -2,6 +2,7 @@
 
 import { requireClubId } from '@/lib/auth-staff';
 import {
+  DEMO_MESA_HUB_TOKEN,
   DEMO_TOURNAMENT_ID,
   DEMO_TOURNAMENTS_CLUB_ID,
   getDemoTournamentBundle,
@@ -25,7 +26,7 @@ import { getCategorySchedulingMap } from '@/lib/tournaments';
 import {
   delegateUrl,
   gateUrl,
-  mesaUrl,
+  mesaHubUrl,
   publicTournamentUrl,
 } from '@/lib/tournament-urls';
 import {
@@ -223,6 +224,7 @@ export type DemoTorneoPwaLinks = {
   publicWeb: string;
   mesa: string;
   mesaLabel: string;
+  mesaHub: string;
   delegado: string;
   delegadoLabel: string;
   taquilla: string;
@@ -230,6 +232,11 @@ export type DemoTorneoPwaLinks = {
   confirmedPlayers: number;
   pendingPlayers: number;
 };
+
+function mesaHubTokenFromTournament(tournament: { slug: string; format_json: Record<string, unknown> }): string {
+  const signage = tournament.format_json?.signage as { mesa_hub_token?: string } | undefined;
+  return signage?.mesa_hub_token ?? `hub-${tournament.slug}`;
+}
 
 export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoTorneoPwaLinks | null> {
   const bundle = await loadTournamentBundle(tournamentId);
@@ -239,6 +246,8 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
   const liveMatch =
     matches.find((m) => m.status === 'live' && m.mesa_token) ?? matches.find((m) => m.mesa_token);
   const team = teams.find((t) => t.invite_token);
+  const hubToken = mesaHubTokenFromTournament(tournament);
+  const mesaMatches = matches.filter((m) => m.mesa_token);
 
   let taquilla = '/torneo/demo';
   if (await isDemoActive() || demoBundleById(tournamentId)) {
@@ -250,10 +259,14 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
   return {
     tournamentName: tournament.name,
     publicWeb: publicTournamentUrl(tournament.slug),
-    mesa: liveMatch?.mesa_token ? mesaUrl(liveMatch.mesa_token) : publicTournamentUrl(tournament.slug),
-    mesaLabel: liveMatch
-      ? `${teams.find((t) => t.id === liveMatch.home_team_id)?.name ?? 'Local'} vs ${teams.find((t) => t.id === liveMatch.away_team_id)?.name ?? 'Visitante'}`
-      : 'Sin partido asignado',
+    mesa: mesaHubUrl(hubToken),
+    mesaLabel:
+      mesaMatches.length > 0
+        ? `${mesaMatches.length} partidos · ${matches.filter((m) => m.status === 'live').length} en juego`
+        : liveMatch
+          ? `${teams.find((t) => t.id === liveMatch.home_team_id)?.name ?? 'Local'} vs ${teams.find((t) => t.id === liveMatch.away_team_id)?.name ?? 'Visitante'}`
+          : 'Sin partidos con mesa',
+    mesaHub: mesaHubUrl(hubToken),
     delegado: team?.invite_token ? delegateUrl(team.invite_token) : publicTournamentUrl(tournament.slug),
     delegadoLabel: team?.name ?? 'Equipo invitado',
     taquilla,
@@ -1336,6 +1349,61 @@ export async function loadMatchByMesaToken(token: string): Promise<{
   const bundle = await loadTournamentBundle(String(match.tournament_id));
   if (!bundle) return null;
   return { match: match as TournamentMatch, bundle };
+}
+
+function resolveMesaHubBundle(token: string): TournamentBundle | null {
+  if (token === DEMO_MESA_HUB_TOKEN) {
+    return getDemoTournamentBundle(DEMO_TOURNAMENT_ID);
+  }
+
+  const store = getDemoTournamentsStore();
+  const demoTournament = store.tournaments.find((t) => {
+    const signage = t.format_json?.signage as { mesa_hub_token?: string } | undefined;
+    return signage?.mesa_hub_token === token;
+  });
+  if (demoTournament) {
+    return getDemoTournamentBundle(demoTournament.id);
+  }
+
+  if (token.startsWith('hub-')) {
+    const slug = token.slice(4);
+    const bySlug = store.tournaments.find((t) => t.slug === slug);
+    if (bySlug) return getDemoTournamentBundle(bySlug.id);
+  }
+
+  return null;
+}
+
+export async function loadMesaHubByToken(token: string): Promise<{
+  bundle: TournamentBundle;
+  matches: TournamentMatch[];
+} | null> {
+  const demoBundle = resolveMesaHubBundle(token);
+  if (demoBundle) {
+    const matches = demoBundle.matches.filter((m) => m.mesa_token);
+    return { bundle: demoBundle, matches };
+  }
+
+  if (await isDemoActive()) {
+    return null;
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data: tournaments } = await supabase.from('synq_tournaments').select('id, slug, format_json');
+
+  const tournament = (tournaments ?? []).find((row) => {
+    const signage = (row.format_json as { signage?: { mesa_hub_token?: string } })?.signage;
+    if (signage?.mesa_hub_token === token) return true;
+    return token === `hub-${String(row.slug)}`;
+  });
+
+  if (!tournament) return null;
+
+  const bundle = await loadTournamentBundle(String(tournament.id));
+  if (!bundle) return null;
+
+  const matches = bundle.matches.filter((m) => m.mesa_token);
+  return { bundle, matches };
 }
 
 export async function loadTeamByInviteToken(token: string): Promise<{

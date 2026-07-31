@@ -296,6 +296,8 @@ export type MatchEvent = {
   team_id: string | null;
   player_name?: string;
   description?: string;
+  /** Gol anulado por VAR o arbitraje — no cuenta en el marcador. */
+  voided?: boolean;
 };
 
 export type TournamentMatch = {

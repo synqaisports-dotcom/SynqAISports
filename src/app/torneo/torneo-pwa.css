@@ -33,7 +33,7 @@
 
 .synq-sponsor-marquee {
   overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, black 8%, black 100%);
+  mask-image: linear-gradient(to right, black 0%, black 92%, transparent 100%);
 }
 
 .synq-sponsor-marquee-track {
@@ -41,7 +41,6 @@
   width: max-content;
   align-items: center;
   gap: 1.25rem;
-  padding-left: 100%;
   animation: synq-sponsor-marquee 36s linear infinite;
 }
 

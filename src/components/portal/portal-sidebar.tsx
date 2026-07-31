@@ -179,7 +179,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
   return (
     <PortalSidebarContext.Provider value={contextValue}>
       <TooltipProvider delayDuration={120}>
-        <div className="flex min-h-svh w-full">
+        <div className="flex h-svh w-full overflow-hidden">
           {!isMobile ? (
             <>
               <div className="hidden shrink-0 md:block" style={{ width: RAIL_PX }} aria-hidden />
@@ -212,7 +212,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
             </Sheet>
           )}
 
-          <div className="portal-main-surface flex min-h-svh min-w-0 flex-1 flex-col">{children}</div>
+          <div className="portal-main-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
         </div>
       </TooltipProvider>
     </PortalSidebarContext.Provider>

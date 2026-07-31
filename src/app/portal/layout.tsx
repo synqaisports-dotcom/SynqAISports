@@ -25,7 +25,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <PortalThemeProvider>
-      <div className="portal-dashboard dark min-h-svh">
+      <div className="portal-dashboard dark h-svh overflow-hidden">
         <PortalShell
           clubName={ctx.club.name}
           clubLogoUrl={ctx.club.logo_url}
