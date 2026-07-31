@@ -1,4 +1,5 @@
-import { PublicTournamentHub, parsePublicTournamentTab } from '@/components/torneo/public/PublicTournamentHub';
+import { PublicTournamentHub } from '@/components/torneo/public/PublicTournamentHub';
+import { parsePublicTournamentTab } from '@/lib/public-tournament-tabs';
 import type { TournamentBundle } from '@/lib/tournaments';
 
 type Props = {

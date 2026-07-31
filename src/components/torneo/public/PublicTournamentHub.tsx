@@ -8,6 +8,11 @@ import { PublicBracketsPanel } from '@/components/torneo/public/PublicBracketsPa
 import { PublicSponsorStrip } from '@/components/torneo/public/PublicSponsorStrip';
 import { PublicSponsorsPanel } from '@/components/torneo/public/PublicSponsorsPanel';
 import {
+  parsePublicTournamentTab,
+  PUBLIC_TOURNAMENT_TABS,
+  type PublicTournamentTabId,
+} from '@/lib/public-tournament-tabs';
+import {
   TOURNAMENT_SPORT_LABELS,
   TOURNAMENT_STATUS_LABELS,
   type TournamentBundle,
@@ -25,14 +30,12 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export const PUBLIC_TOURNAMENT_TABS = [
-  { id: 'horarios', label: 'Horarios', icon: CalendarClock },
-  { id: 'clasificacion', label: 'Clasificación', icon: ListOrdered },
-  { id: 'cruces', label: 'Cruces', icon: GitBranch },
-  { id: 'patrocinadores', label: 'Patrocinadores', icon: Megaphone },
-] as const;
-
-export type PublicTournamentTabId = (typeof PUBLIC_TOURNAMENT_TABS)[number]['id'];
+const TAB_ICONS: Record<PublicTournamentTabId, LucideIcon> = {
+  horarios: CalendarClock,
+  clasificacion: ListOrdered,
+  cruces: GitBranch,
+  patrocinadores: Megaphone,
+};
 
 type Props = {
   bundle: TournamentBundle;
@@ -143,7 +146,9 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
         aria-label="Secciones del torneo"
       >
         <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 py-2">
-          {PUBLIC_TOURNAMENT_TABS.map(({ id, label, icon: Icon }) => (
+          {PUBLIC_TOURNAMENT_TABS.map(({ id, label }) => {
+            const Icon = TAB_ICONS[id];
+            return (
             <button
               key={id}
               type="button"
@@ -158,7 +163,8 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
               <Icon className="size-4" />
               {label}
             </button>
-          ))}
+            );
+          })}
         </div>
       </nav>
 
@@ -198,10 +204,4 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
       </footer>
     </div>
   );
-}
-
-export function parsePublicTournamentTab(value: string | undefined): PublicTournamentTabId {
-  const ids = PUBLIC_TOURNAMENT_TABS.map((t) => t.id);
-  if (value && ids.includes(value as PublicTournamentTabId)) return value as PublicTournamentTabId;
-  return 'horarios';
 }
