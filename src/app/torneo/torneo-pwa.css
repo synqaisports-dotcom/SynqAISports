@@ -32,7 +32,8 @@
 
 .synq-sponsor-marquee {
   overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  /* Desvanecido solo a la izquierda; margen derecho libre para entrada */
+  mask-image: linear-gradient(to right, transparent, black 8%, black 100%);
 }
 
 .synq-sponsor-marquee-track {
@@ -40,6 +41,8 @@
   width: max-content;
   align-items: center;
   gap: 1.25rem;
+  /* El primer logo arranca pegado al margen derecho del contenedor */
+  padding-left: 100%;
   animation: synq-sponsor-marquee 36s linear infinite;
 }
 
@@ -52,6 +55,7 @@
     animation: none;
     flex-wrap: wrap;
     width: 100%;
+    padding-left: 0;
     justify-content: center;
   }
 }
