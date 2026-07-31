@@ -53,6 +53,21 @@ export function TorneoPwaHub({ links }: { links: DemoTorneoPwaLinks }) {
         </p>
       </header>
 
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Jugadores totales</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-cyan-300">{links.totalPlayers}</p>
+        </div>
+        <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Confirmados</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-300">{links.confirmedPlayers}</p>
+        </div>
+        <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pendientes</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-amber-300">{links.pendingPlayers}</p>
+        </div>
+      </div>
+
       <div className="space-y-3">
         {items.map(({ href, icon: Icon, title, desc }) => (
           <Link key={href} href={href} className={cardClass}>

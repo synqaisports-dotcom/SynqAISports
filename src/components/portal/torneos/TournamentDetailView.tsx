@@ -81,7 +81,7 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
           <TournamentHeaderActions tournament={tournament} />
         </div>
 
-        <nav className="mt-4 flex gap-1 overflow-x-auto border-t border-border/50 pt-4 pb-1" aria-label="Secciones del torneo">
+        <nav className="mt-4 flex flex-wrap gap-1 border-t border-border/50 pt-4 pb-1" aria-label="Secciones del torneo">
           {TOURNAMENT_TABS.map(({ id, label, icon: Icon }) => (
             <TabLink
               key={id}

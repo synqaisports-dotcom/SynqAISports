@@ -98,6 +98,21 @@ export function DelegatePortal({ team, bundle }: Props) {
               : ''}
           </p>
         ) : null}
+
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Plantilla</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-cyan-300">{filledCount}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Máximo</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums">{MAX_SQUAD}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pendientes</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-amber-300">{Math.max(0, MAX_SQUAD - filledCount)}</p>
+          </div>
+        </div>
       </div>
 
       {mode === 'confirmed' ? (

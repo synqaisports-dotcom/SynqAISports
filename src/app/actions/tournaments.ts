@@ -9,6 +9,7 @@ import {
 } from '@/lib/demo-tournaments-store';
 import { isDemoActive } from '@/lib/demo';
 import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
+import { buildTournamentPlayerMetrics } from '@/lib/tournament-summary';
 import {
   analyzeCategoryCapacity,
   suggestCategoryWindows,
@@ -49,6 +50,7 @@ import {
   totalEstimatedRevenueCents,
   type FormatType,
   type FieldDivisionMode,
+  type MatchEvent,
   type Tournament,
   type TournamentBundle,
   type TournamentCategory,
@@ -105,7 +107,8 @@ function updateDemoMatchScore(
   match: TournamentMatch,
   scoreHome: number,
   scoreAway: number,
-  status: TournamentMatch['status']
+  status: TournamentMatch['status'],
+  eventsJson?: MatchEvent[]
 ): TournamentActionState {
   if (isMesaTokenExpired(match.mesa_token_expires_at)) {
     return { ok: false, message: 'Enlace de mesa caducado. Solicita uno nuevo al organizador.' };
@@ -114,6 +117,7 @@ function updateDemoMatchScore(
   match.score_home = scoreHome;
   match.score_away = scoreAway;
   match.status = status;
+  if (eventsJson) match.events_json = eventsJson;
   if (status === 'live' && !match.live_started_at) {
     match.live_started_at = new Date().toISOString();
   }
@@ -126,6 +130,13 @@ function updateDemoMatchScore(
   revalidateTournaments();
   return { ok: true, message: 'Guardado' };
 }
+
+export type MesaMatchUpdate = {
+  scoreHome: number;
+  scoreAway: number;
+  status: TournamentMatch['status'];
+  eventsJson?: MatchEvent[];
+};
 
 function mapTournament(row: Record<string, unknown>): Tournament {
   return {
@@ -215,6 +226,9 @@ export type DemoTorneoPwaLinks = {
   delegado: string;
   delegadoLabel: string;
   taquilla: string;
+  totalPlayers: number;
+  confirmedPlayers: number;
+  pendingPlayers: number;
 };
 
 export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoTorneoPwaLinks | null> {
@@ -231,6 +245,8 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
     taquilla = gateUrl(getDemoTournamentsStore().gateToken);
   }
 
+  const players = buildTournamentPlayerMetrics(bundle);
+
   return {
     tournamentName: tournament.name,
     publicWeb: publicTournamentUrl(tournament.slug),
@@ -241,6 +257,7 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
     delegado: team?.invite_token ? delegateUrl(team.invite_token) : publicTournamentUrl(tournament.slug),
     delegadoLabel: team?.name ?? 'Equipo invitado',
     taquilla,
+    ...players,
   };
 }
 
@@ -1242,20 +1259,19 @@ export async function updateMatchScore(
 
 export async function updateMatchScoreByMesaToken(
   token: string,
-  scoreHome: number,
-  scoreAway: number,
-  status: TournamentMatch['status']
+  update: MesaMatchUpdate
 ): Promise<TournamentActionState> {
+  const { scoreHome, scoreAway, status, eventsJson } = update;
   const store = getDemoTournamentsStore();
   const demoMatch = store.matches.find((m) => m.mesa_token === token);
   if (demoMatch) {
-    return updateDemoMatchScore(demoMatch, scoreHome, scoreAway, status);
+    return updateDemoMatchScore(demoMatch, scoreHome, scoreAway, status, eventsJson);
   }
 
   const supabase = createServiceClient() ?? (await createClient());
   const { data } = await supabase
     .from('synq_tournament_matches')
-    .select('id, mesa_token_expires_at, tournament_id')
+    .select('id, mesa_token_expires_at, tournament_id, live_started_at')
     .eq('mesa_token', token)
     .maybeSingle();
   if (!data) return { ok: false, message: 'Token inválido' };
@@ -1263,13 +1279,21 @@ export async function updateMatchScoreByMesaToken(
     return { ok: false, message: 'Enlace de mesa caducado. Solicita uno nuevo al organizador.' };
   }
 
+  const liveStartedAt =
+    status === 'live'
+      ? data.live_started_at
+        ? String(data.live_started_at)
+        : new Date().toISOString()
+      : undefined;
+
   const { error } = await supabase
     .from('synq_tournament_matches')
     .update({
       score_home: scoreHome,
       score_away: scoreAway,
       status,
-      live_started_at: status === 'live' ? new Date().toISOString() : undefined,
+      events_json: eventsJson,
+      live_started_at: liveStartedAt,
       live_finished_at: status === 'finished' ? new Date().toISOString() : undefined,
     })
     .eq('id', data.id);

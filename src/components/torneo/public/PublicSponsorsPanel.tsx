@@ -33,13 +33,14 @@ export function PublicSponsorsPanel({ sponsors }: Props) {
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Empresas y marcas que hacen posible este torneo. Su apoyo se refleja en la web, el dossier del evento y las pantallas del recinto.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
+        <div className="mt-8 flex flex-wrap items-center justify-start gap-6">
           {active
             .filter((s) => s.tier === 'gold')
-            .map((s) => (
+            .map((s, index) => (
               <div
                 key={s.id}
-                className="flex h-20 w-36 items-center justify-center rounded-xl border border-cyan-400/30 bg-white/[0.04] p-3 sm:h-24 sm:w-44"
+                className="synq-sponsor-reveal-item flex h-20 w-36 items-center justify-center rounded-xl border border-cyan-400/30 bg-white/[0.04] p-3 sm:h-24 sm:w-44"
+                style={{ animationDelay: `${index * 420}ms` }}
               >
                 {s.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -70,8 +71,8 @@ export function PublicSponsorsPanel({ sponsors }: Props) {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {tierSponsors.map((s) => (
-                <SponsorCard key={s.id} sponsor={s} meta={meta} />
+              {tierSponsors.map((s, index) => (
+                <SponsorCard key={s.id} sponsor={s} meta={meta} revealDelayMs={index * 320} />
               ))}
             </div>
           </section>
@@ -84,14 +85,16 @@ export function PublicSponsorsPanel({ sponsors }: Props) {
 function SponsorCard({
   sponsor,
   meta,
+  revealDelayMs = 0,
 }: {
   sponsor: TournamentSponsor;
   meta: (typeof TOURNAMENT_SPONSOR_TIER_META)[keyof typeof TOURNAMENT_SPONSOR_TIER_META];
+  revealDelayMs?: number;
 }) {
   return (
     <article
-      className="portal-section-surface flex flex-col overflow-hidden rounded-xl border border-border/50"
-      style={{ borderTopColor: meta.color, borderTopWidth: 3 }}
+      className="synq-sponsor-reveal-item portal-section-surface flex flex-col overflow-hidden rounded-xl border border-border/50"
+      style={{ animationDelay: `${revealDelayMs}ms`, borderTopColor: meta.color, borderTopWidth: 3 }}
     >
       <div className="flex items-center justify-center border-b border-border/30 bg-background/20 p-6">
         {sponsor.logo_url ? (

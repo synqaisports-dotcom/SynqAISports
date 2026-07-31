@@ -14,6 +14,7 @@ import {
 import { TournamentChartTooltip } from '@/components/portal/torneos/TournamentChartTooltip';
 import {
   buildTournamentOperationsChart,
+  buildTournamentPlayersChart,
   buildTournamentProjectionChart,
   buildTournamentRevenueBreakdownChart,
   buildTournamentSummaryMetrics,
@@ -53,6 +54,7 @@ function euroFormatter(value: number) {
 export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
   const metrics = buildTournamentSummaryMetrics(bundle);
   const operationsChart = buildTournamentOperationsChart(metrics);
+  const playersChart = buildTournamentPlayersChart(metrics);
   const projectionChart = buildTournamentProjectionChart(metrics);
   const revenueChart = buildTournamentRevenueBreakdownChart(bundle);
   const teamsWithLogo = bundle.teams.filter((t) => t.logo_url).length;
@@ -94,6 +96,22 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
+        <ChartCard title="Jugadores del torneo" subtitle="Plantillas registradas, confirmadas y pendientes">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={playersChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(183 100% 50% / 0.12)" />
+              <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 65%)', fontSize: 10 }} />
+              <YAxis allowDecimals={false} tick={{ fill: 'hsl(215 20% 65%)', fontSize: 11 }} />
+              <Tooltip cursor={SYNQ_CHART_CURSOR} content={<TournamentChartTooltip />} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {playersChart.map((entry) => (
+                  <Cell key={entry.key} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
         <ChartCard title="Desglose de ingresos" subtitle="Por fuente de ingreso estimada (€)">
           {revenueChart.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -116,7 +134,7 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
           )}
         </ChartCard>
 
-        <div className="portal-section-surface rounded-xl p-4 lg:col-span-2">
+        <div className="portal-section-surface rounded-xl p-4 lg:col-span-1">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 font-medium">
@@ -131,9 +149,10 @@ export function TournamentSummaryPanel({ bundle, tournamentId }: Props) {
               <Link href={`/portal/torneos/${tournamentId}?tab=equipos`}>Configurar logos</Link>
             </Button>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
             <SummaryStat label="Equipos con logo" value={`${teamsWithLogo}/${metrics.totalTeams}`} />
-            <SummaryStat label="Padres / acompañantes est." value={String(metrics.parentsEstimate)} />
+            <SummaryStat label="Jugadores confirmados" value={String(metrics.confirmedPlayers)} />
+            <SummaryStat label="Jugadores pendientes" value={String(metrics.pendingPlayers)} />
             <SummaryStat label="Ingresos totales est." value={euroFormatter(metrics.revenueEur)} highlight />
           </div>
           <Button asChild size="sm" variant="ghost" className="mt-3 h-8 text-cyan-300 hover:text-cyan-200">
