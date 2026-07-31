@@ -4,10 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TournamentClasificacionPanel } from '@/components/portal/torneos/TournamentClasificacionPanel';
 import { TournamentSchedulePanel } from '@/components/portal/torneos/TournamentSchedulePanel';
-import { PublicAdMobileBanner } from '@/components/torneo/public/PublicAdMobileBanner';
 import { PublicAdScript } from '@/components/torneo/public/PublicAdScript';
-import { PublicAdSidebar } from '@/components/torneo/public/PublicAdSidebar';
 import { PublicBracketsPanel } from '@/components/torneo/public/PublicBracketsPanel';
+import { PublicCategoryAd } from '@/components/torneo/public/PublicCategoryAd';
 import { PublicSponsorStrip } from '@/components/torneo/public/PublicSponsorStrip';
 import { PublicSponsorsPanel } from '@/components/torneo/public/PublicSponsorsPanel';
 import {
@@ -40,14 +39,17 @@ const TAB_ICONS: Record<PublicTournamentTabId, LucideIcon> = {
   patrocinadores: Megaphone,
 };
 
-const PAGE_GRID =
-  'mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_320px]';
+const CONTENT_MAX = 'mx-auto w-full max-w-6xl px-4';
 
 type Props = {
   bundle: TournamentBundle;
   slug: string;
   initialTab?: PublicTournamentTabId;
 };
+
+function renderCategoryAd(category: { name: string }) {
+  return <PublicCategoryAd categoryName={category.name} />;
+}
 
 export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: Props) {
   const router = useRouter();
@@ -60,6 +62,8 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
   const { tournament } = bundle;
   const liveMatches = bundle.matches.filter((m) => m.status === 'live');
   const sponsorsHref = `/torneo/${slug}?tab=patrocinadores`;
+  const hasSponsors = bundle.sponsors.some((s) => s.active);
+  const showFixedSponsors = hasSponsors && tab !== 'patrocinadores';
 
   const dateLabel = useMemo(() => {
     if (!tournament.starts_at) return null;
@@ -82,7 +86,7 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
   );
 
   return (
-    <div className="relative min-h-dvh">
+    <div className={cn('relative min-h-dvh', showFixedSponsors && 'pb-28 md:pb-32')}>
       <PublicAdScript />
 
       {/* Hero */}
@@ -101,133 +105,128 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/12 via-transparent to-violet-500/8" />
         )}
 
-        <div className={cn(PAGE_GRID, 'relative py-8 md:py-12')}>
-          <div className="min-w-0 text-left">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200">
-                <Trophy className="mr-1 size-3" />
-                Torneo oficial
+        <div className={cn(CONTENT_MAX, 'relative py-8 text-left md:py-12')}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200">
+              <Trophy className="mr-1 size-3" />
+              Torneo oficial
+            </Badge>
+            <Badge variant="outline">{TOURNAMENT_STATUS_LABELS[tournament.status]}</Badge>
+            {liveMatches.length > 0 ? (
+              <Badge className="border-cyan-400/40 bg-cyan-400/15 text-cyan-100">
+                <Radio className="mr-1 size-3 animate-pulse" />
+                {liveMatches.length} en vivo
               </Badge>
-              <Badge variant="outline">{TOURNAMENT_STATUS_LABELS[tournament.status]}</Badge>
-              {liveMatches.length > 0 ? (
-                <Badge className="border-cyan-400/40 bg-cyan-400/15 text-cyan-100">
-                  <Radio className="mr-1 size-3 animate-pulse" />
-                  {liveMatches.length} en vivo
-                </Badge>
-              ) : null}
-            </div>
-
-            <h1 className="mt-4 text-left text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
-              {tournament.name}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-left text-sm text-white/70">
-              <span>{TOURNAMENT_SPORT_LABELS[tournament.sport_key]}</span>
-              {dateLabel ? <span>{dateLabel}</span> : null}
-              {tournament.venue_name ? (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="size-3.5 text-cyan-300" />
-                  {tournament.venue_name}
-                </span>
-              ) : null}
-            </div>
-
-            {tournament.description ? (
-              <p className="mt-4 max-w-2xl text-left text-sm leading-relaxed text-white/60">
-                {tournament.description}
-              </p>
             ) : null}
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {bundle.categories.map((c) => (
-                <span
-                  key={c.id}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80"
-                >
-                  {c.name}
-                </span>
-              ))}
-            </div>
           </div>
 
-          <div className="hidden lg:block" aria-hidden />
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+            {tournament.name}
+          </h1>
+
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/70">
+            <span>{TOURNAMENT_SPORT_LABELS[tournament.sport_key]}</span>
+            {dateLabel ? <span>{dateLabel}</span> : null}
+            {tournament.venue_name ? (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3.5 text-cyan-300" />
+                {tournament.venue_name}
+              </span>
+            ) : null}
+          </div>
+
+          {tournament.description ? (
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/60">{tournament.description}</p>
+          ) : null}
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {bundle.categories.map((c) => (
+              <span
+                key={c.id}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80"
+              >
+                {c.name}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
 
-      <div className={PAGE_GRID}>
-        <div className="min-w-0">
-          {/* Sticky tabs */}
+      {/* Sticky tabs — estilo portal */}
+      <div className="sticky top-0 z-30 border-b border-border/40 bg-[#060a12]/90 backdrop-blur-md">
+        <div className={cn(CONTENT_MAX, 'py-3')}>
           <nav
-            className="sticky top-0 z-20 -mx-4 border-b border-border/50 bg-[#060a12]/85 px-4 backdrop-blur-md lg:mx-0 lg:rounded-b-xl lg:border-x lg:border-border/40"
+            className="portal-section-surface flex gap-1 overflow-x-auto rounded-xl p-1.5"
             aria-label="Secciones del torneo"
           >
-            <div className="flex gap-1 overflow-x-auto py-2">
-              {PUBLIC_TOURNAMENT_TABS.map(({ id, label }) => {
-                const Icon = TAB_ICONS[id];
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => selectTab(id)}
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors',
-                      tab === id
-                        ? 'bg-cyan-400/15 text-cyan-200 shadow-[0_0_20px_hsl(183_100%_50%_/_0.12)]'
-                        : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="size-4" />
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+            {PUBLIC_TOURNAMENT_TABS.map(({ id, label }) => {
+              const Icon = TAB_ICONS[id];
+              const active = tab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => selectTab(id)}
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors',
+                    active
+                      ? 'bg-primary/15 text-primary shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </button>
+              );
+            })}
           </nav>
-
-          {/* Live ticker */}
-          {liveMatches.length > 0 && tab !== 'horarios' ? (
-            <div className="mt-4 rounded-xl border border-cyan-400/20 bg-cyan-400/5 px-4 py-2">
-              <div className="flex items-center gap-2 overflow-x-auto text-xs">
-                <Radio className="size-3.5 shrink-0 animate-pulse text-cyan-300" />
-                <span className="shrink-0 font-medium text-cyan-200">En vivo ahora</span>
-                {liveMatches.slice(0, 4).map((m) => {
-                  const home = bundle.teams.find((t) => t.id === m.home_team_id)?.name ?? '—';
-                  const away = bundle.teams.find((t) => t.id === m.away_team_id)?.name ?? '—';
-                  return (
-                    <span key={m.id} className="shrink-0 text-muted-foreground">
-                      {home} vs {away}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Content */}
-          <main className="py-6 md:py-8">
-            {tab === 'horarios' ? <TournamentSchedulePanel bundle={bundle} /> : null}
-            {tab === 'clasificacion' ? <TournamentClasificacionPanel bundle={bundle} /> : null}
-            {tab === 'cruces' ? <PublicBracketsPanel bundle={bundle} /> : null}
-            {tab === 'patrocinadores' ? <PublicSponsorsPanel sponsors={bundle.sponsors} /> : null}
-          </main>
-
-          <PublicAdMobileBanner className="mb-6" />
-
-          {tab !== 'patrocinadores' ? (
-            <PublicSponsorStrip sponsors={bundle.sponsors} sponsorsTabHref={sponsorsHref} />
-          ) : null}
-
-          <footer className="border-t border-white/5 py-6 text-left text-[10px] uppercase tracking-widest text-muted-foreground">
-            SynqAI Sports · Torneo en vivo
-          </footer>
         </div>
-
-        <aside className="hidden lg:block">
-          <div className="sticky top-6 pt-2">
-            <PublicAdSidebar />
-          </div>
-        </aside>
       </div>
+
+      {/* Live ticker */}
+      {liveMatches.length > 0 && tab !== 'horarios' ? (
+        <div className="border-b border-cyan-400/20 bg-cyan-400/5">
+          <div className={cn(CONTENT_MAX, 'flex items-center gap-2 overflow-x-auto py-2 text-xs')}>
+            <Radio className="size-3.5 shrink-0 animate-pulse text-cyan-300" />
+            <span className="shrink-0 font-medium text-cyan-200">En vivo ahora</span>
+            {liveMatches.slice(0, 4).map((m) => {
+              const home = bundle.teams.find((t) => t.id === m.home_team_id)?.name ?? '—';
+              const away = bundle.teams.find((t) => t.id === m.away_team_id)?.name ?? '—';
+              return (
+                <span key={m.id} className="shrink-0 text-muted-foreground">
+                  {home} vs {away}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Content — ancho completo como antes */}
+      <main className={cn(CONTENT_MAX, 'py-8')}>
+        {tab === 'horarios' ? (
+          <TournamentSchedulePanel bundle={bundle} renderAfterCategory={renderCategoryAd} />
+        ) : null}
+        {tab === 'clasificacion' ? (
+          <TournamentClasificacionPanel bundle={bundle} renderAfterCategory={renderCategoryAd} />
+        ) : null}
+        {tab === 'cruces' ? <PublicBracketsPanel bundle={bundle} /> : null}
+        {tab === 'patrocinadores' ? <PublicSponsorsPanel sponsors={bundle.sponsors} /> : null}
+      </main>
+
+      <footer
+        className={cn(
+          CONTENT_MAX,
+          'border-t border-white/5 py-6 text-left text-[10px] uppercase tracking-widest text-muted-foreground',
+          showFixedSponsors && 'pb-4'
+        )}
+      >
+        SynqAI Sports · Torneo en vivo
+      </footer>
+
+      {showFixedSponsors ? (
+        <PublicSponsorStrip sponsors={bundle.sponsors} sponsorsTabHref={sponsorsHref} fixed />
+      ) : null}
     </div>
   );
 }

@@ -13,9 +13,10 @@ type Props = {
   sponsors: TournamentSponsor[];
   variant?: 'strip' | 'footer';
   sponsorsTabHref?: string;
+  fixed?: boolean;
 };
 
-export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHref }: Props) {
+export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHref, fixed = false }: Props) {
   const active = sponsors.filter((s) => s.active);
   if (active.length === 0) return null;
 
@@ -25,11 +26,13 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
   return (
     <aside
       className={cn(
-        'border-t border-cyan-400/15 bg-gradient-to-r from-[#060a12] via-[#0a1628]/90 to-[#060a12]',
-        variant === 'footer' ? 'py-8' : 'py-4'
+        'border-t border-cyan-400/20 bg-[#060a12]/95 backdrop-blur-xl',
+        fixed && 'fixed bottom-0 left-0 right-0 z-40 shadow-[0_-12px_40px_rgba(0,0,0,0.45)]',
+        variant === 'footer' ? 'py-8' : 'py-3 md:py-4'
       )}
+      aria-label="Patrocinadores del torneo"
     >
-      <div>
+      <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400/70">
             Patrocinadores del torneo
@@ -42,7 +45,7 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
         </div>
 
         {gold.length > 0 ? (
-          <div className="mt-3 flex flex-wrap items-center justify-start gap-4 sm:gap-6">
+          <div className="mt-2 flex flex-wrap items-center justify-start gap-3 sm:gap-5 md:mt-3">
             {gold.map((s) => (
               <SponsorLogo key={s.id} sponsor={s} sizeClass={TIER_SIZE.gold} featured />
             ))}
@@ -52,8 +55,8 @@ export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHre
         {others.length > 0 ? (
           <div
             className={cn(
-              'flex flex-wrap items-center justify-start gap-3 sm:gap-4',
-              gold.length > 0 ? 'mt-3 border-t border-white/5 pt-3' : 'mt-3'
+              'flex flex-wrap items-center justify-start gap-2 sm:gap-3',
+              gold.length > 0 ? 'mt-2 border-t border-white/5 pt-2 md:mt-3 md:pt-3' : 'mt-2 md:mt-3'
             )}
           >
             {others.map((s) => (

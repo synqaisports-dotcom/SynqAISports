@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { GitBranch, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 
 const BRACKETS_ICON_CLASS =
   'inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-cyan-400 transition-colors hover:bg-cyan-400/10 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50';
@@ -19,6 +20,7 @@ const BRACKETS_ICON_CLASS =
 type Props = {
   bundle: TournamentBundle;
   categoryId?: string;
+  renderAfterCategory?: (category: TournamentCategory) => ReactNode;
 };
 
 function GroupStandingsTable({
@@ -116,7 +118,7 @@ function CategoryClasificacion({
   );
 }
 
-export function TournamentClasificacionPanel({ bundle, categoryId }: Props) {
+export function TournamentClasificacionPanel({ bundle, categoryId, renderAfterCategory }: Props) {
   const categories = categoryId
     ? bundle.categories.filter((c) => c.id === categoryId)
     : bundle.categories;
@@ -135,12 +137,14 @@ export function TournamentClasificacionPanel({ bundle, categoryId }: Props) {
     <>
       <div className="space-y-10">
         {categories.map((cat) => (
-          <CategoryClasificacion
-            key={cat.id}
-            bundle={bundle}
-            category={cat}
-            onOpenBrackets={() => setBracketsCategoryId(cat.id)}
-          />
+          <div key={cat.id} className="space-y-6">
+            <CategoryClasificacion
+              bundle={bundle}
+              category={cat}
+              onOpenBrackets={() => setBracketsCategoryId(cat.id)}
+            />
+            {renderAfterCategory?.(cat)}
+          </div>
         ))}
       </div>
 

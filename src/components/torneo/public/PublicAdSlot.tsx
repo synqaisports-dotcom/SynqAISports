@@ -64,21 +64,18 @@ function PublicAdPlaceholder({
   return (
     <div
       className={cn(
-        'portal-section-surface flex flex-col items-start justify-center rounded-xl border border-dashed border-cyan-400/25 p-4',
+        'flex flex-col items-start justify-center rounded-xl border border-dashed border-cyan-400/20 bg-white/[0.02] p-4',
         className
       )}
       style={{ minHeight: config.height }}
       aria-hidden
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-400/60">
-        Publicidad SynqAI
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-400/50">
+        Publicidad
       </span>
-      <p className="mt-1 text-left text-xs text-muted-foreground">
-        Espacio reservado para Google AdSense
-      </p>
       <div
-        className="mt-3 flex w-full items-center justify-center rounded-lg bg-white/[0.03] ring-1 ring-white/5"
-        style={{ height: Math.max(config.height - 72, 80) }}
+        className="mt-2 flex w-full items-center justify-center rounded-lg bg-white/[0.03] ring-1 ring-white/5"
+        style={{ height: Math.max(config.height - 40, 60) }}
       >
         <span className="text-[10px] text-white/25">
           {config.width} × {config.height}

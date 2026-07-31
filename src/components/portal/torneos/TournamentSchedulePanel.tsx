@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CalendarClock, List, MapPin, Radio } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 const PREVIEW_ROWS = 5;
 
@@ -26,6 +27,7 @@ type ViewMode = 'field' | 'group';
 type Props = {
   bundle: TournamentBundle;
   categoryId?: string;
+  renderAfterCategory?: (category: TournamentCategory) => ReactNode;
 };
 
 function MatchTeamsCell({
@@ -187,7 +189,7 @@ const viewTabs: { id: ViewMode; label: string; icon: typeof MapPin }[] = [
   { id: 'group', label: 'Por grupo', icon: CalendarClock },
 ];
 
-export function TournamentSchedulePanel({ bundle, categoryId }: Props) {
+export function TournamentSchedulePanel({ bundle, categoryId, renderAfterCategory }: Props) {
   const [view, setView] = useState<ViewMode>('field');
   const [sheetBucket, setSheetBucket] = useState<BucketMeta | null>(null);
 
@@ -249,13 +251,15 @@ export function TournamentSchedulePanel({ bundle, categoryId }: Props) {
 
         <div className="space-y-10">
           {categories.map((cat) => (
-            <CategorySchedule
-              key={cat.id}
-              bundle={bundle}
-              category={cat}
-              view={view}
-              onOpenBucket={setSheetBucket}
-            />
+            <div key={cat.id} className="space-y-6">
+              <CategorySchedule
+                bundle={bundle}
+                category={cat}
+                view={view}
+                onOpenBucket={setSheetBucket}
+              />
+              {renderAfterCategory?.(cat)}
+            </div>
           ))}
         </div>
       </div>

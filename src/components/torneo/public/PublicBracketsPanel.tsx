@@ -1,6 +1,7 @@
 'use client';
 
 import { TournamentCategoryBrackets } from '@/components/portal/torneos/TournamentCategoryBrackets';
+import { PublicCategoryAd } from '@/components/torneo/public/PublicCategoryAd';
 import type { TournamentBundle } from '@/lib/tournaments';
 import { GitBranch, Trophy } from 'lucide-react';
 
@@ -44,6 +45,7 @@ export function PublicBracketsPanel({ bundle }: Props) {
               <p className="text-sm tabular-nums text-muted-foreground">{knockoutMatches.length} partidos</p>
             </div>
             <TournamentCategoryBrackets bundle={bundle} category={category} showSchedule />
+            <PublicCategoryAd categoryName={category.name} />
           </section>
         );
       })}
