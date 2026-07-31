@@ -1,6 +1,6 @@
 import { getDemoClubIdFallback } from '@/lib/demo-constants';
 import { generateMultifinalCompetition } from '@/lib/tournament-brackets';
-import { generateAccessToken, generateInviteToken, hashToken } from '@/lib/tournament-tokens';
+import { generateAccessToken, hashToken } from '@/lib/tournament-tokens';
 import type {
   Tournament,
   TournamentBundle,
@@ -34,6 +34,20 @@ weekendEnd.setDate(weekendEnd.getDate() + 1);
 weekendEnd.setHours(20, 0, 0, 0);
 
 export const DEMO_SIGNAGE_SCREEN_TOKEN = generateAccessToken();
+
+/** Tokens fijos para PWA demo — deben ser estables entre instancias serverless. */
+export const DEMO_MESA_TOKEN = 'demo-mesa-ciudad-madrid-live';
+export const DEMO_GATE_TOKEN = 'demo-gate-ciudad-madrid';
+export const DEMO_GATE_TOKEN_HASH = hashToken(DEMO_GATE_TOKEN);
+
+function demoInviteToken(categoryId: string, groupCode: string, playerIndex: number): string {
+  return `demo-invite-${categoryId}-${groupCode}${playerIndex}`;
+}
+
+function demoMesaToken(categoryId: string, matchIndex: number, isLive: boolean): string {
+  if (isLive) return DEMO_MESA_TOKEN;
+  return `demo-mesa-${categoryId}-m${matchIndex + 1}`;
+}
 
 export const DEMO_TOURNAMENT: Tournament = {
   id: tournamentId,
@@ -179,7 +193,7 @@ function buildDemoTeams(categoryId: string, prefix: string, groupsCount: number)
         contact_phone: null,
         logo_url: null,
         status: idx <= groupsCount * 3 ? 'confirmed' : 'invited',
-        invite_token: generateInviteToken(),
+        invite_token: demoInviteToken(categoryId, code, p),
         group_code: code,
         group_position: null,
         squad_json: [
@@ -275,8 +289,8 @@ function materializeStructure(
       score_penalties_home: null,
       score_penalties_away: null,
       went_to_penalties: false,
-      mesa_token: generateAccessToken(),
-      mesa_token_expires_at: weekendEnd.toISOString(),
+      mesa_token: demoMesaToken(category.id, i, i === 3),
+      mesa_token_expires_at: null,
       live_started_at: i === 3 ? now.toISOString() : null,
       live_finished_at: i < 3 ? scheduled.toISOString() : null,
       events_json: [],
@@ -341,9 +355,6 @@ export const DEMO_TICKET_TYPES: TournamentTicketType[] = [
 ];
 
 export const DEMO_TICKETS: TournamentTicket[] = [];
-
-export const DEMO_GATE_TOKEN = generateAccessToken();
-export const DEMO_GATE_TOKEN_HASH = hashToken(DEMO_GATE_TOKEN);
 
 type DemoTournamentStore = {
   tournaments: Tournament[];
