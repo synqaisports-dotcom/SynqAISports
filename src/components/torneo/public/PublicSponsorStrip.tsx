@@ -3,11 +3,9 @@ import { TOURNAMENT_SPONSOR_TIER_LABELS, TOURNAMENT_SPONSOR_TIER_META } from '@/
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-const TIER_SIZE = {
-  gold: 'h-14 w-28 sm:h-16 sm:w-32',
-  silver: 'h-11 w-24 sm:h-12 sm:w-28',
-  bronze: 'h-9 w-20 sm:h-10 sm:w-24',
-} as const;
+const TIER_ORDER = { gold: 0, silver: 1, bronze: 2 } as const;
+
+const MARQUEE_LOGO_SIZE = 'h-10 w-[5.5rem] sm:h-11 sm:w-24';
 
 type Props = {
   sponsors: TournamentSponsor[];
@@ -17,56 +15,48 @@ type Props = {
 };
 
 export function PublicSponsorStrip({ sponsors, variant = 'strip', sponsorsTabHref, fixed = false }: Props) {
-  const active = sponsors.filter((s) => s.active);
+  const active = sponsors
+    .filter((s) => s.active)
+    .sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier]);
+
   if (active.length === 0) return null;
 
-  const gold = active.filter((s) => s.tier === 'gold');
-  const others = active.filter((s) => s.tier !== 'gold');
+  const marqueeItems = [...active, ...active];
 
   return (
     <aside
       className={cn(
-        'border-t border-cyan-400/20 bg-[#060a12]/95 backdrop-blur-xl',
-        fixed && 'fixed bottom-0 left-0 right-0 z-40 shadow-[0_-12px_40px_rgba(0,0,0,0.45)]',
-        variant === 'footer' ? 'py-8' : 'py-3 md:py-4'
+        'border-t border-cyan-400/15 bg-[#060a12]/80 backdrop-blur-md',
+        fixed && 'fixed bottom-0 left-0 right-0 z-40 shadow-[0_-8px_28px_rgba(0,0,0,0.35)]',
+        variant === 'footer' ? 'py-4' : 'py-2'
       )}
       aria-label="Patrocinadores del torneo"
     >
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400/70">
-            Patrocinadores del torneo
-          </p>
-          {sponsorsTabHref ? (
-            <Link href={sponsorsTabHref} className="text-[10px] text-cyan-300/80 hover:text-cyan-200">
-              Ver todos →
-            </Link>
-          ) : null}
-        </div>
+      <div className="flex items-center gap-3 px-4 md:gap-4">
+        <p className="hidden shrink-0 text-[9px] font-semibold uppercase tracking-[0.16em] text-cyan-400/60 sm:block">
+          Patrocinadores
+        </p>
 
-        {gold.length > 0 ? (
-          <div className="mt-2 flex flex-wrap items-center justify-start gap-3 sm:gap-5 md:mt-3">
-            {gold.map((s) => (
-              <SponsorLogo key={s.id} sponsor={s} sizeClass={TIER_SIZE.gold} featured />
-            ))}
-          </div>
-        ) : null}
-
-        {others.length > 0 ? (
-          <div
-            className={cn(
-              'flex flex-wrap items-center justify-start gap-2 sm:gap-3',
-              gold.length > 0 ? 'mt-2 border-t border-white/5 pt-2 md:mt-3 md:pt-3' : 'mt-2 md:mt-3'
-            )}
-          >
-            {others.map((s) => (
+        <div className="synq-sponsor-marquee min-w-0 flex-1">
+          <div className="synq-sponsor-marquee-track">
+            {marqueeItems.map((sponsor, index) => (
               <SponsorLogo
-                key={s.id}
-                sponsor={s}
-                sizeClass={TIER_SIZE[s.tier] ?? TIER_SIZE.bronze}
+                key={`${sponsor.id}-${index}`}
+                sponsor={sponsor}
+                sizeClass={MARQUEE_LOGO_SIZE}
+                featured={sponsor.tier === 'gold'}
               />
             ))}
           </div>
+        </div>
+
+        {sponsorsTabHref ? (
+          <Link
+            href={sponsorsTabHref}
+            className="shrink-0 text-[9px] uppercase tracking-wider text-cyan-300/70 hover:text-cyan-200"
+          >
+            Ver todos
+          </Link>
         ) : null}
       </div>
     </aside>
@@ -85,16 +75,16 @@ function SponsorLogo({
   const meta = TOURNAMENT_SPONSOR_TIER_META[sponsor.tier];
   const content = sponsor.logo_url ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={sponsor.logo_url} alt={sponsor.name} className="max-h-full max-w-full object-contain p-1.5" />
+    <img src={sponsor.logo_url} alt={sponsor.name} className="max-h-full max-w-full object-contain p-1" />
   ) : (
-    <span className="text-sm font-bold text-cyan-100/90">{sponsor.name.slice(0, 2).toUpperCase()}</span>
+    <span className="text-xs font-bold text-cyan-100/90">{sponsor.name.slice(0, 2).toUpperCase()}</span>
   );
 
   const inner = (
     <div
       className={cn(
-        'flex items-center justify-center rounded-xl border bg-white/[0.03] backdrop-blur-sm transition-transform hover:scale-[1.02]',
-        featured ? 'border-cyan-400/30 shadow-[0_0_24px_hsl(183_100%_50%_/_0.12)]' : 'border-white/10',
+        'flex shrink-0 items-center justify-center rounded-lg border bg-white/[0.03]',
+        featured ? 'border-cyan-400/25' : 'border-white/10',
         sizeClass
       )}
       title={`${sponsor.name} · ${TOURNAMENT_SPONSOR_TIER_LABELS[sponsor.tier]}`}

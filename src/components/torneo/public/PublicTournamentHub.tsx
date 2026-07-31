@@ -86,7 +86,7 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
   );
 
   return (
-    <div className={cn('relative min-h-dvh', showFixedSponsors && 'pb-28 md:pb-32')}>
+    <div className={cn('relative min-h-dvh', showFixedSponsors && 'pb-16 md:pb-[4.5rem]')}>
       <PublicAdScript />
 
       {/* Hero */}
@@ -152,11 +152,11 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
         </div>
       </header>
 
-      {/* Sticky tabs — estilo portal */}
-      <div className="sticky top-0 z-30 border-b border-border/40 bg-[#060a12]/90 backdrop-blur-md">
+      {/* Sticky tabs — transparente */}
+      <div className="sticky top-0 z-30">
         <div className={cn(CONTENT_MAX, 'py-3')}>
           <nav
-            className="portal-section-surface flex gap-1 overflow-x-auto rounded-xl p-1.5"
+            className="flex gap-1 overflow-x-auto rounded-xl p-1"
             aria-label="Secciones del torneo"
           >
             {PUBLIC_TOURNAMENT_TABS.map(({ id, label }) => {

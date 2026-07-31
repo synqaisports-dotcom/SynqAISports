@@ -20,3 +20,38 @@
   border-color: hsl(183 100% 50% / 0.18);
   background: linear-gradient(145deg, hsl(222 47% 7% / 0.95), hsl(222 47% 4% / 0.98));
 }
+
+@keyframes synq-sponsor-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.synq-sponsor-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.synq-sponsor-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 1.25rem;
+  animation: synq-sponsor-marquee 36s linear infinite;
+}
+
+.synq-sponsor-marquee:hover .synq-sponsor-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synq-sponsor-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
+  }
+}
