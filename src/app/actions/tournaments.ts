@@ -63,6 +63,7 @@ import {
   type TournamentTicketType,
 } from '@/lib/tournaments';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { revalidatePath } from 'next/cache';
 
 export type TournamentActionState = { ok: boolean; message?: string; id?: string; slug?: string };
@@ -89,6 +90,41 @@ function enrichBundle(bundle: TournamentBundle): TournamentBundle {
 
 function revalidateTournaments() {
   for (const path of TOURNAMENT_PATHS) revalidatePath(path, 'layout');
+}
+
+function revalidateTournamentPublic(slug: string) {
+  revalidatePath(`/torneo/${slug}`);
+}
+
+function isMesaTokenExpired(expiresAt: string | null): boolean {
+  if (!expiresAt) return false;
+  return new Date(expiresAt).getTime() < Date.now();
+}
+
+function updateDemoMatchScore(
+  match: TournamentMatch,
+  scoreHome: number,
+  scoreAway: number,
+  status: TournamentMatch['status']
+): TournamentActionState {
+  if (isMesaTokenExpired(match.mesa_token_expires_at)) {
+    return { ok: false, message: 'Enlace de mesa caducado. Solicita uno nuevo al organizador.' };
+  }
+
+  match.score_home = scoreHome;
+  match.score_away = scoreAway;
+  match.status = status;
+  if (status === 'live' && !match.live_started_at) {
+    match.live_started_at = new Date().toISOString();
+  }
+  if (status === 'finished') {
+    match.live_finished_at = new Date().toISOString();
+  }
+
+  const bundle = getDemoTournamentBundle(match.tournament_id);
+  if (bundle) revalidateTournamentPublic(bundle.tournament.slug);
+  revalidateTournaments();
+  return { ok: true, message: 'Guardado' };
 }
 
 function mapTournament(row: Record<string, unknown>): Tournament {
@@ -1178,26 +1214,24 @@ export async function updateMatchScore(
   scoreAway: number,
   status: TournamentMatch['status'] = 'finished'
 ): Promise<TournamentActionState> {
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    const match = store.matches.find((m) => m.id === matchId);
-    if (!match) return { ok: false, message: 'Partido no encontrado' };
-    match.score_home = scoreHome;
-    match.score_away = scoreAway;
-    match.status = status;
-    if (status === 'live') match.live_started_at = new Date().toISOString();
-    if (status === 'finished') match.live_finished_at = new Date().toISOString();
-    revalidateTournaments();
-    return { ok: true };
+  const store = getDemoTournamentsStore();
+  const demoMatch = store.matches.find((m) => m.id === matchId);
+  if (demoMatch) {
+    return updateDemoMatchScore(demoMatch, scoreHome, scoreAway, status);
   }
 
-  const supabase = await createClient();
+  if (await isDemoActive()) {
+    return { ok: false, message: 'Partido no encontrado' };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
   const { error } = await supabase
     .from('synq_tournament_matches')
     .update({
       score_home: scoreHome,
       score_away: scoreAway,
       status,
+      live_started_at: status === 'live' ? new Date().toISOString() : undefined,
       live_finished_at: status === 'finished' ? new Date().toISOString() : undefined,
     })
     .eq('id', matchId);
@@ -1212,21 +1246,40 @@ export async function updateMatchScoreByMesaToken(
   scoreAway: number,
   status: TournamentMatch['status']
 ): Promise<TournamentActionState> {
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    const match = store.matches.find((m) => m.mesa_token === token);
-    if (!match) return { ok: false, message: 'Token inválido' };
-    return updateMatchScore(match.id, scoreHome, scoreAway, status);
+  const store = getDemoTournamentsStore();
+  const demoMatch = store.matches.find((m) => m.mesa_token === token);
+  if (demoMatch) {
+    return updateDemoMatchScore(demoMatch, scoreHome, scoreAway, status);
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceClient() ?? (await createClient());
   const { data } = await supabase
     .from('synq_tournament_matches')
-    .select('id')
+    .select('id, mesa_token_expires_at, tournament_id')
     .eq('mesa_token', token)
     .maybeSingle();
   if (!data) return { ok: false, message: 'Token inválido' };
-  return updateMatchScore(String(data.id), scoreHome, scoreAway, status);
+  if (isMesaTokenExpired(data.mesa_token_expires_at ? String(data.mesa_token_expires_at) : null)) {
+    return { ok: false, message: 'Enlace de mesa caducado. Solicita uno nuevo al organizador.' };
+  }
+
+  const { error } = await supabase
+    .from('synq_tournament_matches')
+    .update({
+      score_home: scoreHome,
+      score_away: scoreAway,
+      status,
+      live_started_at: status === 'live' ? new Date().toISOString() : undefined,
+      live_finished_at: status === 'finished' ? new Date().toISOString() : undefined,
+    })
+    .eq('id', data.id);
+
+  if (error) return { ok: false, message: error.message };
+
+  const bundle = await loadTournamentBundle(String(data.tournament_id));
+  if (bundle) revalidateTournamentPublic(bundle.tournament.slug);
+  revalidateTournaments();
+  return { ok: true, message: 'Guardado' };
 }
 
 export async function loadMatchByMesaToken(token: string): Promise<{
@@ -1237,6 +1290,7 @@ export async function loadMatchByMesaToken(token: string): Promise<{
     const store = getDemoTournamentsStore();
     const match = store.matches.find((m) => m.mesa_token === token);
     if (match) {
+      if (isMesaTokenExpired(match.mesa_token_expires_at)) return null;
       const bundle = getDemoTournamentBundle(match.tournament_id);
       if (bundle) return { match, bundle };
     }
@@ -1254,6 +1308,7 @@ export async function loadMatchByMesaToken(token: string): Promise<{
   const supabase = await createClient();
   const { data: match } = await supabase.from('synq_tournament_matches').select('*').eq('mesa_token', token).maybeSingle();
   if (!match) return null;
+  if (isMesaTokenExpired(match.mesa_token_expires_at ? String(match.mesa_token_expires_at) : null)) return null;
   const bundle = await loadTournamentBundle(String(match.tournament_id));
   if (!bundle) return null;
   return { match: match as TournamentMatch, bundle };
@@ -1293,23 +1348,54 @@ export async function confirmTeamAttendance(
   inviteToken: string,
   squadJson: TournamentTeam['squad_json']
 ): Promise<TournamentActionState> {
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    const team = store.teams.find((t) => t.invite_token === inviteToken);
-    if (!team) return { ok: false, message: 'Enlace inválido' };
-    team.status = 'confirmed';
-    team.squad_json = squadJson;
-    team.confirmed_at = new Date().toISOString();
+  const filled = squadJson.filter((p) => p.name.trim());
+  if (filled.length === 0) {
+    return { ok: false, message: 'Añade al menos un jugador con nombre.' };
+  }
+
+  const dorsals = filled.map((p) => p.dorsal).filter((d): d is number => d != null);
+  if (new Set(dorsals).size !== dorsals.length) {
+    return { ok: false, message: 'Los dorsales deben ser únicos.' };
+  }
+
+  const store = getDemoTournamentsStore();
+  const demoTeam = store.teams.find((t) => t.invite_token === inviteToken);
+  if (demoTeam) {
+    demoTeam.status = 'confirmed';
+    demoTeam.squad_json = filled;
+    demoTeam.confirmed_at = new Date().toISOString();
+    revalidateTournaments();
     return { ok: true, message: 'Asistencia confirmada' };
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceClient() ?? (await createClient());
   const { error } = await supabase
     .from('synq_tournament_teams')
-    .update({ status: 'confirmed', squad_json: squadJson, confirmed_at: new Date().toISOString() })
+    .update({ status: 'confirmed', squad_json: filled, confirmed_at: new Date().toISOString() })
     .eq('invite_token', inviteToken);
   if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
   return { ok: true, message: 'Asistencia confirmada' };
+}
+
+export async function rejectTeamAttendance(inviteToken: string): Promise<TournamentActionState> {
+  const store = getDemoTournamentsStore();
+  const demoTeam = store.teams.find((t) => t.invite_token === inviteToken);
+  if (demoTeam) {
+    demoTeam.status = 'rejected';
+    demoTeam.confirmed_at = null;
+    revalidateTournaments();
+    return { ok: true, message: 'Asistencia rechazada' };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { error } = await supabase
+    .from('synq_tournament_teams')
+    .update({ status: 'rejected', confirmed_at: null })
+    .eq('invite_token', inviteToken);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Asistencia rechazada' };
 }
 
 export async function toggleTournamentPublic(

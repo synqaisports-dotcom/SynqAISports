@@ -34,7 +34,7 @@ export function TournamentAccessSheet({ tournamentId, open, onOpenChange }: Prop
         { key: 'public', href: links.publicWeb, icon: Trophy, title: 'Web pública', desc: 'Resultados y info para familias' },
         { key: 'mesa', href: links.mesa, icon: Smartphone, title: 'Mesa móvil', desc: links.mesaLabel },
         { key: 'delegado', href: links.delegado, icon: Users, title: 'Portal delegado', desc: links.delegadoLabel },
-        { key: 'taquilla', href: links.taquilla, icon: QrCode, title: 'Taquilla (fase posterior)', desc: 'Validación entradas — no operativo aún' },
+        { key: 'taquilla', href: links.taquilla, icon: QrCode, title: 'Taquilla QR', desc: 'Validación de entradas en puerta' },
       ]
     : [];
 
