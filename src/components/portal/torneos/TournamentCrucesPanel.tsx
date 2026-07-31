@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, GitBranch, Radio, Trophy } from 'lucide-react';
-import { mesaUrl } from '@/lib/tournament-urls';
+import { mesaFieldUrlForMatch } from '@/lib/tournament-mesa-field';
 
 type Props = {
   bundle: TournamentBundle;
@@ -56,11 +56,14 @@ function BracketMatchNode({
           {match.status === 'scheduled' ? '—' : formatMatchScore(match)}
         </span>
         {isLive ? <Radio className="size-4 animate-pulse text-cyan-300" /> : null}
-        {match.mesa_token ? (
-          <Link href={mesaUrl(match.mesa_token)} target="_blank" className="text-cyan-300 hover:text-cyan-200">
-            <ExternalLink className="size-4" />
-          </Link>
-        ) : null}
+        {(() => {
+          const mesaHref = mesaFieldUrlForMatch(bundle, match);
+          return mesaHref ? (
+            <Link href={mesaHref} target="_blank" className="text-cyan-300 hover:text-cyan-200">
+              <ExternalLink className="size-4" />
+            </Link>
+          ) : null;
+        })()}
       </div>
     </div>
   );

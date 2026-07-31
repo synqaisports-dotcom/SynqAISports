@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ExternalLink, MapPin, Radio } from 'lucide-react';
-import { mesaUrl } from '@/lib/tournament-urls';
+import { mesaFieldUrlForMatch } from '@/lib/tournament-mesa-field';
 import { TournamentMatchTeams } from '@/components/portal/torneos/TournamentMatchTeams';
 
 type BucketMeta = {
@@ -112,15 +112,18 @@ export function TournamentScheduleSheet({ bundle, bucket, open, onOpenChange }: 
                           )}
                         </td>
                         <td className="px-2 py-2">
-                          {match.mesa_token ? (
-                            <Link
-                              href={mesaUrl(match.mesa_token)}
-                              target="_blank"
-                              className="text-cyan-300 hover:text-cyan-200"
-                            >
-                              <ExternalLink className="size-3.5" />
-                            </Link>
-                          ) : null}
+                          {(() => {
+                            const mesaHref = mesaFieldUrlForMatch(bundle, match);
+                            return mesaHref ? (
+                              <Link
+                                href={mesaHref}
+                                target="_blank"
+                                className="text-cyan-300 hover:text-cyan-200"
+                              >
+                                <ExternalLink className="size-3.5" />
+                              </Link>
+                            ) : null;
+                          })()}
                         </td>
                       </tr>
                     );

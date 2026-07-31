@@ -20,12 +20,12 @@ export function TorneoPwaHub({ links }: { links: DemoTorneoPwaLinks }) {
       title: 'Web pública del torneo',
       desc: 'Resultados en vivo para padres y seguidores',
     },
-    {
-      href: links.mesa,
+    ...links.mesaFields.map((mesa) => ({
+      href: mesa.href,
       icon: Smartphone,
-      title: 'Mesa móvil',
-      desc: links.mesaLabel,
-    },
+      title: `Mesa · ${mesa.label}`,
+      desc: 'Solo partidos de este campo',
+    })),
     {
       href: links.delegado,
       icon: Users,

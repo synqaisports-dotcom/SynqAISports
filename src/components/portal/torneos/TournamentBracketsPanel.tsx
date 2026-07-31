@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ExternalLink, Radio } from 'lucide-react';
-import { mesaUrl } from '@/lib/tournament-urls';
+import { mesaFieldUrlForMatch } from '@/lib/tournament-mesa-field';
 
 type Props = {
   bundle: TournamentBundle;
@@ -24,7 +24,7 @@ function teamName(bundle: TournamentBundle, teamId: string | null): string {
 }
 
 function MatchRow({ match, bundle }: { match: TournamentMatch; bundle: TournamentBundle }) {
-  const mesaHref = match.mesa_token ? mesaUrl(match.mesa_token) : null;
+  const mesaHref = mesaFieldUrlForMatch(bundle, match);
   const isLive = match.status === 'live';
 
   return (

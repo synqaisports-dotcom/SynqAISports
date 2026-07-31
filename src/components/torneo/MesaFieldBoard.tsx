@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { MesaScoreboard } from '@/components/torneo/MesaScoreboard';
-import { fieldLabel, formatMatchDateTime } from '@/lib/tournament-schedule';
+import { formatMatchDateTime } from '@/lib/tournament-schedule';
+import type { MesaFieldSlot } from '@/lib/tournament-mesa-field';
 import {
   filterMatchesByStatus,
   scheduledHourKey,
@@ -16,20 +17,19 @@ import {
 } from '@/lib/tournaments';
 import { publicTournamentUrl } from '@/lib/tournament-urls';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, CalendarClock, MapPin, Radio, Trophy } from 'lucide-react';
+import { CalendarClock, MapPin, Radio, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
   bundle: TournamentBundle;
+  slot: MesaFieldSlot;
   matches: TournamentMatch[];
-  initialMatchId?: string | null;
 };
 
 const STATUS_FILTERS: { key: MatchStatusFilter; label: string }[] = [
   { key: 'live', label: 'En juego' },
   { key: 'scheduled', label: 'Programados' },
   { key: 'finished', label: 'Finalizados' },
-  { key: 'all', label: 'Todos' },
 ];
 
 function teamName(bundle: TournamentBundle, teamId: string | null): string {
@@ -37,16 +37,10 @@ function teamName(bundle: TournamentBundle, teamId: string | null): string {
   return bundle.teams.find((t) => t.id === teamId)?.name ?? '—';
 }
 
-export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(initialMatchId ?? null);
-  const [fieldFilter, setFieldFilter] = useState<string>('all');
+export function MesaFieldBoard({ bundle, slot, matches }: Props) {
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [hourFilter, setHourFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('live');
-
-  const fieldOptions = useMemo(() => {
-    const ids = [...new Set(matches.map((m) => m.field_id).filter(Boolean))] as string[];
-    return ids.map((id) => ({ id, label: fieldLabel(bundle.fields, id) }));
-  }, [bundle.fields, matches]);
 
   const hourOptions = useMemo(() => {
     const keys = [...new Set(matches.map((m) => scheduledHourKey(m.scheduled_at)))].sort();
@@ -58,18 +52,11 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
 
   const filteredMatches = useMemo(() => {
     let list = filterMatchesByStatus(matches, statusFilter);
-    if (fieldFilter !== 'all') {
-      list = list.filter((m) => m.field_id === fieldFilter);
-    }
     if (hourFilter !== 'all') {
       list = list.filter((m) => scheduledHourKey(m.scheduled_at) === hourFilter);
     }
-    return [...list].sort((a, b) => {
-      const ta = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
-      const tb = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
-      return ta - tb;
-    });
-  }, [matches, statusFilter, fieldFilter, hourFilter]);
+    return list;
+  }, [matches, statusFilter, hourFilter]);
 
   const selectedMatch = selectedMatchId
     ? matches.find((m) => m.id === selectedMatchId) ?? null
@@ -81,6 +68,7 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
         key={selectedMatch.id}
         match={selectedMatch}
         bundle={bundle}
+        mesaFieldToken={slot.token}
         onBack={() => setSelectedMatchId(null)}
       />
     );
@@ -91,8 +79,12 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
       <div className="portal-section-surface rounded-2xl p-5">
         <p className="text-center text-xs uppercase tracking-widest text-cyan-300">Mesa móvil · SynqAI</p>
         <h1 className="mt-2 text-center text-lg font-semibold">{bundle.tournament.name}</h1>
-        <p className="mt-1 text-center text-sm text-muted-foreground">
-          Selecciona campo y horario para anotar partidos
+        <p className="mt-2 inline-flex w-full items-center justify-center gap-1.5 text-sm text-cyan-200">
+          <MapPin className="size-3.5 shrink-0" />
+          {slot.label}
+        </p>
+        <p className="mt-1 text-center text-xs text-muted-foreground">
+          Solo partidos de este campo con equipos asignados
         </p>
       </div>
 
@@ -122,25 +114,6 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
           ))}
         </div>
 
-        {fieldOptions.length > 1 ? (
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Campo
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <FilterChip active={fieldFilter === 'all'} onClick={() => setFieldFilter('all')} label="Todos" />
-              {fieldOptions.map((field) => (
-                <FilterChip
-                  key={field.id}
-                  active={fieldFilter === field.id}
-                  onClick={() => setFieldFilter(field.id)}
-                  label={field.label}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
-
         {hourOptions.length > 1 ? (
           <div>
             <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -148,12 +121,12 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
             </p>
             <div className="flex flex-wrap gap-2">
               <FilterChip active={hourFilter === 'all'} onClick={() => setHourFilter('all')} label="Todos" />
-              {hourOptions.map((slot) => (
+              {hourOptions.map((timeSlot) => (
                 <FilterChip
-                  key={slot.key}
-                  active={hourFilter === slot.key}
-                  onClick={() => setHourFilter(slot.key)}
-                  label={slot.label}
+                  key={timeSlot.key}
+                  active={hourFilter === timeSlot.key}
+                  onClick={() => setHourFilter(timeSlot.key)}
+                  label={timeSlot.label}
                 />
               ))}
             </div>
@@ -164,7 +137,7 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
       <div className="mt-4 space-y-2">
         {filteredMatches.length === 0 ? (
           <p className="rounded-xl border border-border/40 bg-white/[0.02] p-4 text-center text-sm text-muted-foreground">
-            No hay partidos con estos filtros.
+            No hay partidos en este campo con los filtros seleccionados.
           </p>
         ) : (
           filteredMatches.map((match) => {
@@ -186,16 +159,10 @@ export function MesaTournamentHub({ bundle, matches, initialMatchId }: Props) {
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {category?.name ?? 'Categoría'} · {MATCH_STATUS_LABELS[match.status]}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarClock className="size-3 text-cyan-300" />
-                        {when.time}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="size-3 text-cyan-300" />
-                        {fieldLabel(bundle.fields, match.field_id)}
-                      </span>
-                    </div>
+                    <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <CalendarClock className="size-3 text-cyan-300" />
+                      {when.time}
+                    </p>
                   </div>
                   <div className="shrink-0 text-right">
                     {match.status !== 'scheduled' ? (

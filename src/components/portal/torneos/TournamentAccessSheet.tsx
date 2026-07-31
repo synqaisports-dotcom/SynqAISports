@@ -32,7 +32,13 @@ export function TournamentAccessSheet({ tournamentId, open, onOpenChange }: Prop
   const items = links
     ? [
         { key: 'public', href: links.publicWeb, icon: Trophy, title: 'Web pública', desc: 'Resultados y info para familias' },
-        { key: 'mesa', href: links.mesa, icon: Smartphone, title: 'Mesa móvil', desc: links.mesaLabel },
+        ...links.mesaFields.map((mesa, index) => ({
+          key: `mesa-${index}`,
+          href: mesa.href,
+          icon: Smartphone,
+          title: `Mesa · ${mesa.label}`,
+          desc: 'Partidos de este campo',
+        })),
         { key: 'delegado', href: links.delegado, icon: Users, title: 'Portal delegado', desc: links.delegadoLabel },
         { key: 'taquilla', href: links.taquilla, icon: QrCode, title: 'Taquilla QR', desc: 'Validación de entradas en puerta' },
       ]

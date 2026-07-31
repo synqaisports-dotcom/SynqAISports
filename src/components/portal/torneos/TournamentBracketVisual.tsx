@@ -5,7 +5,7 @@ import { ROUND_KEY_LABELS } from '@/lib/tournaments';
 import { type TournamentBundle, type TournamentMatch, type RoundKey } from '@/lib/tournaments';
 import { cn } from '@/lib/utils';
 import { ExternalLink, Radio } from 'lucide-react';
-import { mesaUrl } from '@/lib/tournament-urls';
+import { mesaFieldUrlForMatch } from '@/lib/tournament-mesa-field';
 
 const MAIN_ROUNDS: RoundKey[] = ['r16', 'qf', 'sf', 'final'];
 const SLOT_HEIGHT = 68;
@@ -98,11 +98,14 @@ function MatchSlot({
           {match.status === 'finished' && match.went_to_penalties ? (
             <span className="text-[8px]">pen.</span>
           ) : null}
-          {match.mesa_token ? (
-            <Link href={mesaUrl(match.mesa_token)} target="_blank" className="text-cyan-300 hover:text-cyan-200">
-              <ExternalLink className="size-3" />
-            </Link>
-          ) : null}
+          {(() => {
+            const mesaHref = mesaFieldUrlForMatch(bundle, match);
+            return mesaHref ? (
+              <Link href={mesaHref} target="_blank" className="text-cyan-300 hover:text-cyan-200">
+                <ExternalLink className="size-3" />
+              </Link>
+            ) : null;
+          })()}
         </div>
       </div>
     </div>

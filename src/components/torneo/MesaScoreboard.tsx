@@ -46,6 +46,7 @@ import Link from 'next/link';
 type Props = {
   match: TournamentMatch;
   bundle: TournamentBundle;
+  mesaFieldToken: string;
   onBack?: () => void;
 };
 
@@ -54,7 +55,7 @@ function teamById(bundle: TournamentBundle, id: string | null): TournamentTeam |
   return bundle.teams.find((t) => t.id === id);
 }
 
-export function MesaScoreboard({ match, bundle, onBack }: Props) {
+export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props) {
   const homeTeam = teamById(bundle, match.home_team_id);
   const awayTeam = teamById(bundle, match.away_team_id);
   const capabilities = mesaCapabilitiesForSport(bundle.tournament.sport_key);
@@ -84,12 +85,12 @@ export function MesaScoreboard({ match, bundle, onBack }: Props) {
 
   const persist = useCallback(
     (nextEvents: MatchEvent[], nextStatus: typeof status, nextLiveStartedAt: string | null) => {
-      if (!match.mesa_token) return;
+      if (!mesaFieldToken) return;
       const home = goalsForTeam(nextEvents, match.home_team_id);
       const away = goalsForTeam(nextEvents, match.away_team_id);
       setError(false);
       startTransition(async () => {
-        const res = await updateMatchScoreByMesaToken(match.mesa_token!, {
+        const res = await updateMatchScoreByMesaToken(mesaFieldToken, match.id, {
           scoreHome: home,
           scoreAway: away,
           status: nextStatus,
@@ -107,7 +108,7 @@ export function MesaScoreboard({ match, bundle, onBack }: Props) {
         }
       });
     },
-    [match.home_team_id, match.away_team_id, match.mesa_token, liveStartedAt]
+    [match.home_team_id, match.away_team_id, match.id, mesaFieldToken, liveStartedAt]
   );
 
   useEffect(() => {

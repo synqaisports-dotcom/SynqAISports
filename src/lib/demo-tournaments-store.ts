@@ -37,18 +37,16 @@ weekendEnd.setHours(20, 0, 0, 0);
 export const DEMO_SIGNAGE_SCREEN_TOKEN = generateAccessToken();
 
 /** Tokens fijos para PWA demo — deben ser estables entre instancias serverless. */
-export const DEMO_MESA_TOKEN = 'demo-mesa-ciudad-madrid-live';
-export const DEMO_MESA_HUB_TOKEN = 'demo-mesa-hub-ciudad-madrid';
+export const DEMO_MESA_TOKEN_FIELD1_HALF1 = 'demo-mesa-campo1-mitad1';
+export const DEMO_MESA_TOKEN_FIELD1_HALF2 = 'demo-mesa-campo1-mitad2';
+export const DEMO_MESA_TOKEN_FIELD2 = 'demo-mesa-campo2';
+/** Alias histórico del partido en vivo en mitad 1 del campo 1. */
+export const DEMO_MESA_TOKEN = DEMO_MESA_TOKEN_FIELD1_HALF1;
 export const DEMO_GATE_TOKEN = 'demo-gate-ciudad-madrid';
 export const DEMO_GATE_TOKEN_HASH = hashToken(DEMO_GATE_TOKEN);
 
 function demoInviteToken(categoryId: string, groupCode: string, playerIndex: number): string {
   return `demo-invite-${categoryId}-${groupCode}${playerIndex}`;
-}
-
-function demoMesaToken(categoryId: string, matchIndex: number, isLive: boolean): string {
-  if (isLive) return DEMO_MESA_TOKEN;
-  return `demo-mesa-${categoryId}-m${matchIndex + 1}`;
 }
 
 export const DEMO_TOURNAMENT: Tournament = {
@@ -106,7 +104,11 @@ export const DEMO_TOURNAMENT: Tournament = {
     },
     signage: {
       screen_token: DEMO_SIGNAGE_SCREEN_TOKEN,
-      mesa_hub_token: DEMO_MESA_HUB_TOKEN,
+      mesa_tokens: {
+        [`${field1Id}:half_1`]: DEMO_MESA_TOKEN_FIELD1_HALF1,
+        [`${field1Id}:half_2`]: DEMO_MESA_TOKEN_FIELD1_HALF2,
+        [`${field2Id}:full`]: DEMO_MESA_TOKEN_FIELD2,
+      },
     },
   },
   registration_config_json: { max_teams_per_category: 24, deadline_days_before: 3 },
@@ -273,29 +275,40 @@ function materializeStructure(
     const scheduled = new Date(weekendStart);
     scheduled.setHours(9 + Math.floor(i / 4), (i % 4) * 15, 0, 0);
 
+    const slotIndex = i % 3;
+    const field_id = slotIndex < 2 ? field1Id : field2Id;
+    const scheduling_division_key = slotIndex === 0 ? 'half_1' : slotIndex === 1 ? 'half_2' : 'full';
+
     let events_json: MatchEvent[] = [];
     if (i === 3 && homeId) {
-      const homePlayer = teams.find((t) => t.id === homeId)?.squad_json?.[0]?.name ?? 'Jugador 7';
-      events_json = [
-        {
-          id: `demo-goal-${category.id}-live`,
-          minute: 12,
-          type: 'goal',
-          team_id: homeId,
-          player_name: homePlayer,
-        },
-      ];
+      const homePlayer = teams.find((t) => t.id === homeId)?.squad_json?.[0]?.name;
+      if (homePlayer) {
+        events_json = [
+          {
+            id: `demo-goal-${category.id}-live`,
+            minute: 12,
+            type: 'goal',
+            team_id: homeId,
+            player_name: homePlayer,
+          },
+        ];
+      }
     }
     if (i === 0 && homeId && awayId) {
-      const homePlayer = teams.find((t) => t.id === homeId)?.squad_json?.[0]?.name ?? 'Jugador 9';
-      const awayPlayer = teams.find((t) => t.id === awayId)?.squad_json?.[1]?.name ?? 'Jugador 4';
-      events_json = [
-        { id: `demo-goal-${category.id}-1`, minute: 8, type: 'goal', team_id: homeId, player_name: homePlayer },
-        { id: `demo-goal-${category.id}-2`, minute: 22, type: 'goal', team_id: homeId, player_name: homePlayer },
-        { id: `demo-goal-${category.id}-3`, minute: 31, type: 'goal', team_id: awayId, player_name: awayPlayer },
-        { id: `demo-yellow-${category.id}-1`, minute: 18, type: 'yellow', team_id: awayId, player_name: awayPlayer },
-      ];
+      const homePlayer = teams.find((t) => t.id === homeId)?.squad_json?.[0]?.name;
+      const awayPlayer = teams.find((t) => t.id === awayId)?.squad_json?.[1]?.name;
+      if (homePlayer && awayPlayer) {
+        events_json = [
+          { id: `demo-goal-${category.id}-1`, minute: 8, type: 'goal', team_id: homeId, player_name: homePlayer },
+          { id: `demo-goal-${category.id}-2`, minute: 22, type: 'goal', team_id: homeId, player_name: homePlayer },
+          { id: `demo-goal-${category.id}-3`, minute: 31, type: 'goal', team_id: awayId, player_name: awayPlayer },
+          { id: `demo-yellow-${category.id}-1`, minute: 18, type: 'yellow', team_id: awayId, player_name: awayPlayer },
+        ];
+      }
     }
+
+    const hasTeams = Boolean(homeId && awayId);
+    const isLive = i === 3 && hasTeams && field_id === field1Id && scheduling_division_key === 'half_1';
 
     return {
       id: `demo-match-${category.id}-${i + 1}`,
@@ -308,20 +321,20 @@ function materializeStructure(
       match_number: m.match_number,
       home_team_id: homeId,
       away_team_id: awayId,
-      field_id: i % 2 === 0 ? field1Id : field2Id,
+      field_id,
       scheduled_at: scheduled.toISOString(),
-      status: i < 3 ? 'finished' : i === 3 ? 'live' : 'scheduled',
-      score_home: i < 3 ? [2, 1, 3][i] ?? 0 : i === 3 ? 1 : 0,
-      score_away: i < 3 ? [1, 1, 0][i] ?? 0 : i === 3 ? 0 : 0,
+      status: isLive ? 'live' : i < 3 && hasTeams ? 'finished' : 'scheduled',
+      score_home: i < 3 && hasTeams ? [2, 1, 3][i] ?? 0 : isLive ? 1 : 0,
+      score_away: i < 3 && hasTeams ? [1, 1, 0][i] ?? 0 : 0,
       score_penalties_home: null,
       score_penalties_away: null,
       went_to_penalties: false,
-      mesa_token: demoMesaToken(category.id, i, i === 3),
+      mesa_token: null,
       mesa_token_expires_at: null,
-      live_started_at: i === 3 ? now.toISOString() : null,
-      live_finished_at: i < 3 ? scheduled.toISOString() : null,
+      live_started_at: isLive ? now.toISOString() : null,
+      live_finished_at: i < 3 && hasTeams ? scheduled.toISOString() : null,
       events_json,
-      metadata_json: m.metadata_json,
+      metadata_json: { ...m.metadata_json, scheduling_division_key },
     };
   });
 
