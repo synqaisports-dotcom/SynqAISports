@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import { updateMatchScoreByMesaToken } from '@/app/actions/tournaments';
 import { MesaScoreboard } from '@/components/torneo/MesaScoreboard';
 import { formatMatchDateTime } from '@/lib/tournament-schedule';
 import type { MesaFieldSlot } from '@/lib/tournament-mesa-field';
@@ -16,8 +17,9 @@ import {
   type TournamentMatch,
 } from '@/lib/tournaments';
 import { publicTournamentUrl } from '@/lib/tournament-urls';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CalendarClock, MapPin, Radio, Trophy } from 'lucide-react';
+import { CalendarClock, MapPin, Play, Radio, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
@@ -41,26 +43,72 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [hourFilter, setHourFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('live');
+  const [matchOverrides, setMatchOverrides] = useState<Record<string, Partial<TournamentMatch>>>({});
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const resolvedMatches = useMemo(
+    () => matches.map((match) => ({ ...match, ...matchOverrides[match.id] })),
+    [matches, matchOverrides]
+  );
+
+  const liveMatchOnField = resolvedMatches.find((m) => m.status === 'live');
 
   const hourOptions = useMemo(() => {
-    const keys = [...new Set(matches.map((m) => scheduledHourKey(m.scheduled_at)))].sort();
+    const keys = [...new Set(resolvedMatches.map((m) => scheduledHourKey(m.scheduled_at)))].sort();
     return keys.map((key) => ({
       key,
       label: key === 'sin-horario' ? 'Sin horario' : key,
     }));
-  }, [matches]);
+  }, [resolvedMatches]);
 
   const filteredMatches = useMemo(() => {
-    let list = filterMatchesByStatus(matches, statusFilter);
+    let list = filterMatchesByStatus(resolvedMatches, statusFilter);
     if (hourFilter !== 'all') {
       list = list.filter((m) => scheduledHourKey(m.scheduled_at) === hourFilter);
     }
     return list;
-  }, [matches, statusFilter, hourFilter]);
+  }, [resolvedMatches, statusFilter, hourFilter]);
 
   const selectedMatch = selectedMatchId
-    ? matches.find((m) => m.id === selectedMatchId) ?? null
+    ? resolvedMatches.find((m) => m.id === selectedMatchId) ?? null
     : null;
+
+  function applyMatchPatch(matchId: string, patch: Partial<TournamentMatch>) {
+    setMatchOverrides((prev) => ({
+      ...prev,
+      [matchId]: { ...prev[matchId], ...patch },
+    }));
+  }
+
+  function startMatchFromList(match: TournamentMatch, openScoreboard = true) {
+    if (match.status !== 'scheduled') return;
+    if (liveMatchOnField && liveMatchOnField.id !== match.id) {
+      setError(true);
+      setMessage(`Hay un partido en juego: ${teamName(bundle, liveMatchOnField.home_team_id)} vs ${teamName(bundle, liveMatchOnField.away_team_id)}`);
+      return;
+    }
+
+    const startedAt = new Date().toISOString();
+    setError(false);
+    startTransition(async () => {
+      const res = await updateMatchScoreByMesaToken(slot.token, match.id, {
+        scoreHome: match.score_home,
+        scoreAway: match.score_away,
+        status: 'live',
+        eventsJson: match.events_json ?? [],
+      });
+      if (res.ok) {
+        applyMatchPatch(match.id, { status: 'live', live_started_at: startedAt });
+        setMessage('Partido iniciado');
+        if (openScoreboard) setSelectedMatchId(match.id);
+      } else {
+        setError(true);
+        setMessage(res.message ?? 'No se pudo iniciar el partido');
+      }
+    });
+  }
 
   if (selectedMatch) {
     return (
@@ -69,6 +117,8 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
         match={selectedMatch}
         bundle={bundle}
         mesaFieldToken={slot.token}
+        hasOtherLiveMatch={Boolean(liveMatchOnField && liveMatchOnField.id !== selectedMatch.id)}
+        onMatchChange={(patch) => applyMatchPatch(selectedMatch.id, patch)}
         onBack={() => setSelectedMatchId(null)}
       />
     );
@@ -144,45 +194,71 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
             const when = formatMatchDateTime(match.scheduled_at);
             const score = formatMatchScore(match);
             const category = bundle.categories.find((c) => c.id === match.category_id);
+            const canStart =
+              match.status === 'scheduled' && (!liveMatchOnField || liveMatchOnField.id === match.id);
+
             return (
-              <button
+              <div
                 key={match.id}
-                type="button"
-                onClick={() => setSelectedMatchId(match.id)}
-                className="portal-section-surface w-full rounded-xl p-4 text-left transition-colors hover:border-cyan-400/40"
+                className="portal-section-surface rounded-xl p-4 transition-colors hover:border-cyan-400/40"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {teamName(bundle, match.home_team_id)} vs {teamName(bundle, match.away_team_id)}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {category?.name ?? 'Categoría'} · {MATCH_STATUS_LABELS[match.status]}
-                    </p>
-                    <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <CalendarClock className="size-3 text-cyan-300" />
-                      {when.time}
-                    </p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMatchId(match.id)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">
+                        {teamName(bundle, match.home_team_id)} vs {teamName(bundle, match.away_team_id)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {category?.name ?? 'Categoría'} · {MATCH_STATUS_LABELS[match.status]}
+                      </p>
+                      <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <CalendarClock className="size-3 text-cyan-300" />
+                        {when.time}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      {match.status !== 'scheduled' ? (
+                        <p className="text-lg font-bold tabular-nums text-cyan-300">{score}</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Pendiente</p>
+                      )}
+                      {match.status === 'live' ? (
+                        <span className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase text-cyan-300">
+                          <Radio className="size-3 animate-pulse" />
+                          Live
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="shrink-0 text-right">
-                    {match.status !== 'scheduled' ? (
-                      <p className="text-lg font-bold tabular-nums text-cyan-300">{score}</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Pendiente</p>
-                    )}
-                    {match.status === 'live' ? (
-                      <span className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase text-cyan-300">
-                        <Radio className="size-3 animate-pulse" />
-                        Live
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </button>
+                </button>
+
+                {match.status === 'scheduled' ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="mt-3 h-9 w-full"
+                    disabled={pending || !canStart}
+                    onClick={() => startMatchFromList(match)}
+                  >
+                    <Play className="mr-2 size-4" />
+                    Iniciar partido
+                  </Button>
+                ) : null}
+              </div>
             );
           })
         )}
       </div>
+
+      {message ? (
+        <p className={cn('mt-4 text-center text-sm', error ? 'text-red-400' : 'text-muted-foreground')}>
+          {message}
+        </p>
+      ) : null}
 
       <div className="mt-8 text-center">
         <Link

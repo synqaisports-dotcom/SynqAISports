@@ -16,6 +16,7 @@ import {
   playerCardCount,
   playerFoulCount,
   playerGoalCount,
+  isAnnulableMatchEvent,
   voidMatchEvent,
 } from '@/lib/tournament-mesa';
 import {
@@ -47,6 +48,8 @@ type Props = {
   match: TournamentMatch;
   bundle: TournamentBundle;
   mesaFieldToken: string;
+  hasOtherLiveMatch?: boolean;
+  onMatchChange?: (patch: Partial<TournamentMatch>) => void;
   onBack?: () => void;
 };
 
@@ -55,7 +58,14 @@ function teamById(bundle: TournamentBundle, id: string | null): TournamentTeam |
   return bundle.teams.find((t) => t.id === id);
 }
 
-export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props) {
+export function MesaScoreboard({
+  match,
+  bundle,
+  mesaFieldToken,
+  hasOtherLiveMatch = false,
+  onMatchChange,
+  onBack,
+}: Props) {
   const homeTeam = teamById(bundle, match.home_team_id);
   const awayTeam = teamById(bundle, match.away_team_id);
   const capabilities = mesaCapabilitiesForSport(bundle.tournament.sport_key);
@@ -98,9 +108,20 @@ export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props)
         });
         if (res.ok) {
           setStatus(nextStatus);
+          const patch: Partial<TournamentMatch> = {
+            status: nextStatus,
+            score_home: home,
+            score_away: away,
+            events_json: nextEvents,
+          };
           if (nextStatus === 'live' && !liveStartedAt && nextLiveStartedAt) {
             setLiveStartedAt(nextLiveStartedAt);
+            patch.live_started_at = nextLiveStartedAt;
           }
+          if (nextStatus === 'finished') {
+            patch.live_finished_at = new Date().toISOString();
+          }
+          onMatchChange?.(patch);
           setMessage(res.message ?? 'Guardado');
         } else {
           setError(true);
@@ -108,7 +129,7 @@ export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props)
         }
       });
     },
-    [match.home_team_id, match.away_team_id, match.id, mesaFieldToken, liveStartedAt]
+    [match.home_team_id, match.away_team_id, match.id, mesaFieldToken, liveStartedAt, onMatchChange]
   );
 
   useEffect(() => {
@@ -130,6 +151,11 @@ export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props)
   }, [events, isLive, liveStartedAt, persist]);
 
   function startMatch() {
+    if (hasOtherLiveMatch) {
+      setError(true);
+      setMessage('Finaliza el otro partido en juego en este campo antes de iniciar uno nuevo.');
+      return;
+    }
     const startedAt = new Date().toISOString();
     setLiveStartedAt(startedAt);
     skipAutosave.current = true;
@@ -343,7 +369,7 @@ export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props)
                     {teamById(bundle, event.team_id)?.name ?? '—'}
                   </span>
                 </div>
-                {canEditStats && !event.voided && (event.type === 'goal' || event.type === 'penalty') ? (
+                {canEditStats && isAnnulableMatchEvent(event) ? (
                   <Button
                     type="button"
                     size="sm"
@@ -368,15 +394,20 @@ export function MesaScoreboard({ match, bundle, mesaFieldToken, onBack }: Props)
 
       <div className="mt-8 flex flex-col gap-2">
         {!isLive && !isFinished ? (
-          <Button className="w-full" onClick={startMatch} disabled={pending}>
+          <Button className="w-full" onClick={startMatch} disabled={pending || hasOtherLiveMatch}>
             <Play className="mr-2 size-4" />
             Iniciar partido
           </Button>
         ) : null}
+        {!isLive && !isFinished && hasOtherLiveMatch ? (
+          <p className="text-center text-xs text-amber-300/90">
+            Hay otro partido en juego en este campo. Finalízalo antes de iniciar este.
+          </p>
+        ) : null}
         {isLive ? (
           <>
             <p className="text-center text-xs text-muted-foreground">
-              Los cambios se guardan automáticamente. Los goles anulados no restan del marcador.
+              Los cambios se guardan automáticamente. Goles y tarjetas anulados no cuentan en marcador ni estadísticas.
             </p>
             <Button className="w-full" variant="secondary" onClick={finishMatch} disabled={pending}>
               <Square className="mr-2 size-4" />

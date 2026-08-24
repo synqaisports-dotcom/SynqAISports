@@ -125,6 +125,17 @@ export function voidMatchEvent(events: MatchEvent[], eventId: string): MatchEven
   return events.map((event) => (event.id === eventId ? { ...event, voided: true } : event));
 }
 
+export function isAnnulableMatchEvent(event: MatchEvent): boolean {
+  if (event.voided) return false;
+  return (
+    event.type === 'goal' ||
+    event.type === 'penalty' ||
+    event.type === 'yellow' ||
+    event.type === 'red' ||
+    (event.type === 'note' && event.description === 'falta')
+  );
+}
+
 export function matchEventLabel(event: MatchEvent): string {
   if (event.voided) return 'Anulado';
   switch (event.type) {
