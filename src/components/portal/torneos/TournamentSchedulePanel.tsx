@@ -28,6 +28,7 @@ type Props = {
   bundle: TournamentBundle;
   categoryId?: string;
   renderAfterCategory?: (category: TournamentCategory) => ReactNode;
+  showMesaLinks?: boolean;
 };
 
 function MatchTeamsCell({
@@ -189,7 +190,12 @@ const viewTabs: { id: ViewMode; label: string; icon: typeof MapPin }[] = [
   { id: 'group', label: 'Por grupo', icon: CalendarClock },
 ];
 
-export function TournamentSchedulePanel({ bundle, categoryId, renderAfterCategory }: Props) {
+export function TournamentSchedulePanel({
+  bundle,
+  categoryId,
+  renderAfterCategory,
+  showMesaLinks = true,
+}: Props) {
   const [view, setView] = useState<ViewMode>('field');
   const [sheetBucket, setSheetBucket] = useState<BucketMeta | null>(null);
 
@@ -269,6 +275,7 @@ export function TournamentSchedulePanel({ bundle, categoryId, renderAfterCategor
         bucket={sheetBucket}
         open={sheetBucket != null}
         onOpenChange={(open) => !open && setSheetBucket(null)}
+        showMesaLinks={showMesaLinks}
       />
     </>
   );

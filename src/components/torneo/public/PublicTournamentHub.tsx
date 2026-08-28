@@ -205,10 +205,10 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
       {/* Content — ancho completo como antes */}
       <main className={cn(CONTENT_MAX, 'py-8')}>
         {tab === 'horarios' ? (
-          <TournamentSchedulePanel bundle={bundle} renderAfterCategory={renderCategoryAd} />
+          <TournamentSchedulePanel bundle={bundle} renderAfterCategory={renderCategoryAd} showMesaLinks={false} />
         ) : null}
         {tab === 'clasificacion' ? (
-          <TournamentClasificacionPanel bundle={bundle} renderAfterCategory={renderCategoryAd} />
+          <TournamentClasificacionPanel bundle={bundle} renderAfterCategory={renderCategoryAd} showMesaLinks={false} />
         ) : null}
         {tab === 'cruces' ? <PublicBracketsPanel bundle={bundle} /> : null}
         {tab === 'patrocinadores' ? <PublicSponsorsPanel sponsors={bundle.sponsors} /> : null}

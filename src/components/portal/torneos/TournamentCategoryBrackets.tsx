@@ -107,6 +107,7 @@ function PlacementBracketPhase({
   color,
   positionLabel,
   showSchedule,
+  showMesaLinks = true,
 }: {
   bundle: TournamentBundle;
   category: TournamentCategory;
@@ -115,6 +116,7 @@ function PlacementBracketPhase({
   color?: string;
   positionLabel: string;
   showSchedule?: boolean;
+  showMesaLinks?: boolean;
 }) {
   const categoryMatches = bundle.matches.filter((m) => m.category_id === category.id);
   const bracketMatches = matchesByBracket(categoryMatches, bracketKey);
@@ -142,6 +144,7 @@ function PlacementBracketPhase({
           bundle={bundle}
           bracketName={bracketName}
           accentColor={color}
+          showMesaLinks={showMesaLinks}
         />
       </div>
       {showSchedule ? (
@@ -155,10 +158,12 @@ export function TournamentCategoryBrackets({
   bundle,
   category,
   showSchedule = false,
+  showMesaLinks = true,
 }: {
   bundle: TournamentBundle;
   category: TournamentCategory;
   showSchedule?: boolean;
+  showMesaLinks?: boolean;
 }) {
   const brackets = placementBracketsForCategory(category);
   const categoryMatches = bundle.matches.filter((m) => m.category_id === category.id);
@@ -176,6 +181,7 @@ export function TournamentCategoryBrackets({
           color={bracket.color}
           positionLabel={`${bracket.position}º en cada grupo`}
           showSchedule={showSchedule}
+          showMesaLinks={showMesaLinks}
         />
       ))}
 
@@ -188,6 +194,7 @@ export function TournamentCategoryBrackets({
           color={CONSOLATION_BRACKET.color}
           positionLabel="Últimos puestos / bandeja inferior"
           showSchedule={showSchedule}
+          showMesaLinks={showMesaLinks}
         />
       ) : null}
     </div>

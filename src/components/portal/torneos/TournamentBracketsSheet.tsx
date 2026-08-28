@@ -11,9 +11,16 @@ type Props = {
   categoryId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showMesaLinks?: boolean;
 };
 
-export function TournamentBracketsSheet({ bundle, categoryId, open, onOpenChange }: Props) {
+export function TournamentBracketsSheet({
+  bundle,
+  categoryId,
+  open,
+  onOpenChange,
+  showMesaLinks = true,
+}: Props) {
   const category = bundle.categories.find((c) => c.id === categoryId);
 
   return (
@@ -31,7 +38,9 @@ export function TournamentBracketsSheet({ bundle, categoryId, open, onOpenChange
           </SheetHeader>
         </PortalSheetHeader>
         <PortalSheetBody className="max-w-[1400px]">
-          {category ? <TournamentCategoryBrackets bundle={bundle} category={category} /> : null}
+          {category ? (
+            <TournamentCategoryBrackets bundle={bundle} category={category} showMesaLinks={showMesaLinks} />
+          ) : null}
         </PortalSheetBody>
       </PortalSheetContent>
     </Sheet>

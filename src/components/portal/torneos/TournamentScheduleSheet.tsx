@@ -30,6 +30,7 @@ type Props = {
   bucket: BucketMeta | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showMesaLinks?: boolean;
 };
 
 function bracketName(bundle: TournamentBundle, match: TournamentMatch) {
@@ -41,7 +42,13 @@ function bracketName(bundle: TournamentBundle, match: TournamentMatch) {
   return match.bracket_key === 'consolation' ? 'Consolación' : undefined;
 }
 
-export function TournamentScheduleSheet({ bundle, bucket, open, onOpenChange }: Props) {
+export function TournamentScheduleSheet({
+  bundle,
+  bucket,
+  open,
+  onOpenChange,
+  showMesaLinks = true,
+}: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <PortalSheetContent maxWidth="lg">
@@ -66,7 +73,7 @@ export function TournamentScheduleSheet({ bundle, bucket, open, onOpenChange }: 
                     <th className="px-3 py-2">Partido</th>
                     <th className="px-3 py-2 text-center">Ronda</th>
                     <th className="px-3 py-2 text-center">Res</th>
-                    <th className="px-3 py-2 w-8" />
+                    {showMesaLinks ? <th className="px-3 py-2 w-8" /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -111,20 +118,22 @@ export function TournamentScheduleSheet({ bundle, bucket, open, onOpenChange }: 
                             formatMatchScore(match)
                           )}
                         </td>
-                        <td className="px-2 py-2">
-                          {(() => {
-                            const mesaHref = mesaFieldUrlForMatch(bundle, match);
-                            return mesaHref ? (
-                              <Link
-                                href={mesaHref}
-                                target="_blank"
-                                className="text-cyan-300 hover:text-cyan-200"
-                              >
-                                <ExternalLink className="size-3.5" />
-                              </Link>
-                            ) : null;
-                          })()}
-                        </td>
+                        {showMesaLinks ? (
+                          <td className="px-2 py-2">
+                            {(() => {
+                              const mesaHref = mesaFieldUrlForMatch(bundle, match);
+                              return mesaHref ? (
+                                <Link
+                                  href={mesaHref}
+                                  target="_blank"
+                                  className="text-cyan-300 hover:text-cyan-200"
+                                >
+                                  <ExternalLink className="size-3.5" />
+                                </Link>
+                              ) : null;
+                            })()}
+                          </td>
+                        ) : null}
                       </tr>
                     );
                   })}

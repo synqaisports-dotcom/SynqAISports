@@ -44,7 +44,7 @@ export function PublicBracketsPanel({ bundle }: Props) {
               </div>
               <p className="text-sm tabular-nums text-muted-foreground">{knockoutMatches.length} partidos</p>
             </div>
-            <TournamentCategoryBrackets bundle={bundle} category={category} showSchedule />
+            <TournamentCategoryBrackets bundle={bundle} category={category} showSchedule showMesaLinks={false} />
             <PublicCategoryAd categoryName={category.name} />
           </section>
         );

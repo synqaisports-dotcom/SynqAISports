@@ -30,11 +30,13 @@ function MatchSlot({
   bundle,
   accentColor,
   isBye,
+  showMesaLinks = true,
 }: {
   match: TournamentMatch | null;
   bundle: TournamentBundle;
   accentColor?: string;
   isBye?: boolean;
+  showMesaLinks?: boolean;
 }) {
   if (!match) {
     return (
@@ -98,14 +100,16 @@ function MatchSlot({
           {match.status === 'finished' && match.went_to_penalties ? (
             <span className="text-[8px]">pen.</span>
           ) : null}
-          {(() => {
-            const mesaHref = mesaFieldUrlForMatch(bundle, match);
-            return mesaHref ? (
-              <Link href={mesaHref} target="_blank" className="text-cyan-300 hover:text-cyan-200">
-                <ExternalLink className="size-3" />
-              </Link>
-            ) : null;
-          })()}
+          {showMesaLinks
+            ? (() => {
+                const mesaHref = mesaFieldUrlForMatch(bundle, match);
+                return mesaHref ? (
+                  <Link href={mesaHref} target="_blank" className="text-cyan-300 hover:text-cyan-200">
+                    <ExternalLink className="size-3" />
+                  </Link>
+                ) : null;
+              })()
+            : null}
         </div>
       </div>
     </div>
@@ -188,16 +192,24 @@ function BranchTree({
   direction,
   bundle,
   accentColor,
+  showMesaLinks = true,
 }: {
   node: BracketNode;
   direction: 'left' | 'right';
   bundle: TournamentBundle;
   accentColor?: string;
+  showMesaLinks?: boolean;
 }) {
   if (!node.children) {
     return (
       <div className="flex items-center" style={{ height: SLOT_HEIGHT }}>
-        <MatchSlot match={node.match} bundle={bundle} accentColor={accentColor} isBye={node.isBye} />
+        <MatchSlot
+          match={node.match}
+          bundle={bundle}
+          accentColor={accentColor}
+          isBye={node.isBye}
+          showMesaLinks={showMesaLinks}
+        />
       </div>
     );
   }
@@ -208,8 +220,8 @@ function BranchTree({
 
   const childrenColumn = (
     <div className="flex flex-col justify-between" style={{ height: pairHeight }}>
-      <BranchTree node={top} direction={direction} bundle={bundle} accentColor={accentColor} />
-      <BranchTree node={bottom} direction={direction} bundle={bundle} accentColor={accentColor} />
+      <BranchTree node={top} direction={direction} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
+      <BranchTree node={bottom} direction={direction} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
     </div>
   );
 
@@ -220,7 +232,7 @@ function BranchTree({
         <PairConnector direction="left" height={pairHeight} />
         {hasParent ? (
           <div className="flex items-center" style={{ height: pairHeight }}>
-            <MatchSlot match={node.match} bundle={bundle} accentColor={accentColor} />
+            <MatchSlot match={node.match} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
           </div>
         ) : null}
       </div>
@@ -231,7 +243,7 @@ function BranchTree({
     <div className="flex items-center">
       {hasParent ? (
         <div className="flex items-center" style={{ height: pairHeight }}>
-          <MatchSlot match={node.match} bundle={bundle} accentColor={accentColor} />
+          <MatchSlot match={node.match} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
         </div>
       ) : null}
       <PairConnector direction="right" height={pairHeight} />
@@ -307,15 +319,17 @@ function DualBracketTree({
   root,
   bundle,
   accentColor,
+  showMesaLinks = true,
 }: {
   root: BracketNode;
   bundle: TournamentBundle;
   accentColor?: string;
+  showMesaLinks?: boolean;
 }) {
   if (!root.children) {
     return (
       <div className="flex justify-center">
-        <MatchSlot match={root.match} bundle={bundle} accentColor={accentColor} />
+        <MatchSlot match={root.match} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
       </div>
     );
   }
@@ -325,16 +339,16 @@ function DualBracketTree({
 
   return (
     <div className="flex items-center justify-center">
-      <BranchTree node={leftBranch} direction="left" bundle={bundle} accentColor={accentColor} />
+      <BranchTree node={leftBranch} direction="left" bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
       <FinalConnector direction="left" height={branchHeight} />
       <div className="flex flex-col items-center gap-1 px-1">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {ROUND_KEY_LABELS.final}
         </p>
-        <MatchSlot match={root.match} bundle={bundle} accentColor={accentColor} />
+        <MatchSlot match={root.match} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
       </div>
       <FinalConnector direction="right" height={branchHeight} />
-      <BranchTree node={rightBranch} direction="right" bundle={bundle} accentColor={accentColor} />
+      <BranchTree node={rightBranch} direction="right" bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
     </div>
   );
 }
@@ -344,9 +358,16 @@ type Props = {
   bundle: TournamentBundle;
   bracketName: string;
   accentColor?: string;
+  showMesaLinks?: boolean;
 };
 
-export function TournamentBracketVisual({ matches, bundle, bracketName, accentColor }: Props) {
+export function TournamentBracketVisual({
+  matches,
+  bundle,
+  bracketName,
+  accentColor,
+  showMesaLinks = true,
+}: Props) {
   if (matches.length === 0) {
     return <p className="text-sm text-muted-foreground">Sin partidos en esta fase.</p>;
   }
@@ -374,7 +395,7 @@ export function TournamentBracketVisual({ matches, bundle, bracketName, accentCo
       <div className="overflow-x-auto pb-4">
         <div className="flex min-w-max justify-center px-4 py-2">
           {tree ? (
-            <DualBracketTree root={tree} bundle={bundle} accentColor={accentColor} />
+            <DualBracketTree root={tree} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
           ) : (
             <p className="text-sm text-muted-foreground">Sin estructura de eliminatoria.</p>
           )}
@@ -388,7 +409,7 @@ export function TournamentBracketVisual({ matches, bundle, bracketName, accentCo
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {bracketName} · 3.er puesto
               </p>
-              <MatchSlot match={thirdPlace[0]!} bundle={bundle} accentColor={accentColor} />
+              <MatchSlot match={thirdPlace[0]!} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
             </div>
           ) : null}
           {consolationFinal.length > 0 ? (
@@ -396,7 +417,7 @@ export function TournamentBracketVisual({ matches, bundle, bracketName, accentCo
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Final consolación
               </p>
-              <MatchSlot match={consolationFinal[0]!} bundle={bundle} accentColor={accentColor} />
+              <MatchSlot match={consolationFinal[0]!} bundle={bundle} accentColor={accentColor} showMesaLinks={showMesaLinks} />
             </div>
           ) : null}
         </div>

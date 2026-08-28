@@ -21,6 +21,7 @@ type Props = {
   bundle: TournamentBundle;
   categoryId?: string;
   renderAfterCategory?: (category: TournamentCategory) => ReactNode;
+  showMesaLinks?: boolean;
 };
 
 function GroupStandingsTable({
@@ -118,7 +119,12 @@ function CategoryClasificacion({
   );
 }
 
-export function TournamentClasificacionPanel({ bundle, categoryId, renderAfterCategory }: Props) {
+export function TournamentClasificacionPanel({
+  bundle,
+  categoryId,
+  renderAfterCategory,
+  showMesaLinks = true,
+}: Props) {
   const categories = categoryId
     ? bundle.categories.filter((c) => c.id === categoryId)
     : bundle.categories;
@@ -153,6 +159,7 @@ export function TournamentClasificacionPanel({ bundle, categoryId, renderAfterCa
         categoryId={bracketsCategoryId}
         open={bracketsCategoryId != null}
         onOpenChange={(open) => !open && setBracketsCategoryId(null)}
+        showMesaLinks={showMesaLinks}
       />
     </>
   );
