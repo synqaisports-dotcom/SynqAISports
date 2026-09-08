@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { matchesByBracket } from '@/lib/tournament-brackets';
 import { fieldLabel, formatMatchDateTime, roundLabelWithBracket } from '@/lib/tournament-schedule';
 import { TournamentBracketVisual } from '@/components/portal/torneos/TournamentBracketVisual';
@@ -14,6 +15,15 @@ import {
 } from '@/lib/tournaments';
 import { cn } from '@/lib/utils';
 import { CalendarClock, MapPin, Radio } from 'lucide-react';
+
+type BracketTab = {
+  bracketKey: string;
+  name: string;
+  color?: string;
+  positionLabel: string;
+  matchCount: number;
+  liveCount: number;
+};
 
 function BracketScheduleTable({
   matches,
@@ -169,30 +179,90 @@ export function TournamentCategoryBrackets({
   const categoryMatches = bundle.matches.filter((m) => m.category_id === category.id);
   const hasConsolation = categoryMatches.some((m) => m.bracket_key === 'consolation');
 
-  return (
-    <div className="space-y-6">
-      {brackets.map((bracket) => (
-        <PlacementBracketPhase
-          key={bracket.bracket_key}
-          bundle={bundle}
-          category={category}
-          bracketKey={bracket.bracket_key}
-          bracketName={bracket.name}
-          color={bracket.color}
-          positionLabel={`${bracket.position}º en cada grupo`}
-          showSchedule={showSchedule}
-          showMesaLinks={showMesaLinks}
-        />
-      ))}
+  const bracketTabs = useMemo<BracketTab[]>(() => {
+    const tabs: BracketTab[] = brackets.map((bracket) => {
+      const matches = matchesByBracket(categoryMatches, bracket.bracket_key);
+      return {
+        bracketKey: bracket.bracket_key,
+        name: bracket.name,
+        color: bracket.color,
+        positionLabel: `${bracket.position}º en cada grupo`,
+        matchCount: matches.length,
+        liveCount: matches.filter((m) => m.status === 'live').length,
+      };
+    });
 
-      {hasConsolation ? (
+    if (hasConsolation) {
+      const matches = matchesByBracket(categoryMatches, CONSOLATION_BRACKET.bracket_key);
+      tabs.push({
+        bracketKey: CONSOLATION_BRACKET.bracket_key,
+        name: CONSOLATION_BRACKET.name,
+        color: CONSOLATION_BRACKET.color,
+        positionLabel: 'Últimos puestos / bandeja inferior',
+        matchCount: matches.length,
+        liveCount: matches.filter((m) => m.status === 'live').length,
+      });
+    }
+
+    return tabs;
+  }, [brackets, categoryMatches, hasConsolation]);
+
+  const [activeBracketKey, setActiveBracketKey] = useState(() => bracketTabs[0]?.bracketKey ?? '');
+
+  const activeTab =
+    bracketTabs.find((tab) => tab.bracketKey === activeBracketKey) ?? bracketTabs[0] ?? null;
+
+  if (bracketTabs.length === 0) {
+    return (
+      <div className="portal-section-surface rounded-xl p-6 text-center text-sm text-muted-foreground">
+        Aún no hay cuadros eliminatorios para esta categoría.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-x-auto pb-1">
+        <div className="flex min-w-max gap-1 rounded-lg border border-border/50 p-1">
+          {bracketTabs.map((tab) => {
+            const active = tab.bracketKey === activeTab?.bracketKey;
+            return (
+              <button
+                key={tab.bracketKey}
+                type="button"
+                onClick={() => setActiveBracketKey(tab.bracketKey)}
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                  active
+                    ? 'bg-primary/15 text-primary shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                )}
+                aria-pressed={active}
+              >
+                <span
+                  className="size-2.5 shrink-0 rounded-full ring-1 ring-white/10"
+                  style={{ backgroundColor: tab.color ?? '#94a3b8' }}
+                />
+                <span className="font-medium">{tab.name}</span>
+                {tab.liveCount > 0 ? (
+                  <Radio className="size-3 animate-pulse text-cyan-300" />
+                ) : (
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{tab.matchCount}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeTab ? (
         <PlacementBracketPhase
           bundle={bundle}
           category={category}
-          bracketKey={CONSOLATION_BRACKET.bracket_key}
-          bracketName={CONSOLATION_BRACKET.name}
-          color={CONSOLATION_BRACKET.color}
-          positionLabel="Últimos puestos / bandeja inferior"
+          bracketKey={activeTab.bracketKey}
+          bracketName={activeTab.name}
+          color={activeTab.color}
+          positionLabel={activeTab.positionLabel}
           showSchedule={showSchedule}
           showMesaLinks={showMesaLinks}
         />
