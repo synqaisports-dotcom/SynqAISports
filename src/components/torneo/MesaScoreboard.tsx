@@ -17,6 +17,9 @@ import {
   playerFoulCount,
   playerGoalCount,
   isAnnulableMatchEvent,
+  isMesaMatchEditExpired,
+  mesaMatchCanEdit,
+  mesaMatchEditSecondsRemaining,
   voidMatchEvent,
 } from '@/lib/tournament-mesa';
 import {
@@ -73,7 +76,9 @@ export function MesaScoreboard({
   const [events, setEvents] = useState<MatchEvent[]>(match.events_json ?? []);
   const [status, setStatus] = useState(match.status);
   const [liveStartedAt, setLiveStartedAt] = useState<string | null>(match.live_started_at);
+  const [liveFinishedAt, setLiveFinishedAt] = useState<string | null>(match.live_finished_at);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [graceSeconds, setGraceSeconds] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -89,7 +94,13 @@ export function MesaScoreboard({
   const roundLabel = ROUND_KEY_LABELS[match.round_key] ?? match.round_key;
   const isLive = status === 'live';
   const isFinished = status === 'finished';
-  const canEditStats = isLive && !isFinished;
+  const matchSnapshot = useMemo(
+    () => ({ ...match, status, live_finished_at: liveFinishedAt }),
+    [match, status, liveFinishedAt]
+  );
+  const canEditStats = mesaMatchCanEdit(matchSnapshot);
+  const isMesaExpired = isFinished && isMesaMatchEditExpired(matchSnapshot);
+  const isInGracePeriod = isFinished && canEditStats;
 
   const currentMinute = Math.max(1, Math.floor(timerSeconds / 60) + 1);
 
@@ -118,8 +129,10 @@ export function MesaScoreboard({
             setLiveStartedAt(nextLiveStartedAt);
             patch.live_started_at = nextLiveStartedAt;
           }
-          if (nextStatus === 'finished') {
-            patch.live_finished_at = new Date().toISOString();
+          if (nextStatus === 'finished' && status !== 'finished') {
+            const finishedAt = new Date().toISOString();
+            setLiveFinishedAt(finishedAt);
+            patch.live_finished_at = finishedAt;
           }
           onMatchChange?.(patch);
           setMessage(res.message ?? 'Guardado');
@@ -129,7 +142,7 @@ export function MesaScoreboard({
         }
       });
     },
-    [match.home_team_id, match.away_team_id, match.id, mesaFieldToken, liveStartedAt, onMatchChange]
+    [match.home_team_id, match.away_team_id, match.id, mesaFieldToken, liveStartedAt, status, onMatchChange]
   );
 
   useEffect(() => {
@@ -141,14 +154,27 @@ export function MesaScoreboard({
   }, [isLive, liveStartedAt]);
 
   useEffect(() => {
-    if (!isLive) return;
+    if (!isFinished || !liveFinishedAt) {
+      setGraceSeconds(null);
+      return;
+    }
+    const tick = () =>
+      setGraceSeconds(mesaMatchEditSecondsRemaining({ status: 'finished', live_finished_at: liveFinishedAt }));
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [isFinished, liveFinishedAt]);
+
+  useEffect(() => {
+    if (!canEditStats) return;
     if (skipAutosave.current) {
       skipAutosave.current = false;
       return;
     }
-    const timer = window.setTimeout(() => persist(events, 'live', liveStartedAt), 700);
+    const saveStatus = isLive ? 'live' : status;
+    const timer = window.setTimeout(() => persist(events, saveStatus, liveStartedAt), 700);
     return () => window.clearTimeout(timer);
-  }, [events, isLive, liveStartedAt, persist]);
+  }, [events, canEditStats, isLive, status, liveStartedAt, persist]);
 
   function startMatch() {
     if (hasOtherLiveMatch) {
@@ -163,6 +189,9 @@ export function MesaScoreboard({
   }
 
   function finishMatch() {
+    const finishedAt = new Date().toISOString();
+    setLiveFinishedAt(finishedAt);
+    skipAutosave.current = true;
     persist(events, 'finished', liveStartedAt);
   }
 
@@ -237,6 +266,21 @@ export function MesaScoreboard({
             </span>
             <span className="text-xs text-cyan-200/80">{MATCH_STATUS_LABELS.live}</span>
           </div>
+        ) : null}
+
+        {isInGracePeriod && graceSeconds != null ? (
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+            <span className="text-sm text-amber-100">Margen de corrección</span>
+            <span className="text-2xl font-bold tabular-nums tracking-widest text-amber-200">
+              {formatMatchTimer(graceSeconds)}
+            </span>
+          </div>
+        ) : null}
+
+        {isMesaExpired ? (
+          <p className="mt-4 rounded-xl border border-border/40 bg-white/[0.02] px-4 py-3 text-center text-sm text-muted-foreground">
+            La mesa dejó de aceptar cambios 5 minutos después del final.
+          </p>
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -404,15 +448,19 @@ export function MesaScoreboard({
             Hay otro partido en juego en este campo. Finalízalo antes de iniciar este.
           </p>
         ) : null}
-        {isLive ? (
+        {isLive || isFinished ? (
           <>
             <p className="text-center text-xs text-muted-foreground">
-              Los cambios se guardan automáticamente. Goles y tarjetas anulados no cuentan en marcador ni estadísticas.
+              {isInGracePeriod
+                ? 'Puedes corregir goles y tarjetas durante 5 minutos tras el final.'
+                : 'Los cambios se guardan automáticamente. Goles y tarjetas anulados no cuentan en marcador ni estadísticas.'}
             </p>
-            <Button className="w-full" variant="secondary" onClick={finishMatch} disabled={pending}>
-              <Square className="mr-2 size-4" />
-              Finalizar partido
-            </Button>
+            {isLive ? (
+              <Button className="w-full" variant="secondary" onClick={finishMatch} disabled={pending}>
+                <Square className="mr-2 size-4" />
+                Finalizar partido
+              </Button>
+            ) : null}
           </>
         ) : null}
       </div>

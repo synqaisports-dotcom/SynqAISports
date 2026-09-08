@@ -30,6 +30,7 @@ import {
   resolveMesaFieldSlotByToken,
   type MesaFieldSlot,
 } from '@/lib/tournament-mesa-field';
+import { isMesaMatchEditExpired, mesaMatchCanEdit } from '@/lib/tournament-mesa';
 import {
   delegateUrl,
   gateUrl,
@@ -111,6 +112,27 @@ function isMesaTokenExpired(expiresAt: string | null): boolean {
   return new Date(expiresAt).getTime() < Date.now();
 }
 
+function assertMesaMatchEditable(
+  match: TournamentMatch,
+  nextStatus?: TournamentMatch['status']
+): TournamentActionState | null {
+  if (nextStatus === 'finished' && match.status === 'live') return null;
+  if (nextStatus === 'live' && match.status === 'scheduled') return null;
+
+  if (isMesaMatchEditExpired(match)) {
+    return {
+      ok: false,
+      message: 'La mesa dejó de aceptar cambios 5 minutos después del final del partido.',
+    };
+  }
+
+  if (!mesaMatchCanEdit(match) && match.status !== 'live' && match.status !== 'scheduled') {
+    return { ok: false, message: 'Este partido ya no se puede editar desde la mesa.' };
+  }
+
+  return null;
+}
+
 function updateDemoMatchScore(
   match: TournamentMatch,
   scoreHome: number,
@@ -118,9 +140,8 @@ function updateDemoMatchScore(
   status: TournamentMatch['status'],
   eventsJson?: MatchEvent[]
 ): TournamentActionState {
-  if (isMesaTokenExpired(match.mesa_token_expires_at)) {
-    return { ok: false, message: 'Enlace de mesa caducado. Solicita uno nuevo al organizador.' };
-  }
+  const blocked = assertMesaMatchEditable(match, status);
+  if (blocked) return blocked;
 
   match.score_home = scoreHome;
   match.score_away = scoreAway;
@@ -129,7 +150,7 @@ function updateDemoMatchScore(
   if (status === 'live' && !match.live_started_at) {
     match.live_started_at = new Date().toISOString();
   }
-  if (status === 'finished') {
+  if (status === 'finished' && match.status !== 'finished') {
     match.live_finished_at = new Date().toISOString();
   }
 
@@ -1302,7 +1323,7 @@ export async function updateMatchScoreByMesaToken(
   const supabase = createServiceClient() ?? (await createClient());
   const { data } = await supabase
     .from('synq_tournament_matches')
-    .select('id, tournament_id, field_id, metadata_json, live_started_at')
+    .select('id, tournament_id, field_id, metadata_json, live_started_at, live_finished_at, status')
     .eq('id', matchId)
     .maybeSingle();
   if (!data) return { ok: false, message: 'Partido no encontrado' };
@@ -1315,11 +1336,19 @@ export async function updateMatchScoreByMesaToken(
     return { ok: false, message: 'El partido no pertenece a esta mesa' };
   }
 
+  const blocked = assertMesaMatchEditable(match, status);
+  if (blocked) return blocked;
+
   const liveStartedAt =
     status === 'live'
       ? data.live_started_at
         ? String(data.live_started_at)
         : new Date().toISOString()
+      : undefined;
+
+  const liveFinishedAt =
+    status === 'finished' && match.status !== 'finished'
+      ? new Date().toISOString()
       : undefined;
 
   const { error } = await supabase
@@ -1330,7 +1359,7 @@ export async function updateMatchScoreByMesaToken(
       status,
       events_json: eventsJson,
       live_started_at: liveStartedAt,
-      live_finished_at: status === 'finished' ? new Date().toISOString() : undefined,
+      live_finished_at: liveFinishedAt,
     })
     .eq('id', matchId);
 

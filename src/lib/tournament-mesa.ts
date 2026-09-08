@@ -1,4 +1,4 @@
-import type { MatchEvent, TournamentSport } from '@/lib/tournaments';
+import type { MatchEvent, TournamentMatch, TournamentSport } from '@/lib/tournaments';
 
 export function formatMatchTimer(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
@@ -187,4 +187,38 @@ export function scheduledHourKey(iso: string | null): string {
   if (!iso) return 'sin-horario';
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Margen de edición en mesa tras finalizar el partido. */
+export const MESA_POST_FINISH_GRACE_MS = 5 * 60 * 1000;
+
+export function mesaMatchEditExpiresAt(match: Pick<TournamentMatch, 'status' | 'live_finished_at'>): Date | null {
+  if (match.status !== 'finished' || !match.live_finished_at) return null;
+  return new Date(new Date(match.live_finished_at).getTime() + MESA_POST_FINISH_GRACE_MS);
+}
+
+export function isMesaMatchEditExpired(
+  match: Pick<TournamentMatch, 'status' | 'live_finished_at'>,
+  now = Date.now()
+): boolean {
+  if (match.status === 'scheduled' || match.status === 'live') return false;
+  if (match.status !== 'finished') return true;
+  const expiresAt = mesaMatchEditExpiresAt(match);
+  if (!expiresAt) return false;
+  return now >= expiresAt.getTime();
+}
+
+export function mesaMatchCanEdit(match: Pick<TournamentMatch, 'status' | 'live_finished_at'>, now = Date.now()): boolean {
+  if (match.status === 'scheduled' || match.status === 'live') return true;
+  if (match.status === 'finished') return !isMesaMatchEditExpired(match, now);
+  return false;
+}
+
+export function mesaMatchEditSecondsRemaining(
+  match: Pick<TournamentMatch, 'status' | 'live_finished_at'>,
+  now = Date.now()
+): number | null {
+  const expiresAt = mesaMatchEditExpiresAt(match);
+  if (!expiresAt) return null;
+  return Math.max(0, Math.floor((expiresAt.getTime() - now) / 1000));
 }

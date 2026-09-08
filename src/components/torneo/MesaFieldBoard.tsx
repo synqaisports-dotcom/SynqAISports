@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { updateMatchScoreByMesaToken } from '@/app/actions/tournaments';
 import { MesaScoreboard } from '@/components/torneo/MesaScoreboard';
 import { formatMatchDateTime } from '@/lib/tournament-schedule';
 import type { MesaFieldSlot } from '@/lib/tournament-mesa-field';
 import {
   filterMatchesByStatus,
+  isMesaMatchEditExpired,
+  mesaMatchEditSecondsRemaining,
   scheduledHourKey,
   type MatchStatusFilter,
 } from '@/lib/tournament-mesa';
@@ -47,6 +49,12 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const resolvedMatches = useMemo(
     () => matches.map((match) => ({ ...match, ...matchOverrides[match.id] })),
@@ -196,6 +204,12 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
             const category = bundle.categories.find((c) => c.id === match.category_id);
             const canStart =
               match.status === 'scheduled' && (!liveMatchOnField || liveMatchOnField.id === match.id);
+            const graceSeconds =
+              match.status === 'finished'
+                ? mesaMatchEditSecondsRemaining(match, now)
+                : null;
+            const isExpired =
+              match.status === 'finished' && isMesaMatchEditExpired(match, now);
 
             return (
               <div
@@ -213,7 +227,12 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
                         {teamName(bundle, match.home_team_id)} vs {teamName(bundle, match.away_team_id)}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {category?.name ?? 'Categoría'} · {MATCH_STATUS_LABELS[match.status]}
+                        {category?.name ?? 'Categoría'} ·{' '}
+                        {match.status === 'finished' && isExpired
+                          ? 'Cerrado'
+                          : match.status === 'finished' && graceSeconds != null && graceSeconds > 0
+                            ? `Corrección ${Math.floor(graceSeconds / 60)}:${String(graceSeconds % 60).padStart(2, '0')}`
+                            : MATCH_STATUS_LABELS[match.status]}
                       </p>
                       <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <CalendarClock className="size-3 text-cyan-300" />
@@ -230,6 +249,16 @@ export function MesaFieldBoard({ bundle, slot, matches }: Props) {
                         <span className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase text-cyan-300">
                           <Radio className="size-3 animate-pulse" />
                           Live
+                        </span>
+                      ) : null}
+                      {match.status === 'finished' && !isExpired && graceSeconds != null && graceSeconds > 0 ? (
+                        <span className="mt-1 block text-[10px] uppercase text-amber-300">
+                          Margen activo
+                        </span>
+                      ) : null}
+                      {isExpired ? (
+                        <span className="mt-1 block text-[10px] uppercase text-muted-foreground">
+                          Caducado
                         </span>
                       ) : null}
                     </div>
