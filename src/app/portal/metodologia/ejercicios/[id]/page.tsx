@@ -1,5 +1,4 @@
 import { ExerciseEditor, type ExerciseRow } from '@/components/methodology/ExerciseEditor';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
@@ -23,7 +22,6 @@ export default async function EditarEjercicioPage({ params }: Props) {
 
   return (
     <div className="space-y-4">
-      <MethodologySubnav />
       <ExerciseEditor exercise={exercise as ExerciseRow} />
     </div>
   );

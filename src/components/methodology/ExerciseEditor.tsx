@@ -14,8 +14,10 @@ import {
   type ExerciseTaskSheet,
   type TaskType,
 } from '@/lib/exercise-sheet';
+import { PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS } from '@/components/portal/PortalActionIcon';
 import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import type { DrawingData } from '@/lib/methodology';
+import { cn } from '@/lib/utils';
 
 export type ExerciseRow = {
   id: string;
@@ -30,9 +32,6 @@ export type ExerciseRow = {
 };
 
 const initial: ActionState = { ok: false };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:opacity-50';
 
 type Props = {
   exercise?: ExerciseRow;
@@ -149,7 +148,7 @@ export function ExerciseEditor({
           <button
             type="submit"
             disabled={pending}
-            className={actionButtonClass}
+            className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
             aria-label={isEdit ? 'Guardar ficha del ejercicio' : 'Crear ficha de ejercicio'}
             title={isEdit ? 'Guardar ficha del ejercicio' : 'Crear ficha de ejercicio'}
           >
@@ -157,7 +156,7 @@ export function ExerciseEditor({
           </button>
           <Link
             href={backHref}
-            className={actionButtonClass}
+            className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
             aria-label={returnTo ? 'Volver a la sesión' : 'Volver al catálogo'}
             title={returnTo ? 'Volver a la sesión' : 'Volver al catálogo'}
           >
@@ -166,7 +165,7 @@ export function ExerciseEditor({
           {isEdit && exercise ? (
             <Link
               href={`/print/ficha/ejercicio/${exercise.id}`}
-              className={actionButtonClass}
+              className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
               aria-label="Imprimir ficha"
               title="Imprimir ficha"
               target="_blank"

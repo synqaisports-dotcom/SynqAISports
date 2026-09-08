@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  FileText,
   Layers,
   MapPin,
   Package,
@@ -12,29 +13,35 @@ import {
   Warehouse,
 } from 'lucide-react';
 import { MaterialForm } from '@/components/portal/MaterialForm';
+import { MaterialHandoverForm } from '@/components/portal/MaterialHandoverForm';
 import { MaterialPauseButton } from '@/components/portal/MaterialPauseButton';
 import { MaterialStockForm } from '@/components/portal/MaterialStockForm';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
+import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { ClubFacility } from '@/lib/club-facilities';
 import {
   MATERIAL_CATEGORY_LABELS,
   MATERIAL_UNIT_LABELS,
+  formatMaterialMoney,
+  handoverItemsFromStock,
+  lineImmobilizedValue,
   locationLabel,
   stockByLocation,
   stockForMaterial,
   totalQuantityForMaterial,
   type ClubMaterialItem,
   type ClubMaterialStock,
+  type MaterialLocationType,
 } from '@/lib/club-material';
 import type { TeamOption } from '@/lib/person-assignments';
 import { cn } from '@/lib/utils';
@@ -55,9 +62,6 @@ type Props = {
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 function compareMaterials(a: ClubMaterialItem, b: ClubMaterialItem, sort: MaterialListSortMode) {
   const cmp = a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
@@ -183,6 +187,9 @@ function CatalogDetailPanel({
             <p className="mt-1 text-sm text-primary">
               {MATERIAL_CATEGORY_LABELS[material.category]} ·{' '}
               {MATERIAL_UNIT_LABELS[material.unit]}
+              {material.unit_cost != null
+                ? ` · ${formatMaterialMoney(material.unit_cost, material.currency_code)}/ud.`
+                : ''}
             </p>
             {material.sku ? (
               <p className="text-xs text-muted-foreground">Ref. {material.sku}</p>
@@ -191,7 +198,7 @@ function CatalogDetailPanel({
           <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Modificar material"
               title="Modificar material"
               onClick={() => setEditOpen(true)}
@@ -200,7 +207,7 @@ function CatalogDetailPanel({
             </button>
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Añadir stock"
               title="Añadir o mover stock"
               onClick={() => {
@@ -309,11 +316,13 @@ function CatalogDetailPanel({
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Modificar — {material.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Modificar — {material.name}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialForm
               material={material}
               onSaved={() => {
@@ -322,16 +331,18 @@ function CatalogDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <Sheet open={stockOpen} onOpenChange={setStockOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Asignar stock</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="lg">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Asignar stock</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialStockForm
               material={material}
               teams={teams}
@@ -341,8 +352,8 @@ function CatalogDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -352,29 +363,95 @@ function LocationDetailPanel({
   title,
   subtitle,
   rows,
+  locationType,
+  locationId,
+  locationLabelText,
+  materials,
+  stock,
+  onHandoverCreated,
 }: {
   title: string;
   subtitle: string;
   rows: ReturnType<typeof stockByLocation>;
+  locationType: MaterialLocationType;
+  locationId: string | null;
+  locationLabelText: string;
+  materials: ClubMaterialItem[];
+  stock: ClubMaterialStock[];
+  onHandoverCreated: (handoverId: string) => void;
 }) {
+  const [handoverOpen, setHandoverOpen] = useState(false);
   const totalUnits = rows.reduce((sum, row) => sum + row.quantity, 0);
+  const immobilized = rows.reduce(
+    (sum, row) => sum + lineImmobilizedValue(row.material, row.quantity),
+    0
+  );
+  const currency = rows.find((row) => row.material.unit_cost != null)?.material.currency_code ?? 'EUR';
+  const handoverItems = handoverItemsFromStock(materials, stock, locationType, locationId);
 
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+          {handoverItems.length > 0 ? (
+            <button
+              type="button"
+              className={PORTAL_ACTION_ICON_CLASS}
+              aria-label="Generar recibí de entrega"
+              title="Generar recibí de entrega"
+              onClick={() => setHandoverOpen(true)}
+            >
+              <FileText className="size-4" />
+            </button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            Líneas de inventario
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-foreground">{rows.length}</p>
-          <p className="text-xs text-muted-foreground">{totalUnits} unidades contabilizadas</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Líneas de inventario
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">{rows.length}</p>
+            <p className="text-xs text-muted-foreground">{totalUnits} unidades contabilizadas</p>
+          </div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Dinero inmovilizado
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">
+              {immobilized > 0 ? formatMaterialMoney(immobilized, currency) : '—'}
+            </p>
+          </div>
         </div>
         <StockTable rows={rows} />
       </CardContent>
+
+      <Sheet open={handoverOpen} onOpenChange={setHandoverOpen}>
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">{locationLabelText}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
+            <MaterialHandoverForm
+              locationType={locationType}
+              locationId={locationId}
+              locationLabel={locationLabelText}
+              items={handoverItems}
+              onCreated={(handoverId) => {
+                setHandoverOpen(false);
+                onHandoverCreated(handoverId);
+              }}
+            />
+          </PortalSheetBody>
+        </PortalSheetContent>
+      </Sheet>
     </Card>
   );
 }
@@ -462,6 +539,12 @@ export function MaterialMasterDetail({
     facilities.find((facility) => facility.id === selectedFacilityId) ??
     filteredFacilities[0] ??
     null;
+
+  const handleHandoverCreated = (handoverId: string) => {
+    window.open(`/print/material/entrega/${handoverId}`, '_blank', 'noopener,noreferrer');
+    router.refresh();
+  };
+
 
   const teamInventory = useMemo(
     () =>
@@ -584,7 +667,7 @@ export function MaterialMasterDetail({
             {view === 'catalog' ? (
               <button
                 type="button"
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Nuevo material"
                 title="Nuevo material"
                 onClick={() => setCreateOpen(true)}
@@ -796,6 +879,12 @@ export function MaterialMasterDetail({
               : 'Selecciona un equipo'
           }
           rows={teamInventory}
+          locationType="team"
+          locationId={selectedTeam?.id ?? null}
+          locationLabelText={selectedTeam?.name ?? 'Equipo'}
+          materials={materials}
+          stock={stock}
+          onHandoverCreated={handleHandoverCreated}
         />
       ) : (
         <LocationDetailPanel
@@ -810,18 +899,26 @@ export function MaterialMasterDetail({
               : 'Selecciona una instalación'
           }
           rows={facilityInventory}
+          locationType="facility"
+          locationId={selectedFacility?.id ?? null}
+          locationLabelText={selectedFacility?.name ?? 'Instalación'}
+          materials={materials}
+          stock={stock}
+          onHandoverCreated={handleHandoverCreated}
         />
       )}
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Nuevo material</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nuevo material</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialForm onSaved={handleMaterialSaved} />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

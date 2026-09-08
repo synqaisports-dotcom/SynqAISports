@@ -7,7 +7,11 @@ import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
+  getPlayerImage,
+  isPlayerMaterial,
+  playerImageKey,
   type MaterialKind,
+  type PlayerMaterialKind,
 } from '@/lib/drawing-material-assets';
 import {
   DEFAULT_WAVE_WAVELENGTH_NORM,
@@ -43,10 +47,12 @@ function ReadonlyElement({
   element,
   fieldRect,
   materialImages,
+  playerImages,
 }: {
   element: DrawingElement;
   fieldRect: FieldRect;
   materialImages: Partial<Record<MaterialKind, HTMLImageElement>>;
+  playerImages: Record<string, HTMLImageElement>;
 }) {
   if (element.type === 'shape-line') {
     const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -219,7 +225,9 @@ function ReadonlyElement({
       );
     }
 
-    const img = materialImages[element.material];
+    const img = isPlayerMaterial(element.material)
+      ? playerImages[playerImageKey(element.material, element.label)]
+      : materialImages[element.material];
     const scale = element.scale * base;
     return (
       <Group
@@ -231,7 +239,7 @@ function ReadonlyElement({
         listening={false}
       >
         {img ? (
-          <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
+          <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} listening={false} />
         ) : (
           <Circle radius={scale / 2} fill="#334155" listening={false} />
         )}
@@ -244,12 +252,30 @@ function ReadonlyElement({
 
 export function DrawingKonvaReadonly({ document, width, height, fit = 'fill-width' }: Props) {
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
+  const [playerImages, setPlayerImages] = useState<Record<string, HTMLImageElement>>({});
 
   useEffect(() => {
     void Promise.all(
       MATERIAL_CATALOG.map(async ({ kind }) => [kind, await getMaterialImage(kind)] as const)
     ).then((entries) => setMaterialImages(Object.fromEntries(entries)));
   }, []);
+
+  useEffect(() => {
+    const keys = new Set<string>();
+    for (const el of document.elements) {
+      if (el.type === 'material' && isPlayerMaterial(el.material)) {
+        keys.add(playerImageKey(el.material, el.label));
+      }
+    }
+    for (const key of keys) {
+      const sep = key.indexOf(':');
+      const kind = key.slice(0, sep) as PlayerMaterialKind;
+      const label = key.slice(sep + 1);
+      void getPlayerImage(kind, label).then((img) => {
+        setPlayerImages((prev) => (prev[key] ? prev : { ...prev, [key]: img }));
+      });
+    }
+  }, [document.elements]);
 
   const fieldRect = useMemo(
     () => computeFieldRect(width, height, document.field, 0, {}, fit),
@@ -279,6 +305,7 @@ export function DrawingKonvaReadonly({ document, width, height, fit = 'fill-widt
             element={element}
             fieldRect={fieldRect}
             materialImages={materialImages}
+            playerImages={playerImages}
           />
         ))}
         {materialElements.map((element) => (
@@ -287,6 +314,7 @@ export function DrawingKonvaReadonly({ document, width, height, fit = 'fill-widt
             element={element}
             fieldRect={fieldRect}
             materialImages={materialImages}
+            playerImages={playerImages}
           />
         ))}
       </Layer>

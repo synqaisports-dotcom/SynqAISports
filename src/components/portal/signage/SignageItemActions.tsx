@@ -1,0 +1,94 @@
+'use client';
+
+import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Pause, Pencil, Play, Trash2 } from 'lucide-react';
+import {
+  PORTAL_ACTION_ICON_DISABLED_CLASS,
+} from '@/components/portal/PortalActionIcon';
+import { cn } from '@/lib/utils';
+
+export const SIGNAGE_ACTION_ICON_CLASS =
+  'inline-flex size-9 items-center justify-center rounded-lg text-cyan-400 transition-colors hover:bg-cyan-400/10 hover:text-cyan-300';
+
+type Props = {
+  active: boolean;
+  onToggle: () => Promise<unknown>;
+  onEdit?: () => void;
+  onDelete?: () => Promise<unknown>;
+  pauseLabel?: string;
+  resumeLabel?: string;
+  editLabel?: string;
+  deleteLabel?: string;
+};
+
+export function SignageItemActions({
+  active,
+  onToggle,
+  onEdit,
+  onDelete,
+  pauseLabel = 'Pausar',
+  resumeLabel = 'Reactivar',
+  editLabel = 'Editar',
+  deleteLabel = 'Eliminar',
+}: Props) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div className="flex shrink-0 gap-1">
+      {onEdit ? (
+        <button
+          type="button"
+          aria-label={editLabel}
+          title={editLabel}
+          onClick={onEdit}
+          className={cn(SIGNAGE_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
+        >
+          <Pencil className="size-4" />
+        </button>
+      ) : null}
+      <button
+        type="button"
+        disabled={pending}
+        aria-label={active ? pauseLabel : resumeLabel}
+        title={active ? pauseLabel : resumeLabel}
+        onClick={() => {
+          startTransition(async () => {
+            await onToggle();
+            router.refresh();
+          });
+        }}
+        className={cn(
+          SIGNAGE_ACTION_ICON_CLASS,
+          PORTAL_ACTION_ICON_DISABLED_CLASS,
+          !active && 'text-cyan-400/45'
+        )}
+      >
+        {active ? <Pause className="size-4" /> : <Play className="size-4" />}
+      </button>
+      {onDelete ? (
+        <button
+          type="button"
+          disabled={pending}
+          aria-label={deleteLabel}
+          title={deleteLabel}
+          onClick={() => {
+            if (!window.confirm('¿Eliminar permanentemente? Esta acción no se puede deshacer.')) return;
+            startTransition(async () => {
+              await onDelete();
+              router.refresh();
+            });
+          }}
+          className={cn(
+            SIGNAGE_ACTION_ICON_CLASS,
+            PORTAL_ACTION_ICON_DISABLED_CLASS,
+            'hover:bg-destructive/10 hover:text-destructive'
+          )}
+        >
+          <Trash2 className="size-4" />
+        </button>
+      ) : null}
+    </div>
+  );
+}

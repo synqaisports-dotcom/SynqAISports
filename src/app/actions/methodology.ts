@@ -164,7 +164,7 @@ export async function createExercise(
     return { ok: false, message: 'error' };
   }
 
-  revalidatePath('/portal/metodologia');
+  revalidatePath('/portal/metodologia/resumen');
   revalidatePath('/portal/metodologia/ejercicios');
   if (returnTo.startsWith('/portal/')) {
     revalidatePath(returnTo);
@@ -689,7 +689,7 @@ export async function createChangeRequest(
 
   revalidatePath('/portal/metodologia/solicitudes');
   revalidatePath('/portal/entrenador');
-  revalidatePath('/portal/metodologia');
+  revalidatePath('/portal/metodologia/resumen');
   return { ok: true, id: data?.id };
 }
 

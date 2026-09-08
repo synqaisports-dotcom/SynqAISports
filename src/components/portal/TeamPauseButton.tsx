@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pause, Play } from 'lucide-react';
 import { toggleTeamActive } from '@/app/actions/cantera';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
+import {
+  PORTAL_ACTION_ICON_CLASS,
+  PORTAL_ACTION_ICON_DISABLED_CLASS,
+} from '@/components/portal/PortalActionIcon';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -17,12 +21,20 @@ export function TeamPauseButton({ teamId, teamName, active }: Props) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [localActive, setLocalActive] = useState(active);
+
+  useEffect(() => {
+    setLocalActive(active);
+  }, [active, teamId]);
 
   const handleConfirm = () => {
     startTransition(async () => {
-      await toggleTeamActive(teamId, !active);
-      setConfirmOpen(false);
-      router.refresh();
+      const result = await toggleTeamActive(teamId, !localActive);
+      if (result.ok) {
+        setLocalActive(!localActive);
+        setConfirmOpen(false);
+        router.refresh();
+      }
     });
   };
 
@@ -31,35 +43,35 @@ export function TeamPauseButton({ teamId, teamName, active }: Props) {
       <button
         type="button"
         disabled={pending}
-        aria-label={active ? `Pausar ${teamName}` : `Reactivar ${teamName}`}
+        aria-label={localActive ? `Pausar ${teamName}` : `Reactivar ${teamName}`}
         title={
-          active
+          localActive
             ? 'Pausar equipo (deja de mostrarse como activo; conserva datos e histórico)'
             : 'Reactivar equipo en la cantera'
         }
         onClick={() => setConfirmOpen(true)}
         className={cn(
-          'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-          'hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
-          'disabled:opacity-50'
+          PORTAL_ACTION_ICON_CLASS,
+          PORTAL_ACTION_ICON_DISABLED_CLASS,
+          !localActive && 'text-muted-foreground'
         )}
       >
-        {active ? <Pause className="size-4" /> : <Play className="size-4" />}
+        {localActive ? <Pause className="size-4" /> : <Play className="size-4" />}
       </button>
 
       <PortalConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={active ? `¿Pausar ${teamName}?` : `¿Reactivar ${teamName}?`}
+        title={localActive ? `¿Pausar ${teamName}?` : `¿Reactivar ${teamName}?`}
         description={
-          active
+          localActive
             ? 'El equipo dejará de aparecer como activo en la cantera. Se conservan jugadores, staff asignado e histórico. Podrás reactivarlo cuando quieras.'
             : 'El equipo volverá a mostrarse como activo en listados, fichas y asignaciones de la cantera.'
         }
-        confirmLabel={active ? 'Pausar equipo' : 'Reactivar equipo'}
+        confirmLabel={localActive ? 'Pausar equipo' : 'Reactivar equipo'}
         onConfirm={handleConfirm}
         pending={pending}
-        destructive={active}
+        destructive={localActive}
       />
     </>
   );

@@ -278,7 +278,7 @@ export async function resolveChangeRequestWithNote(
 
   revalidatePath('/portal/metodologia/solicitudes');
   revalidatePath('/portal/entrenador');
-  revalidatePath('/portal/metodologia');
+  revalidatePath('/portal/metodologia/resumen');
   return { ok: true };
 }
 

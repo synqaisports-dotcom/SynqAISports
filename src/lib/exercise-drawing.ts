@@ -4,6 +4,13 @@
  */
 
 import type { MaterialKind } from '@/lib/drawing-material-assets';
+import {
+  normalizeDrawingFormations,
+  sanitizeFormationsForField,
+  type DrawingFormations,
+} from '@/lib/drawing-formations';
+
+export type { DrawingFormations } from '@/lib/drawing-formations';
 
 export const DRAWING_DOC_VERSION = 3 as const;
 
@@ -244,11 +251,33 @@ export type LegacyStroke = {
   width: number;
 };
 
+export const MAX_ANIMATION_SCENES = 10;
+export const DEFAULT_ANIMATION_TRANSITION_MS = 1400;
+export const DEFAULT_ANIMATION_HOLD_MS = 2000;
+export const DEFAULT_ANIMATION_PLAYBACK_SPEED = 0.85;
+
+export type DrawingAnimationScene = {
+  id: string;
+  label?: string;
+  elements: DrawingElement[];
+};
+
+export type DrawingAnimation = {
+  transitionMs: number;
+  holdMs: number;
+  loop: boolean;
+  /** < 1 = más lento; 1 = tiempo real */
+  playbackSpeed?: number;
+  scenes: DrawingAnimationScene[];
+};
+
 export type ExerciseDrawingDocument = {
   version: typeof DRAWING_DOC_VERSION;
   field: FieldTemplate;
   elements: DrawingElement[];
   legacyStrokes?: LegacyStroke[];
+  animation?: DrawingAnimation;
+  formations?: DrawingFormations;
 };
 
 export const EMPTY_DRAWING_DOC: ExerciseDrawingDocument = {
@@ -259,6 +288,105 @@ export const EMPTY_DRAWING_DOC: ExerciseDrawingDocument = {
 
 export function createElementId(): string {
   return `el-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createAnimationSceneId(): string {
+  return `scene-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function cloneDrawingElements(elements: DrawingElement[]): DrawingElement[] {
+  return JSON.parse(JSON.stringify(elements)) as DrawingElement[];
+}
+
+export function createAnimationScene(
+  elements: DrawingElement[],
+  label?: string
+): DrawingAnimationScene {
+  return {
+    id: createAnimationSceneId(),
+    label,
+    elements: cloneDrawingElements(elements),
+  };
+}
+
+/** Etiquetas cortas: 1, 2, 3… */
+export function renumberAnimationScenes(scenes: DrawingAnimationScene[]): DrawingAnimationScene[] {
+  return scenes.map((scene, index) => ({
+    ...scene,
+    label: String(index + 1),
+  }));
+}
+
+export function animationSceneLabel(scene: DrawingAnimationScene, index: number): string {
+  return scene.label?.trim() || String(index + 1);
+}
+
+function parseAnimationScene(raw: unknown): DrawingAnimationScene | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  if (!Array.isArray(obj.elements)) return null;
+  const elements = sortElementsByLayer(obj.elements.filter(isV3Element).map(normalizeElementOpacity));
+  return {
+    id: typeof obj.id === 'string' ? obj.id : createAnimationSceneId(),
+    label: typeof obj.label === 'string' ? obj.label : undefined,
+    elements,
+  };
+}
+
+function parseDrawingAnimation(raw: unknown): DrawingAnimation | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const obj = raw as Record<string, unknown>;
+  if (!Array.isArray(obj.scenes)) return undefined;
+  const scenes = obj.scenes.map(parseAnimationScene).filter((s): s is DrawingAnimationScene => s !== null);
+  if (scenes.length === 0) return undefined;
+  let transitionMs =
+    typeof obj.transitionMs === 'number' && Number.isFinite(obj.transitionMs)
+      ? Math.max(200, Math.min(5000, obj.transitionMs))
+      : DEFAULT_ANIMATION_TRANSITION_MS;
+  let holdMs =
+    typeof obj.holdMs === 'number' && Number.isFinite(obj.holdMs)
+      ? Math.max(200, Math.min(5000, obj.holdMs))
+      : DEFAULT_ANIMATION_HOLD_MS;
+  // Migrar timings antiguos demasiado rápidos
+  if (holdMs < 1200) holdMs = DEFAULT_ANIMATION_HOLD_MS;
+  if (transitionMs < 1000) transitionMs = DEFAULT_ANIMATION_TRANSITION_MS;
+  return {
+    transitionMs,
+    holdMs,
+    loop: typeof obj.loop === 'boolean' ? obj.loop : true,
+    playbackSpeed:
+      typeof obj.playbackSpeed === 'number' && Number.isFinite(obj.playbackSpeed)
+        ? Math.max(0.25, Math.min(2, obj.playbackSpeed))
+        : DEFAULT_ANIMATION_PLAYBACK_SPEED,
+    scenes: scenes.slice(0, MAX_ANIMATION_SCENES),
+  };
+}
+
+export function hasDrawableAnimation(doc: ExerciseDrawingDocument): boolean {
+  return Boolean(doc.animation && doc.animation.scenes.length >= 2);
+}
+
+/** Sincroniza la escena 1 con `elements` para compatibilidad con vistas estáticas. */
+export function syncAnimationToElements(doc: ExerciseDrawingDocument): ExerciseDrawingDocument {
+  if (!doc.animation?.scenes.length) {
+    const { animation: _removed, ...rest } = doc;
+    return rest;
+  }
+  return {
+    ...doc,
+    elements: cloneDrawingElements(doc.animation.scenes[0].elements),
+  };
+}
+
+export function persistActiveAnimationScene(
+  doc: ExerciseDrawingDocument,
+  sceneIndex: number
+): ExerciseDrawingDocument {
+  if (!doc.animation?.scenes.length) return doc;
+  const scenes = doc.animation.scenes.map((scene, index) =>
+    index === sceneIndex ? { ...scene, elements: cloneDrawingElements(doc.elements) } : scene
+  );
+  return { ...doc, animation: { ...doc.animation, scenes } };
 }
 
 function clamp01(v: number): number {
@@ -441,11 +569,19 @@ export function parseExerciseDrawing(raw: unknown): ExerciseDrawingDocument {
   const obj = raw as Record<string, unknown>;
 
   if (obj.version === DRAWING_DOC_VERSION && Array.isArray(obj.elements)) {
+    const animation = parseDrawingAnimation(obj.animation);
+    const field = isFieldTemplate(obj.field) ? obj.field : 'football-full';
+    const elements = sortElementsByLayer(obj.elements.filter(isV3Element).map(normalizeElementOpacity));
     return {
       version: DRAWING_DOC_VERSION,
-      field: isFieldTemplate(obj.field) ? obj.field : 'football-full',
-      elements: sortElementsByLayer(obj.elements.filter(isV3Element).map(normalizeElementOpacity)),
+      field,
+      elements:
+        animation?.scenes[0]?.elements.length
+          ? cloneDrawingElements(animation.scenes[0].elements)
+          : elements,
       legacyStrokes: parseLegacyStrokes(obj.legacyStrokes),
+      animation,
+      formations: sanitizeFormationsForField(normalizeDrawingFormations(obj.formations, field), field),
     };
   }
 
@@ -478,12 +614,23 @@ export function drawingDocumentIsEmpty(doc: ExerciseDrawingDocument): boolean {
 }
 
 export function serializeExerciseDrawing(doc: ExerciseDrawingDocument): string {
+  const synced = syncAnimationToElements(doc);
   const payload: ExerciseDrawingDocument = {
     version: DRAWING_DOC_VERSION,
-    field: doc.field,
-    elements: sortElementsByLayer(doc.elements.map(normalizeElementOpacity)),
+    field: synced.field,
+    elements: sortElementsByLayer(synced.elements.map(normalizeElementOpacity)),
   };
-  if (doc.legacyStrokes?.length) payload.legacyStrokes = doc.legacyStrokes;
+  if (synced.legacyStrokes?.length) payload.legacyStrokes = synced.legacyStrokes;
+  if (synced.formations) payload.formations = synced.formations;
+  if (synced.animation && synced.animation.scenes.length >= 2) {
+    payload.animation = {
+      ...synced.animation,
+      scenes: synced.animation.scenes.map((scene) => ({
+        ...scene,
+        elements: sortElementsByLayer(scene.elements.map(normalizeElementOpacity)),
+      })),
+    };
+  }
   return JSON.stringify(payload);
 }
 
@@ -771,7 +918,8 @@ export function defaultDraftForTool(
         tool === 'ball' ||
         tool === 'goal' ||
         tool === 'hurdle' ||
-        tool === 'ladder'
+        tool === 'ladder' ||
+        tool === 'seta'
       ) {
         return {
           id,
@@ -800,7 +948,8 @@ export function isMaterialTool(tool: StudioTool): tool is MaterialKind {
     tool === 'ball' ||
     tool === 'goal' ||
     tool === 'hurdle' ||
-    tool === 'ladder'
+    tool === 'ladder' ||
+    tool === 'seta'
   );
 }
 

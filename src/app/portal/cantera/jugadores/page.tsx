@@ -1,10 +1,9 @@
-import Link from 'next/link';
-import { ArrowLeft, Plus, UsersRound } from 'lucide-react';
 import { PlayersMasterDetail } from '@/components/portal/PlayersMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { demoMembershipsForPlayer } from '@/lib/demo-memberships';
 import { isDemoActive } from '@/lib/demo';
+import { getDemoPausedPlayerIds } from '@/lib/demo-cantera-pause';
 import {
   mapMembershipRow,
   primaryMembership,
@@ -19,8 +18,6 @@ import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{ player?: string; team?: string }>;
@@ -59,10 +56,9 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
     supabase
       .from('synq_players')
       .select(
-        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
+        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, federation_until, federation_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
       )
       .eq('club_id', ctx.club.id)
-      .eq('active', true)
       .order('last_name')
       .order('first_name'),
     supabase
@@ -133,12 +129,15 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       guardians: parseGuardiansJson(row.guardians_json),
       medical_until: row.medical_until ?? null,
       medical_document_url: row.medical_document_url ?? null,
+      federation_until: row.federation_until ?? null,
+      federation_document_url: row.federation_document_url ?? null,
       created_at: row.created_at ?? null,
       history: parsePlayerHistoryJson(row.player_history_json),
     };
   });
 
   if (demo) {
+    const pausedDemoPlayers = await getDemoPausedPlayerIds();
     const existingIds = new Set(profiles.map((player) => player.id));
     for (const demoPlayer of DEMO_TEAM_PLAYERS) {
       if (existingIds.has(demoPlayer.id)) continue;
@@ -159,7 +158,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         team_category_slug: team.team_category_slug,
         primary_sport: team.sport,
         memberships,
-        active: true,
+        active: !pausedDemoPlayers.has(demoPlayer.id),
         is_minor: demoPlayer.id === 'demo-pl-ale-1',
         guardians:
           demoPlayer.id === 'demo-pl-ale-1'
@@ -167,6 +166,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
             : [],
         medical_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-12-31' : null,
         medical_document_url: null,
+        federation_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-06-30' : null,
+        federation_document_url: null,
         created_at:
           demoPlayer.id === 'demo-pl-ale-1'
             ? '2024-09-01T10:00:00.000Z'
@@ -198,29 +199,6 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UsersRound className="size-4 text-primary" />
-            Jugadores
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/cantera">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/portal/cantera/equipos">
-                <Plus className="h-4 w-4" />
-                Gestionar en equipos
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
       <PlayersMasterDetail
         clubId={ctx.club.id}
         players={profiles}

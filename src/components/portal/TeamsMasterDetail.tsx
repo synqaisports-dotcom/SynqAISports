@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, ClipboardList, Layers, Pencil, Plus, TrendingUp, UserCog } from 'lucide-react';
 import { CategorySeasonPromoteSheet } from '@/components/portal/CategorySeasonPromoteSheet';
+import { TeamsListPrintSheet } from '@/components/portal/TeamsListPrintSheet';
 import { TeamClubHistorySection } from '@/components/portal/TeamClubHistorySection';
+import { TeamCoachingStaffSheet } from '@/components/portal/TeamCoachingStaffSheet';
 import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteSheet';
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { TeamRosterList } from '@/components/portal/TeamRosterList';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { SynqSelect } from '@/components/portal/SynqSelect';
@@ -18,11 +21,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   CANTERA_CATEGORIES,
   getCanteraCategory,
@@ -44,6 +47,7 @@ import {
   type TeamProfile,
 } from '@/lib/team-profile';
 import type { PlayerTeamOption } from '@/lib/player-teams';
+import type { StaffProfile } from '@/lib/staff-profile';
 import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { cn } from '@/lib/utils';
 
@@ -51,6 +55,7 @@ type Props = {
   teams: TeamProfile[];
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
+  staff: StaffProfile[];
   initialTeamId?: string | null;
   initialEditOpen?: boolean;
   initialCreateOpen?: boolean;
@@ -78,25 +83,24 @@ function teamOptionsFromProfiles(teams: TeamProfile[]): PlayerTeamOption[] {
   );
 }
 
-const teamActionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
-
 function TeamDetailActions({
   team,
   onEdit,
   onRoster,
   onSeason,
+  onStaff,
 }: {
   team: TeamProfile;
   onEdit: () => void;
   onRoster: () => void;
   onSeason: () => void;
+  onStaff: () => void;
 }) {
   return (
-    <div className="flex shrink-0 flex-nowrap items-center gap-0.5 rounded-xl border border-primary/20 bg-muted/10 p-1">
+    <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Editar equipo"
         title="Editar equipo"
         onClick={onEdit}
@@ -105,7 +109,7 @@ function TeamDetailActions({
       </button>
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Ver plantilla del equipo"
         title="Ver plantilla del equipo"
         onClick={onRoster}
@@ -114,24 +118,25 @@ function TeamDetailActions({
       </button>
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Cierre de temporada"
         title="Cierre de temporada (ascenso, letra o fusión)"
         onClick={onSeason}
       >
         <TrendingUp className="size-4" />
       </button>
-      <Link
-        href={`/portal/club/staff?team=${team.id}`}
-        className={teamActionButtonClass}
-        aria-label="Ver staff asignado"
-        title="Ver cuerpo técnico asignado a este equipo"
+      <button
+        type="button"
+        className={PORTAL_ACTION_ICON_CLASS}
+        aria-label="Ver cuerpo técnico"
+        title="Ver cuerpo técnico del equipo"
+        onClick={onStaff}
       >
         <UserCog className="size-4" />
-      </Link>
+      </button>
       <Link
         href="/portal/cantera/horarios"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Ver horarios"
         title="Ver horarios del club"
       >
@@ -147,19 +152,20 @@ function TeamDetailPanel({
   facilities,
   trainingSlots,
   teams,
-  demoMode,
+  staff,
   initialEditOpen,
 }: {
   team: TeamProfile | null;
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
   teams: TeamProfile[];
-  demoMode?: boolean;
+  staff: StaffProfile[];
   initialEditOpen?: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
   const [rosterOpen, setRosterOpen] = useState(false);
   const [seasonOpen, setSeasonOpen] = useState(false);
+  const [staffOpen, setStaffOpen] = useState(false);
 
   useEffect(() => {
     setEditOpen(Boolean(initialEditOpen));
@@ -168,6 +174,7 @@ function TeamDetailPanel({
   useEffect(() => {
     setRosterOpen(false);
     setSeasonOpen(false);
+    setStaffOpen(false);
   }, [team?.id]);
 
   if (!team) {
@@ -183,7 +190,6 @@ function TeamDetailPanel({
   }
 
   const category = teamCategoryMeta(team);
-  const sportLabel = team.sport === 'futsal' ? 'Fútbol sala' : 'Fútbol';
   const occupiedSlots = trainingSlots.filter((slot) => slot.teamId !== team.id);
   const usedLetters = usedTeamLettersInCategory(
     teams,
@@ -219,23 +225,11 @@ function TeamDetailPanel({
             onEdit={() => setEditOpen(true)}
             onRoster={() => setRosterOpen(true)}
             onSeason={() => setSeasonOpen(true)}
+            onStaff={() => setStaffOpen(true)}
           />
         </div>
-        {category ? (
-          <p className="text-sm text-muted-foreground">
-            Letra {team.team_letter ?? '—'} · {category.ages}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">{sportLabel}</p>
-        )}
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-y-auto">
-        {demoMode && team.is_demo ? (
-          <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-3 text-xs text-muted-foreground">
-            Equipo de demostración. Puedes revisar instalación, horarios y sede; en tu club real
-            podrás editarlos y guardar los cambios.
-          </p>
-        ) : null}
         <TeamViewSections
           category={category}
           team={{
@@ -265,34 +259,39 @@ function TeamDetailPanel({
         onOpenChange={setSeasonOpen}
       />
 
+      <TeamCoachingStaffSheet
+        team={team}
+        staff={staff}
+        open={staffOpen}
+        onOpenChange={setStaffOpen}
+      />
+
       <Sheet open={rosterOpen} onOpenChange={setRosterOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
-        >
-          <SheetHeader>
-            <SheetTitle>Plantilla · {team.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="md">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Plantilla · {team.name}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <TeamRosterList
               teamId={team.id}
               teamName={team.name}
               players={team.players}
               teams={teamOptions}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
-        >
-          <SheetHeader>
-            <SheetTitle>Editar equipo</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Editar equipo</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <TeamEditForm
               key={team.id}
               teamId={team.id}
@@ -303,11 +302,10 @@ function TeamDetailPanel({
               facilities={facilities}
               occupiedSlots={occupiedSlots}
               initialSetup={team.setup}
-              readOnly={demoMode && team.is_demo}
               onSaved={() => setEditOpen(false)}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -317,6 +315,7 @@ export function TeamsMasterDetail({
   teams,
   facilities,
   trainingSlots,
+  staff,
   initialTeamId,
   initialEditOpen,
   initialCreateOpen,
@@ -341,9 +340,6 @@ export function TeamsMasterDetail({
       ? initialTeamId
       : teams[0]?.id ?? null
   );
-  const rosterActionClass =
-    'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
-
   const filteredTeams = useMemo(() => {
     const query = search.trim().toLowerCase();
     let list = [...teams];
@@ -455,9 +451,10 @@ export function TeamsMasterDetail({
               </CardDescription>
             </div>
             <div className="flex items-center gap-1">
+              <TeamsListPrintSheet />
               <button
                 type="button"
-                className={rosterActionClass}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
                 aria-label="Cierre de temporada por categoría"
                 title="Cierre de temporada por categoría"
                 onClick={() => setCategorySeasonOpen(true)}
@@ -466,7 +463,7 @@ export function TeamsMasterDetail({
               </button>
               <button
                 type="button"
-                className={rosterActionClass}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
                 aria-label="Nuevo equipo"
                 title="Nuevo equipo"
                 onClick={() => setCreateOpen(true)}
@@ -610,7 +607,7 @@ export function TeamsMasterDetail({
         facilities={facilities}
         trainingSlots={trainingSlots}
         teams={teams}
-        demoMode={demoMode}
+        staff={staff}
         initialEditOpen={initialEditOpen && selectedTeam?.id === initialTeamId}
       />
 
@@ -621,37 +618,38 @@ export function TeamsMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
-        >
-          <SheetHeader>
-            <SheetTitle>Nuevo equipo</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Categoría
-              </label>
-              <SynqSelect
-                value={createCategorySlug}
-                onChange={(value) => setCreateCategorySlug(value as CanteraCategorySlug)}
-                options={CANTERA_CATEGORIES.map((category) => ({
-                  value: category.slug,
-                  label: `${category.name} · ${category.ages}`,
-                }))}
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nuevo equipo</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Categoría
+                </label>
+                <SynqSelect
+                  value={createCategorySlug}
+                  onChange={(value) => setCreateCategorySlug(value as CanteraCategorySlug)}
+                  options={CANTERA_CATEGORIES.map((category) => ({
+                    value: category.slug,
+                    label: `${category.name} · ${category.ages}`,
+                  }))}
+                />
+              </div>
+              <TeamCreateForm
+                key={createCategory.slug}
+                category={createCategory}
+                usedLetters={createUsedLetters}
+                facilities={facilities}
+                occupiedSlots={trainingSlots}
+                onCreated={handleTeamCreated}
               />
             </div>
-            <TeamCreateForm
-              key={createCategory.slug}
-              category={createCategory}
-              usedLetters={createUsedLetters}
-              facilities={facilities}
-              occupiedSlots={trainingSlots}
-              onCreated={handleTeamCreated}
-            />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

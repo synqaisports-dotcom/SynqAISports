@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PORTAL_DROPDOWN_SURFACE_CLASS, PORTAL_FIELD_CLASS } from '@/lib/portal-field-styles';
 import { cn } from '@/lib/utils';
 
 export type SynqSelectOption = {
@@ -53,7 +54,8 @@ export function SynqSelect({
     return (
       <div
         className={cn(
-          'flex h-9 w-full items-center rounded-md border border-primary/20 bg-muted/20 px-3 text-sm text-muted-foreground',
+          'flex h-9 w-full items-center rounded-md border px-3 text-sm text-muted-foreground opacity-70',
+          PORTAL_FIELD_CLASS,
           className
         )}
       >
@@ -68,10 +70,9 @@ export function SynqSelect({
         <button
           type="button"
           className={cn(
-            'group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-primary/30 bg-background/80 px-3 text-sm shadow-[0_0_0_1px_hsl(183_100%_50%_/_0.04)]',
-            'transition-colors hover:border-primary/50 hover:bg-primary/5',
-            'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
-            'data-[state=open]:border-primary/55 data-[state=open]:bg-primary/5',
+            'group flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm',
+            PORTAL_FIELD_CLASS,
+            'transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
             className
           )}
         >
@@ -83,7 +84,10 @@ export function SynqSelect({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto border-primary/30 bg-popover/95 p-1 shadow-[0_8px_32px_hsl(183_100%_50%_/_0.12)] backdrop-blur-md"
+        className={cn(
+          'max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto p-1',
+          PORTAL_DROPDOWN_SURFACE_CLASS
+        )}
       >
         {groups.length > 0
           ? groups.map((group) => (

@@ -7,6 +7,7 @@ import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
+  Eraser,
   Copy,
   Minus,
   MousePointer2,
@@ -20,19 +21,32 @@ import {
   Waves,
   X,
 } from 'lucide-react';
+import { ExerciseAnimationTimeline } from '@/components/methodology/drawing/ExerciseAnimationTimeline';
+import { DrawingStudioConfirmDialog } from '@/components/methodology/drawing/DrawingStudioConfirmDialog';
+import { FormationTeamPanel } from '@/components/methodology/drawing/FormationTeamPanel';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
 import { useFieldTransition } from '@/hooks/useFieldTransition';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
+  getPlayerImage,
+  isPlayerMaterial,
+  playerImageKey,
   type MaterialKind,
+  type PlayerMaterialKind,
 } from '@/lib/drawing-material-assets';
 import {
+  DEFAULT_ANIMATION_HOLD_MS,
+  DEFAULT_ANIMATION_PLAYBACK_SPEED,
+  DEFAULT_ANIMATION_TRANSITION_MS,
   DEFAULT_STROKE,
   FIELD_FORMAT_SHORT,
   DEFAULT_WAVE_WAVELENGTH_NORM,
+  MAX_ANIMATION_SCENES,
   SPORT_OPTIONS,
+  cloneDrawingElements,
+  createAnimationScene,
   type DrawingElement,
   type ExerciseDrawingDocument,
   type FieldTemplate,
@@ -48,7 +62,9 @@ import {
   isTextTool,
   normToPx,
   parseExerciseDrawing,
+  persistActiveAnimationScene,
   pxToNorm,
+  renumberAnimationScenes,
   quadBezierEndAngle,
   quadBezierLinePoints,
   arrowHeadPoints,
@@ -63,6 +79,15 @@ import {
   type TextFontSize,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
+import {
+  applyFormationToElements,
+  applyTeamTacticalPhase,
+  formationGroupForField,
+  formationsForField,
+  TACTICAL_TRANSITION_MS,
+  type TacticalPhaseIndex,
+} from '@/lib/drawing-formations';
+import { easeInOutCubic } from '@/lib/exercise-animation';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -114,7 +139,32 @@ const GLASS = {
   danger:
     'border-red-400/45 bg-red-500/12 text-red-300 backdrop-blur-md transition-all hover:border-red-400/60 hover:bg-red-500/22',
   label: 'text-xs text-cyan-300/90',
+  sidebarSelect:
+    'w-[6.25rem] rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-all',
+  sidebarLabel:
+    'w-[6.25rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
+  /** Paneles laterales más legibles sobre campos que ocupan casi todo el lienzo (p. ej. sala). */
+  sidebarEmphasis:
+    'rounded-2xl border border-cyan-400/25 bg-[#060a12]/82 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.72)] backdrop-blur-xl',
+  sidebarSelectEmphasis:
+    'border-cyan-400/50 bg-[#060a12]/88 text-cyan-100 shadow-[0_4px_20px_rgba(0,0,0,0.55)]',
 } as const;
+
+/** Margen inferior: por encima del dock de materiales/herramientas */
+const SIDEBAR_BOTTOM_CLASS = 'bottom-[6.5rem]' as const;
+
+/** Barra de propiedades: una sola fila; scroll horizontal si no cabe. */
+const PROPERTY_BAR_CLASS =
+  'pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex w-max max-w-[min(95vw,56rem)] -translate-x-1/2 flex-nowrap items-center gap-2 overflow-x-auto rounded-2xl px-3 py-2';
+
+function lerpNum(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function lerpAngle(from: number, to: number, t: number): number {
+  const delta = ((to - from + 180) % 360) - 180;
+  return from + delta * t;
+}
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
 const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
@@ -128,15 +178,31 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [sport, setSport] = useState<SportKind>(() => sportForField(parseExerciseDrawing(initialData).field));
   const [tool, setTool] = useState<StudioTool>('select');
   const [stroke, setStroke] = useState<StrokeStyle>(DEFAULT_STROKE);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [draft, setDraft] = useState<DrawingElement | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
+  const [playerImages, setPlayerImages] = useState<Record<string, HTMLImageElement>>({});
+  const [pixelRatio, setPixelRatio] = useState(1);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [activeSceneIndex, setActiveSceneIndex] = useState(0);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const multiDragRef = useRef<{
+    anchorId: string;
+    starts: Map<string, { x: number; y: number }>;
+  } | null>(null);
+  const tacticalAnimRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tacticalAnimRef.current) cancelAnimationFrame(tacticalAnimRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
+    setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   }, []);
 
   useEffect(() => {
@@ -152,11 +218,12 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const parsed = parseExerciseDrawing(initialData);
     setDoc(parsed);
     setSport(sportForField(parsed.field));
-    setSelectedId(null);
+    setSelectedIds([]);
     setDraft(null);
     setTool('select');
     setToolsOpen(false);
     setMaterialsOpen(false);
+    setActiveSceneIndex(0);
   }, [open, initialData]);
 
   useEffect(() => {
@@ -165,6 +232,25 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       (entries) => setMaterialImages(Object.fromEntries(entries))
     );
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const keys = new Set<string>();
+    for (const el of doc.elements) {
+      if (el.type === 'material' && isPlayerMaterial(el.material)) {
+        keys.add(playerImageKey(el.material, el.label));
+      }
+    }
+    for (const key of keys) {
+      if (playerImages[key]) continue;
+      const sep = key.indexOf(':');
+      const kind = key.slice(0, sep) as PlayerMaterialKind;
+      const label = key.slice(sep + 1);
+      void getPlayerImage(kind, label).then((img) => {
+        setPlayerImages((prev) => (prev[key] ? prev : { ...prev, [key]: img }));
+      });
+    }
+  }, [open, doc.elements]);
 
   useEffect(() => {
     if (!open || !containerRef.current) return;
@@ -183,8 +269,108 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const { displayRect, outgoing, blend } = useFieldTransition(doc.field, targetRect);
   const fieldRect = displayRect;
 
-  const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
+  const isSelected = useCallback((id: string) => selectedIds.includes(id), [selectedIds]);
+  const selected =
+    selectedIds.length === 1 ? doc.elements.find((el) => el.id === selectedIds[0]) ?? null : null;
+
+  const isMultiSelectModifier = (e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    const evt = e?.evt;
+    if (!evt || !('shiftKey' in evt)) return false;
+    return Boolean(evt.shiftKey || evt.metaKey || evt.ctrlKey);
+  };
+
+  const selectElement = useCallback(
+    (id: string, additive = false) => {
+      const el = doc.elements.find((e) => e.id === id);
+      if (!el) return;
+      if (additive && el.type === 'material') {
+        setSelectedIds((prev) =>
+          prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+      } else {
+        setSelectedIds([id]);
+      }
+    },
+    [doc.elements]
+  );
+
+  const handleElementSelect = (
+    id: string,
+    e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>
+  ) => {
+    selectElement(id, isMultiSelectModifier(e));
+  };
+
+  const beginMaterialDrag = (elementId: string) => {
+    if (selectedIds.includes(elementId) && selectedIds.length > 1) {
+      const starts = new Map<string, { x: number; y: number }>();
+      for (const id of selectedIds) {
+        const el = doc.elements.find((item) => item.id === id);
+        if (el?.type === 'material') starts.set(id, { x: el.x, y: el.y });
+      }
+      multiDragRef.current = { anchorId: elementId, starts };
+      return;
+    }
+    multiDragRef.current = null;
+    if (!selectedIds.includes(elementId)) {
+      setSelectedIds([elementId]);
+    }
+  };
+
+  const moveSelectedMaterials = (draggedId: string, nx: number, ny: number) => {
+    const dragged = doc.elements.find((el) => el.id === draggedId);
+    if (!dragged || dragged.type !== 'material') return;
+    const dx = nx - dragged.x;
+    const dy = ny - dragged.y;
+    const idsToMove =
+      selectedIds.includes(draggedId) && selectedIds.length > 1 ? selectedIds : [draggedId];
+    setDoc((d) => ({
+      ...d,
+      elements: d.elements.map((el) => {
+        if (!idsToMove.includes(el.id) || el.type !== 'material') return el;
+        if (el.id === draggedId) return { ...el, x: nx, y: ny };
+        return {
+          ...el,
+          x: Math.max(0, Math.min(1, el.x + dx)),
+          y: Math.max(0, Math.min(1, el.y + dy)),
+        };
+      }),
+    }));
+  };
+
+  const moveMaterialDuringDrag = (elementId: string, nx: number, ny: number) => {
+    const ref = multiDragRef.current;
+    if (ref && ref.anchorId === elementId && ref.starts.size > 1) {
+      const anchorStart = ref.starts.get(elementId);
+      if (!anchorStart) return;
+      const dx = nx - anchorStart.x;
+      const dy = ny - anchorStart.y;
+      setDoc((d) => ({
+        ...d,
+        elements: d.elements.map((el) => {
+          const start = ref.starts.get(el.id);
+          if (!start || el.type !== 'material') return el;
+          return {
+            ...el,
+            x: Math.max(0, Math.min(1, start.x + dx)),
+            y: Math.max(0, Math.min(1, start.y + dy)),
+          };
+        }),
+      }));
+      return;
+    }
+    moveSelectedMaterials(elementId, nx, ny);
+  };
+
+  const finishMaterialDrag = (elementId: string, nx: number, ny: number) => {
+    moveMaterialDuringDrag(elementId, nx, ny);
+    multiDragRef.current = null;
+  };
+
   const fieldOptions = SPORT_OPTIONS[sport].fields;
+  const isDenseField = doc.field === 'futsal';
+  const sidebarShellClass = isDenseField ? GLASS.sidebarEmphasis : undefined;
+  const sidebarBtnClass = isDenseField ? GLASS.sidebarSelectEmphasis : GLASS.btn;
   const layeredElements = useMemo(() => sortElementsByLayer(doc.elements), [doc.elements]);
   const shapeElements = useMemo(
     () => layeredElements.filter((el) => el.type !== 'material'),
@@ -195,42 +381,38 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     [layeredElements]
   );
 
-  const attachTransformer = useCallback(
-    (node: Konva.Node | null) => {
-      const tr = transformerRef.current;
-      if (!tr) return;
-      if (node && (selected?.type === 'material' || selected?.type === 'shape-rect')) {
-        tr.nodes([node]);
-        tr.keepRatio(!(selected?.type === 'material' && selected.material === 'ladder'));
-      } else {
-        tr.nodes([]);
-      }
-      tr.getLayer()?.batchDraw();
-    },
-    [selected]
+  const transformableIds = useMemo(
+    () =>
+      selectedIds.filter((id) => {
+        const el = doc.elements.find((e) => e.id === id);
+        return el?.type === 'material' || el?.type === 'shape-rect';
+      }),
+    [selectedIds, doc.elements]
   );
 
   useEffect(() => {
     const tr = transformerRef.current;
     if (!tr || !open) return;
-    if (
-      !selectedId ||
-      !selected ||
-      (selected.type !== 'shape-rect' && selected.type !== 'material')
-    ) {
+    if (transformableIds.length !== 1) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
     }
     requestAnimationFrame(() => {
       const stage = tr.getStage();
-      const node = stage?.findOne('#' + selectedId);
-      if (!node) return;
+      if (!stage) return;
+      const node = stage.findOne('#' + transformableIds[0]);
+      if (!node) {
+        tr.nodes([]);
+        tr.getLayer()?.batchDraw();
+        return;
+      }
       tr.nodes([node]);
-      tr.keepRatio(!(selected.type === 'material' && selected.material === 'ladder'));
+      const single = doc.elements.find((el) => el.id === transformableIds[0]);
+      tr.keepRatio(!(single?.type === 'material' && single.material === 'ladder'));
       tr.getLayer()?.batchDraw();
     });
-  }, [selectedId, selected, open, layeredElements]);
+  }, [transformableIds, open, layeredElements, doc.elements]);
 
   const getPointerNorm = (stage: Konva.Stage) => {
     const pos = stage.getPointerPosition();
@@ -247,7 +429,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (!norm) return;
 
     if (tool === 'select') {
-      if (clickedOnEmpty) setSelectedId(null);
+      if (clickedOnEmpty) setSelectedIds([]);
       return;
     }
 
@@ -255,7 +437,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
       if (!el) return;
       setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
-      setSelectedId(el.id);
+      setSelectedIds([el.id]);
       setTool('select');
       return;
     }
@@ -264,7 +446,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
       if (!el) return;
       setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
-      setSelectedId(el.id);
+      setSelectedIds([el.id]);
       setTool('select');
       return;
     }
@@ -308,7 +490,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const handleStagePointerUp = () => {
     if (draft) {
       setDoc((d) => ({ ...d, elements: [...d.elements, draft] }));
-      setSelectedId(draft.id);
+      setSelectedIds([draft.id]);
       setDraft(null);
       setDragStart(null);
       setTool('select');
@@ -323,33 +505,285 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const deleteSelected = () => {
-    if (!selectedId) return;
-    setDoc((d) => ({ ...d, elements: d.elements.filter((el) => el.id !== selectedId) }));
-    setSelectedId(null);
+    if (selectedIds.length === 0) return;
+    setDoc((d) => ({ ...d, elements: d.elements.filter((el) => !selectedIds.includes(el.id)) }));
+    setSelectedIds([]);
   };
 
   const duplicateSelected = () => {
-    if (!selected) return;
-    let copy = duplicateDrawingElement(selected);
-    if (
-      selected.type === 'material' &&
-      copy.type === 'material' &&
-      copy.material === 'player-own'
-    ) {
-      const current = parseInt(selected.label ?? '1', 10);
-      copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
-    }
-    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
-    setSelectedId(copy.id);
+    const targets = doc.elements.filter((el) => selectedIds.includes(el.id));
+    if (targets.length === 0) return;
+    const copies = targets.map((el) => {
+      let copy = duplicateDrawingElement(el);
+      if (el.type === 'material' && copy.type === 'material' && copy.material === 'player-own') {
+        const current = parseInt(el.label ?? '1', 10);
+        copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
+      }
+      return copy;
+    });
+    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, ...copies]) }));
+    setSelectedIds(copies.map((copy) => copy.id));
   };
+
+  const enableAnimation = () => {
+    setDoc((current) => ({
+      ...current,
+      animation: {
+        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
+        holdMs: DEFAULT_ANIMATION_HOLD_MS,
+        loop: true,
+        playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
+        scenes: renumberAnimationScenes([createAnimationScene(current.elements)]),
+      },
+    }));
+    setActiveSceneIndex(0);
+  };
+
+  const disableAnimation = () => {
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const { animation: _removed, ...rest } = saved;
+      return rest;
+    });
+    setActiveSceneIndex(0);
+  };
+
+  const switchScene = (index: number) => {
+    if (!doc.animation || index === activeSceneIndex) return;
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const target = saved.animation?.scenes[index];
+      if (!target) return saved;
+      return { ...saved, elements: cloneDrawingElements(target.elements) };
+    });
+    setActiveSceneIndex(index);
+    setSelectedIds([]);
+  };
+
+  const duplicateFrame = () => {
+    setDoc((current) => {
+      if (!current.animation || current.animation.scenes.length >= MAX_ANIMATION_SCENES) return current;
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const syncedScenes = renumberAnimationScenes(
+        saved.animation!.scenes.map((scene, index) =>
+          index === activeSceneIndex
+            ? { ...scene, elements: cloneDrawingElements(saved.elements) }
+            : scene
+        )
+      );
+      const duplicate = createAnimationScene(cloneDrawingElements(saved.elements));
+      const scenes = renumberAnimationScenes([...syncedScenes, duplicate]);
+      const newIndex = scenes.length - 1;
+      setActiveSceneIndex(newIndex);
+      return {
+        ...saved,
+        animation: { ...saved.animation!, scenes },
+        elements: cloneDrawingElements(duplicate.elements),
+      };
+    });
+    setSelectedIds([]);
+  };
+
+  const deleteFrame = () => {
+    if (!doc.animation || doc.animation.scenes.length <= 1) return;
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const scenes = renumberAnimationScenes(
+        saved.animation!.scenes.filter((_, index) => index !== activeSceneIndex)
+      );
+      const newIndex = Math.min(activeSceneIndex, scenes.length - 1);
+      setActiveSceneIndex(newIndex);
+      return {
+        ...saved,
+        animation: { ...saved.animation!, scenes },
+        elements: cloneDrawingElements(scenes[newIndex].elements),
+      };
+    });
+    setSelectedIds([]);
+  };
+
+  const stripTeamPlayers = (elements: DrawingElement[]) =>
+    elements.filter(
+      (el) =>
+        !(
+          el.type === 'material' &&
+          (el.material === 'player-own' || el.material === 'player-rival')
+        )
+    );
 
   const handleSportChange = (next: SportKind) => {
     setSport(next);
     const field = defaultFieldForSport(next);
-    setDoc((d) => ({ ...d, field }));
+    setDoc((d) => {
+      const saved = persistActiveAnimationScene(d, activeSceneIndex);
+      const elements = stripTeamPlayers(saved.elements);
+      const nextDoc = { ...saved, field, formations: undefined, elements };
+      return syncSceneElements(nextDoc, elements, activeSceneIndex);
+    });
+    setSelectedIds([]);
+  };
+
+  const handleFieldChange = (field: FieldTemplate) => {
+    setDoc((d) => {
+      const saved = persistActiveAnimationScene(d, activeSceneIndex);
+      const elements = stripTeamPlayers(saved.elements);
+      const nextDoc = { ...saved, field, formations: undefined, elements };
+      return syncSceneElements(nextDoc, elements, activeSceneIndex);
+    });
+    setSelectedIds([]);
+  };
+
+  const formationGroup = formationGroupForField(doc.field);
+  const availableFormations = formationsForField(doc.field);
+
+  const applyFormationSelection = (side: 'home' | 'away', formationId: string | null) => {
+    const group = formationGroupForField(doc.field);
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const formations = {
+        home: saved.formations?.home ?? null,
+        away: saved.formations?.away ?? null,
+        homePhase: side === 'home' ? 0 : (saved.formations?.homePhase ?? 0),
+        awayPhase: side === 'away' ? 0 : (saved.formations?.awayPhase ?? 0),
+        [side]: formationId,
+      };
+      const newElements =
+        formationId && group
+          ? applyTeamTacticalPhase(saved.elements, formations, saved.field, side, 0)
+          : applyFormationToElements(saved.elements, side, formationId, group, saved.field);
+      return syncSceneElements({ ...saved, formations }, newElements, activeSceneIndex);
+    });
+    setSelectedIds([]);
+  };
+
+  const syncSceneElements = (
+    document: ExerciseDrawingDocument,
+    elements: DrawingElement[],
+    sceneIndex: number
+  ): ExerciseDrawingDocument => {
+    if (!document.animation?.scenes.length) {
+      return { ...document, elements };
+    }
+    return {
+      ...document,
+      elements,
+      animation: {
+        ...document.animation,
+        scenes: document.animation.scenes.map((scene, index) =>
+          index === sceneIndex ? { ...scene, elements: cloneDrawingElements(elements) } : scene
+        ),
+      },
+    };
+  };
+
+  const applyTeamPhase = (side: 'home' | 'away', phase: TacticalPhaseIndex) => {
+    if (!doc.formations?.[side]) return;
+    if (tacticalAnimRef.current) cancelAnimationFrame(tacticalAnimRef.current);
+
+    const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+    const formations = {
+      home: saved.formations?.home ?? null,
+      away: saved.formations?.away ?? null,
+      homePhase: side === 'home' ? phase : (saved.formations?.homePhase ?? 0),
+      awayPhase: side === 'away' ? phase : (saved.formations?.awayPhase ?? 0),
+    };
+    const material = side === 'home' ? 'player-own' : 'player-rival';
+    const targetElements = applyTeamTacticalPhase(
+      saved.elements,
+      formations,
+      saved.field,
+      side,
+      phase
+    );
+
+    const starts = new Map<string, { x: number; y: number; rotation: number }>();
+    for (const el of saved.elements) {
+      if (el.type === 'material' && el.material === material) {
+        starts.set(el.id, { x: el.x, y: el.y, rotation: el.rotation });
+      }
+    }
+    const targets = new Map<string, { x: number; y: number; rotation: number }>();
+    for (const el of targetElements) {
+      if (el.type === 'material' && el.material === material) {
+        targets.set(el.id, { x: el.x, y: el.y, rotation: el.rotation });
+      }
+    }
+
+    setDoc(syncSceneElements({ ...saved, formations }, saved.elements, activeSceneIndex));
+    setSelectedIds([]);
+
+    const startMs = performance.now();
+    const tick = (now: number) => {
+      const raw = Math.min(1, (now - startMs) / TACTICAL_TRANSITION_MS);
+      const t = easeInOutCubic(raw);
+
+      setDoc((live) => {
+        const elements = live.elements.map((el) => {
+          const start = starts.get(el.id);
+          const target = targets.get(el.id);
+          if (!start || !target || el.type !== 'material' || el.material !== material) return el;
+          return {
+            ...el,
+            x: lerpNum(start.x, target.x, t),
+            y: lerpNum(start.y, target.y, t),
+            rotation: lerpAngle(start.rotation, target.rotation, t),
+          };
+        });
+        return syncSceneElements(
+          { ...live, formations },
+          elements,
+          activeSceneIndex
+        );
+      });
+
+      if (raw < 1) {
+        tacticalAnimRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      tacticalAnimRef.current = null;
+      setDoc((live) => {
+        const finalElements = applyTeamTacticalPhase(
+          live.elements,
+          formations,
+          live.field,
+          side,
+          phase
+        );
+        return syncSceneElements({ ...live, formations }, finalElements, activeSceneIndex);
+      });
+    };
+
+    tacticalAnimRef.current = requestAnimationFrame(tick);
+  };
+
+  const confirmClearBoard = () => {
+    setDoc((d) => ({
+      ...d,
+      elements: [],
+      formations: undefined,
+      animation: undefined,
+    }));
+    setActiveSceneIndex(0);
+    setSelectedIds([]);
+    setClearConfirmOpen(false);
   };
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
+  const multiMaterialSelection = transformableIds.length > 1;
+
+  const materialDragHandlers = (elementId: string) => ({
+    onDragStart: () => beginMaterialDrag(elementId),
+    onDragMove: (ev: Konva.KonvaEventObject<DragEvent>) => {
+      if (!multiDragRef.current) return;
+      const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+      moveMaterialDuringDrag(elementId, n.x, n.y);
+    },
+    onDragEnd: (ev: Konva.KonvaEventObject<DragEvent>) => {
+      const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+      finishMaterialDrag(elementId, n.x, n.y);
+    },
+  });
   const cursorClass = tool === 'select' ? 'cursor-default' : 'cursor-crosshair';
 
   const finishElementDrag = (element: DrawingElement, node: Konva.Node) => {
@@ -361,13 +795,37 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
   };
 
+  /** Selección y arrastre en tablet: materiales ya usaban onTap; las formas solo onMouseDown. */
+  const shapeInteractionHandlers = (
+    elementId: string,
+    isPreview: boolean,
+    canDrag: boolean
+  ) => ({
+    onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onTouchStart: (e: Konva.KonvaEventObject<TouchEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onTap: (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onDragStart: () => {
+      if (!isPreview && tool === 'select') handleElementSelect(elementId);
+    },
+  });
+
   const renderElement = (element: DrawingElement, isPreview = false) => {
     const key = isPreview ? `draft-${element.id}` : element.id;
     const canDrag = tool === 'select' && !isPreview;
     const hitStroke =
       element.type === 'material' || element.type === 'shape-text'
-        ? 16
-        : Math.max(16, element.style.width * 5);
+        ? 24
+        : Math.max(24, element.style.width * 5);
+    const interact = shapeInteractionHandlers(element.id, isPreview, canDrag);
 
     if (element.type === 'shape-line') {
       const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -387,12 +845,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             pointerWidth={10}
             hitStrokeWidth={hitStroke}
             draggable={canDrag}
-            onMouseDown={(e) => {
-              e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
-            }}
+            {...interact}
             onDragEnd={(e) => finishElementDrag(element, e.target)}
-            onClick={() => !isPreview && setSelectedId(element.id)}
           />
         );
       }
@@ -408,12 +862,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           lineCap="round"
           hitStrokeWidth={hitStroke}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && setSelectedId(element.id)}
         />
       );
     }
@@ -438,10 +888,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           y={p1.y}
           opacity={element.opacity}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => {
             const node = e.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -453,7 +900,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             const snapped = normToPx(element.x1 + dx, element.y1 + dy, fieldRect);
             node.position({ x: snapped.x, y: snapped.y });
           }}
-          onClick={() => !isPreview && setSelectedId(element.id)}
         >
           <Rect x={minX} y={minY} width={boxW} height={boxH} fill="rgba(0,0,0,0.001)" />
           <Line
@@ -501,12 +947,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           lineCap="round"
           hitStrokeWidth={hitStroke}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && setSelectedId(element.id)}
         />
       );
     }
@@ -532,11 +974,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           opacity={element.opacity}
           dash={dashArray(element.style)}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
-          onClick={() => setSelectedId(element.id)}
+          {...interact}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
@@ -553,9 +991,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             });
             node.scaleX(1);
             node.scaleY(1);
-          }}
-          ref={(node) => {
-            if (selectedId === element.id) attachTransformer(node);
           }}
         />
       );
@@ -574,15 +1009,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           y={p.y}
           opacity={element.opacity}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
+          {...interact}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
           }}
-          onClick={() => !isPreview && setSelectedId(element.id)}
         >
           <Rect
             x={0}
@@ -594,7 +1025,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           <Text
             text={element.text}
             fontSize={fontSize}
-            fill={selectedId === element.id && !isPreview ? '#22d3ee' : element.color}
+            fill={isSelected(element.id) && !isPreview ? '#22d3ee' : element.color}
             fontFamily="system-ui, -apple-system, sans-serif"
             fontStyle="bold"
             listening={false}
@@ -616,8 +1047,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         const ladderH = scaleYn * base * (unitH / unitW);
         const hw = ladderW / 2;
         const hh = ladderH / 2;
-        const pole = selectedId === element.id && !isPreview ? '#22d3ee' : '#0f172a';
-        const rung = selectedId === element.id && !isPreview ? '#22d3ee' : '#fbbf24';
+        const pole = isSelected(element.id) && !isPreview ? '#22d3ee' : '#0f172a';
+        const rung = isSelected(element.id) && !isPreview ? '#22d3ee' : '#fbbf24';
         const rungs = 5;
         return (
           <Group
@@ -630,20 +1061,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             draggable={canDrag}
             onMouseDown={(e) => {
               e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
+              if (canDrag) handleElementSelect(element.id, e);
+            }}
+            onTouchStart={(e) => {
+              e.cancelBubble = true;
+              if (canDrag) handleElementSelect(element.id, e);
             }}
             onTap={(e) => {
               e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
+              if (canDrag) handleElementSelect(element.id, e);
             }}
-            onClick={(e) => {
-              e.cancelBubble = true;
-              setSelectedId(element.id);
-            }}
-            onDragEnd={(ev) => {
-              const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-              updateElement(element.id, { x: n.x, y: n.y });
-            }}
+            {...materialDragHandlers(element.id)}
             onTransformEnd={(ev) => {
               const node = ev.target;
               const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -662,10 +1090,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 scale: Math.max(nextScaleX, nextScaleY),
               });
             }}
-            ref={(node) => {
-              if (selectedId === element.id) attachTransformer(node);
-            }}
           >
+            {isSelected(element.id) && !isPreview ? (
+              <Rect
+                x={-hw - 6}
+                y={-hh - 6}
+                width={ladderW + 12}
+                height={ladderH + 12}
+                stroke="#22d3ee"
+                strokeWidth={2}
+                dash={[6, 4]}
+                listening={false}
+              />
+            ) : null}
             <Rect
               x={-hw}
               y={-hh}
@@ -693,7 +1130,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         );
       }
 
-      const img = materialImages[element.material];
+      const img = isPlayerMaterial(element.material)
+        ? playerImages[playerImageKey(element.material, element.label)]
+        : materialImages[element.material];
       const scale = element.scale * base;
       return (
         <Group
@@ -706,20 +1145,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) handleElementSelect(element.id, e);
+          }}
+          onTouchStart={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) handleElementSelect(element.id, e);
           }}
           onTap={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) handleElementSelect(element.id, e);
           }}
-          onClick={(e) => {
-            e.cancelBubble = true;
-            setSelectedId(element.id);
-          }}
-          onDragEnd={(ev) => {
-            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-            updateElement(element.id, { x: n.x, y: n.y });
-          }}
+          {...materialDragHandlers(element.id)}
           onTransformEnd={(ev) => {
             const node = ev.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -732,10 +1168,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             node.scaleX(1);
             node.scaleY(1);
           }}
-          ref={(node) => {
-            if (selectedId === element.id) attachTransformer(node);
-          }}
         >
+          {isSelected(element.id) && !isPreview ? (
+            <Circle
+              radius={scale / 2 + 6}
+              stroke="#22d3ee"
+              strokeWidth={2}
+              dash={[6, 4]}
+              listening={false}
+            />
+          ) : null}
           {img ? (
             <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
           ) : (
@@ -765,12 +1207,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             key={a.role}
             x={p.x}
             y={p.y}
-            radius={a.role === 'control' ? 8 : 9}
+            radius={a.role === 'control' ? 10 : 11}
+            hitStrokeWidth={28}
             fill="#22d3ee"
             stroke="#0f172a"
             strokeWidth={2}
             draggable
             onMouseDown={(e) => {
+              e.cancelBubble = true;
+            }}
+            onTouchStart={(e) => {
+              e.cancelBubble = true;
+            }}
+            onTap={(e) => {
               e.cancelBubble = true;
             }}
             onDragEnd={(ev) => {
@@ -804,6 +1253,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         <Stage
           width={size.width}
           height={size.height}
+          pixelRatio={pixelRatio}
           onMouseDown={handleStagePointerDown}
           onMousemove={handleStagePointerMove}
           onMouseup={handleStagePointerUp}
@@ -832,8 +1282,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             {renderAnchors()}
             <Transformer
               ref={transformerRef}
-              rotateEnabled
-              enabledAnchors={[...TRANSFORMER_ANCHORS]}
+              rotateEnabled={!multiMaterialSelection}
+              enabledAnchors={multiMaterialSelection ? [] : [...TRANSFORMER_ANCHORS]}
               borderStroke="#22d3ee"
               anchorStroke="#22d3ee"
               anchorFill="#67e8f9"
@@ -842,63 +1292,141 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Cerrar — superior izquierda */}
-      <button
-        type="button"
-        onClick={onClose}
-        className={cn('absolute left-4 top-4 z-40 size-10', GLASS.iconBtn)}
-        aria-label="Cerrar"
+      {/* Banda izquierda — arriba: cerrar + animación; abajo: formación local */}
+      <div
+        className={cn(
+          'pointer-events-none absolute left-4 top-4 z-40 flex flex-col items-center justify-between',
+          SIDEBAR_BOTTOM_CLASS
+        )}
       >
-        <X className="size-4" />
-      </button>
+        <div className={cn('pointer-events-auto flex flex-col items-center gap-1.5', sidebarShellClass)}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn('size-10', GLASS.iconBtn)}
+            aria-label="Cerrar"
+          >
+            <X className="size-4" />
+          </button>
 
-      {/* Controles — superior derecha */}
-      <div className="absolute right-4 top-4 z-40 flex max-w-[min(92vw,640px)] flex-wrap items-center justify-end gap-2">
-        <div className={cn('flex p-0.5', GLASS.pill)}>
+          <ExerciseAnimationTimeline
+            doc={doc}
+            activeSceneIndex={activeSceneIndex}
+            onEnableAnimation={enableAnimation}
+            onDisableAnimation={disableAnimation}
+            onSwitchScene={switchScene}
+            onDuplicateFrame={duplicateFrame}
+            onDeleteFrame={deleteFrame}
+          />
+        </div>
+
+        {formationGroup ? (
+          <div className={cn('pointer-events-auto', sidebarShellClass)}>
+            <FormationTeamPanel
+              side="home"
+              teamLabel="Local"
+              emphasized={isDenseField}
+              selectedFormationId={doc.formations?.home ?? null}
+              activePhase={(doc.formations?.homePhase ?? 0) as TacticalPhaseIndex}
+              formations={availableFormations}
+              playerImageSrc={materialImages['player-own']?.src}
+              onFormationSelect={(id) => applyFormationSelection('home', id)}
+              onPhaseSelect={(phase) => applyTeamPhase('home', phase)}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* Banda derecha — arriba: guardar y campo; abajo: formación visitante */}
+      <div
+        className={cn(
+          'pointer-events-none absolute right-4 top-4 z-40 flex flex-col items-end justify-between',
+          SIDEBAR_BOTTOM_CLASS
+        )}
+      >
+        <div className={cn('pointer-events-auto flex flex-col items-end gap-1.5', sidebarShellClass)}>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              title="Guardar"
+              aria-label="Guardar"
+              className={cn('size-10', GLASS.iconBtn)}
+              onClick={() => {
+                const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+                onSave(serializeExerciseDrawing(saved));
+                onClose();
+              }}
+            >
+              <Save className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(true)}
+              className={cn('size-10', GLASS.danger)}
+              title="Borrar todo"
+              aria-label="Borrar todo el contenido de la pizarra"
+            >
+              <Eraser className="size-4" />
+            </button>
+          </div>
+
           {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
             <button
               key={key}
               type="button"
               onClick={() => handleSportChange(key)}
               className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all',
-                sport === key ? GLASS.btnActive : GLASS.btn
+                GLASS.sidebarSelect,
+                sport === key ? GLASS.btnActive : sidebarBtnClass
               )}
             >
               {SPORT_OPTIONS[key].label}
             </button>
           ))}
+
+          {fieldOptions.length > 1
+            ? fieldOptions.map((field) => (
+                <button
+                  key={field}
+                  type="button"
+                  onClick={() => handleFieldChange(field)}
+                  className={cn(
+                    GLASS.sidebarSelect,
+                    doc.field === field ? GLASS.btnActive : sidebarBtnClass
+                  )}
+                >
+                  {FIELD_FORMAT_SHORT[field]}
+                </button>
+              ))
+            : null}
         </div>
 
-        <div className={cn('flex flex-wrap justify-end gap-1 rounded-2xl px-2 py-1.5', GLASS.panel)}>
-          {fieldOptions.map((field) => (
-            <button
-              key={field}
-              type="button"
-              onClick={() => setDoc((d) => ({ ...d, field }))}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
-                doc.field === field ? GLASS.btnActive : GLASS.btn
-              )}
-            >
-              {FIELD_FORMAT_SHORT[field]}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          title="Guardar"
-          aria-label="Guardar"
-          className={cn('size-10', GLASS.iconBtn)}
-          onClick={() => {
-            onSave(serializeExerciseDrawing(doc));
-            onClose();
-          }}
-        >
-          <Save className="size-4" />
-        </button>
+        {formationGroup ? (
+          <div className={cn('pointer-events-auto', sidebarShellClass)}>
+            <FormationTeamPanel
+              side="away"
+              teamLabel="Visitante"
+              emphasized={isDenseField}
+              selectedFormationId={doc.formations?.away ?? null}
+              activePhase={(doc.formations?.awayPhase ?? 0) as TacticalPhaseIndex}
+              formations={availableFormations}
+              playerImageSrc={materialImages['player-rival']?.src}
+              onFormationSelect={(id) => applyFormationSelection('away', id)}
+              onPhaseSelect={(phase) => applyTeamPhase('away', phase)}
+            />
+          </div>
+        ) : null}
       </div>
+
+      <DrawingStudioConfirmDialog
+        open={clearConfirmOpen}
+        title="Borrar toda la pizarra"
+        description="Se eliminarán todos los elementos, formaciones y fotogramas de animación. Esta acción no se puede deshacer."
+        confirmLabel="Borrar todo"
+        cancelLabel="Cancelar"
+        onConfirm={confirmClearBoard}
+        onCancel={() => setClearConfirmOpen(false)}
+      />
 
       {/* Propiedades selección */}
       {selected &&
@@ -1073,9 +1601,41 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
       ) : null}
 
+      {selectedIds.length > 1 &&
+      doc.elements.filter((el) => selectedIds.includes(el.id)).every((el) => el.type === 'material') ? (
+        <div
+          className={cn(
+            'pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 items-center gap-3 rounded-2xl px-4 py-2.5',
+            GLASS.panel
+          )}
+        >
+          <span className={cn('pointer-events-auto text-xs', GLASS.label)}>
+            {selectedIds.length} materiales · Shift/Ctrl+clic para añadir o quitar
+          </span>
+          <button
+            type="button"
+            title="Duplicar selección"
+            aria-label="Duplicar selección"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Eliminar selección"
+            aria-label="Eliminar selección"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.danger)}
+            onClick={deleteSelected}
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       {selected && selected.type === 'material' ? (
-        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+        <div className={cn(PROPERTY_BAR_CLASS, GLASS.panel)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Transparencia
             <input
               type="range"
@@ -1084,10 +1644,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               step={0.05}
               value={selected.opacity}
               onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
-              className="w-24"
+              className="w-20"
             />
           </label>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Escala
             <input
               type="range"
@@ -1103,10 +1663,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                   updateElement(selected.id, { scale: v });
                 }
               }}
-              className="w-24"
+              className="w-20"
             />
           </label>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Rotación
             <input
               type="range"
@@ -1114,18 +1674,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               max={180}
               value={selected.rotation}
               onChange={(e) => updateElement(selected.id, { rotation: Number(e.target.value) })}
-              className="w-24"
+              className="w-20"
             />
           </label>
           {selected.material.startsWith('player') ? (
-            <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
               Etiqueta
               <input
                 type="text"
                 maxLength={3}
                 value={selected.label ?? ''}
                 onChange={(e) => updateElement(selected.id, { label: e.target.value })}
-                className="w-12 rounded border border-cyan-400/35 bg-cyan-400/10 px-1.5 py-0.5 text-center text-xs text-cyan-200"
+                className="w-10 rounded border border-cyan-400/35 bg-cyan-400/10 px-1 py-0.5 text-center text-xs text-cyan-200"
               />
             </label>
           ) : null}
@@ -1133,7 +1693,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             type="button"
             title="Duplicar"
             aria-label="Duplicar"
-            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            className={cn('pointer-events-auto flex size-8 shrink-0 items-center justify-center rounded-lg', GLASS.btn)}
             onClick={duplicateSelected}
           >
             <Copy className="size-3.5" />
@@ -1142,7 +1702,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             type="button"
             title="Eliminar"
             aria-label="Eliminar"
-            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            className={cn('pointer-events-auto flex size-8 shrink-0 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
             onClick={deleteSelected}
           >
             <Trash2 className="size-3.5" />
@@ -1163,7 +1723,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': materialsPanelW } as React.CSSProperties}
           >
             <div
-              className={cn('mr-2 rounded-2xl p-2.5', GLASS.panel)}
+              className={cn(
+                'mr-2 rounded-2xl p-2.5',
+                isDenseField ? GLASS.sidebarEmphasis : GLASS.panel
+              )}
               style={{ width: materialsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
@@ -1195,7 +1758,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </div>
 
           {/* Hub central — solo iconos */}
-          <div className={cn('relative z-10 flex overflow-hidden', GLASS.pill)}>
+          <div className={cn('relative z-10 flex overflow-hidden', isDenseField ? GLASS.sidebarEmphasis : GLASS.pill)}>
             <button
               type="button"
               title="Material"
@@ -1234,7 +1797,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': toolsPanelW } as React.CSSProperties}
           >
             <div
-              className={cn('ml-2 rounded-2xl p-2.5', GLASS.panel)}
+              className={cn(
+                'ml-2 rounded-2xl p-2.5',
+                isDenseField ? GLASS.sidebarEmphasis : GLASS.panel
+              )}
               style={{ width: toolsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
@@ -1245,7 +1811,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                     title={item.label}
                     onClick={() => {
                       setTool(item.id);
-                      setSelectedId(null);
+                      setSelectedIds([]);
                     }}
                     className={cn(
                       'flex size-10 items-center justify-center',

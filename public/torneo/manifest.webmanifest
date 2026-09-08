@@ -1,0 +1,19 @@
+{
+  "name": "SynqAI Torneos",
+  "short_name": "Torneos",
+  "description": "Resultados en vivo, mesa móvil, portal delegado y taquilla QR.",
+  "start_url": "/torneo/demo",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060a12",
+  "theme_color": "#22d3ee",
+  "icons": [
+    {
+      "src": "/brand/synqai-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "utilities"]
+}
