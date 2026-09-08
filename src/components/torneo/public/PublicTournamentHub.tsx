@@ -9,6 +9,7 @@ import { PublicBracketsPanel } from '@/components/torneo/public/PublicBracketsPa
 import { PublicCategoryAd } from '@/components/torneo/public/PublicCategoryAd';
 import { PublicSponsorStrip } from '@/components/torneo/public/PublicSponsorStrip';
 import { PublicSponsorsPanel } from '@/components/torneo/public/PublicSponsorsPanel';
+import { PublicTicketAvailability } from '@/components/torneo/public/PublicTicketAvailability';
 import {
   parsePublicTournamentTab,
   PUBLIC_TOURNAMENT_TABS,
@@ -151,6 +152,10 @@ export function PublicTournamentHub({ bundle, slug, initialTab = 'horarios' }: P
           </div>
         </div>
       </header>
+
+      <div className={cn(CONTENT_MAX, 'py-4')}>
+        <PublicTicketAvailability slug={slug} />
+      </div>
 
       {/* Sticky tabs — transparente */}
       <div className="sticky top-0 z-30">

@@ -5,6 +5,7 @@ import {
   QrCode,
   Radio,
   Smartphone,
+  Ticket,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -67,6 +68,26 @@ export function TorneoPwaHub({ links }: { links: DemoTorneoPwaLinks }) {
           <p className="mt-1 text-2xl font-semibold tabular-nums text-amber-300">{links.pendingPlayers}</p>
         </div>
       </div>
+
+      {links.ticketAvailability.length > 0 ? (
+        <div className="mb-6 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-200">
+            <Ticket className="size-3.5" />
+            Disponibilidad de entradas
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {links.ticketAvailability.map((item) => (
+              <div key={item.id} className="rounded-xl border border-white/5 bg-background/20 px-3 py-2">
+                <p className="font-medium">{item.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.pending} por validar · {item.used} dentro
+                  {item.remaining != null ? ` · ${item.remaining} libres` : ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         {items.map(({ href, icon: Icon, title, desc }) => (

@@ -32,6 +32,12 @@ import {
 } from '@/lib/tournament-mesa-field';
 import { isMesaMatchEditExpired, mesaMatchCanEdit } from '@/lib/tournament-mesa';
 import {
+  ticketStatsForTournament,
+  ticketTypeAvailability,
+  type TicketStats,
+  type TicketTypeAvailability,
+} from '@/lib/tournament-ticketing';
+import {
   delegateUrl,
   gateUrl,
   mesaUrl,
@@ -48,6 +54,7 @@ import {
   generateInviteToken,
   generateQrHash,
   generateQrPayload,
+  hashToken,
   tokenExpiresAt,
 } from '@/lib/tournament-tokens';
 import {
@@ -261,6 +268,7 @@ export type DemoTorneoPwaLinks = {
   delegado: string;
   delegadoLabel: string;
   taquilla: string;
+  ticketAvailability: TicketTypeAvailability[];
   totalPlayers: number;
   confirmedPlayers: number;
   pendingPlayers: number;
@@ -285,6 +293,9 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
 
   const players = buildTournamentPlayerMetrics(enriched);
   const primaryMesa = mesaFields[0];
+  const ticketAvailability = enriched.ticketTypes
+    .filter((t) => t.active)
+    .map((tt) => ticketTypeAvailability(tt, enriched.tickets));
 
   return {
     tournamentName: tournament.name,
@@ -297,6 +308,7 @@ export async function getTournamentPwaLinks(tournamentId: string): Promise<DemoT
     delegado: team?.invite_token ? delegateUrl(team.invite_token) : publicTournamentUrl(tournament.slug),
     delegadoLabel: team?.name ?? 'Equipo invitado',
     taquilla,
+    ticketAvailability,
     ...players,
   };
 }
@@ -1554,13 +1566,314 @@ export async function refreshRevenueEstimates(tournamentId: string): Promise<Tou
 }
 
 export async function getGateAccessUrl(tournamentId: string): Promise<string | null> {
-  if (tournamentId === DEMO_TOURNAMENT_ID || tournamentId.startsWith('demo-tournament')) {
+  if (tournamentId === DEMO_TOURNAMENT_ID || tournamentId.startsWith('demo-tournament') || demoBundleById(tournamentId)) {
     return gateUrl(getDemoTournamentsStore().gateToken);
   }
   if (await isDemoActive()) {
     return gateUrl(generateAccessToken());
   }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data: existing } = await supabase
+    .from('synq_tournament_access_tokens')
+    .select('token_hash, pin_display')
+    .eq('tournament_id', tournamentId)
+    .eq('token_type', 'gate')
+    .maybeSingle();
+
+  if (existing?.pin_display) {
+    return gateUrl(String(existing.pin_display));
+  }
+
+  const token = generateAccessToken();
+  const { error } = await supabase.from('synq_tournament_access_tokens').insert({
+    tournament_id: tournamentId,
+    token_type: 'gate',
+    token_hash: hashToken(token),
+    pin_display: token,
+    expires_at: null,
+  });
+  if (error) return null;
+  return gateUrl(token);
+}
+
+export type GateContext = {
+  tournamentId: string;
+  tournamentName: string;
+  stats: TicketStats;
+};
+
+export type IssuedTicketResult = {
+  id: string;
+  purchaserName: string;
+  qrPayload: string;
+};
+
+async function resolveGateTournament(
+  gateToken: string
+): Promise<{ tournamentId: string; tournamentName: string } | null> {
+  const store = getDemoTournamentsStore();
+  if (gateToken === store.gateToken) {
+    const tournament = store.tournaments.find((t) => t.id === DEMO_TOURNAMENT_ID) ?? store.tournaments[0];
+    if (!tournament) return null;
+    return { tournamentId: tournament.id, tournamentName: tournament.name };
+  }
+
+  if (await isDemoActive()) return null;
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data } = await supabase
+    .from('synq_tournament_access_tokens')
+    .select('tournament_id')
+    .eq('token_hash', hashToken(gateToken))
+    .eq('token_type', 'gate')
+    .maybeSingle();
+  if (!data?.tournament_id) return null;
+
+  const { data: tournament } = await supabase
+    .from('synq_tournaments')
+    .select('name')
+    .eq('id', data.tournament_id)
+    .maybeSingle();
+  if (!tournament) return null;
+  return { tournamentId: String(data.tournament_id), tournamentName: String(tournament.name) };
+}
+
+function demoTicketTypeCapacity(
+  tournamentId: string,
+  ticketTypeId: string,
+  additional = 1
+): TournamentActionState | null {
+  const store = getDemoTournamentsStore();
+  const tt = store.ticketTypes.find((t) => t.id === ticketTypeId && t.tournament_id === tournamentId);
+  if (!tt) return { ok: false, message: 'Tipo de entrada no encontrado' };
+  if (!tt.active) return { ok: false, message: 'Este tipo de entrada está desactivado' };
+  if (tt.max_quantity == null) return null;
+  const issued = store.tickets.filter(
+    (t) => t.ticket_type_id === ticketTypeId && t.status !== 'cancelled'
+  ).length;
+  if (issued + additional > tt.max_quantity) {
+    return {
+      ok: false,
+      message: `Cupo agotado para ${tt.name} (${issued}/${tt.max_quantity} emitidas)`,
+    };
+  }
   return null;
+}
+
+function pushDemoTicket(
+  tournamentId: string,
+  ticketTypeId: string,
+  ticketId: string,
+  purchaserName: string,
+  purchaserEmail: string | undefined,
+  payload: string,
+  hash: string
+): TournamentTicket {
+  const store = getDemoTournamentsStore();
+  const tt = store.ticketTypes.find((t) => t.id === ticketTypeId);
+  const ticket: TournamentTicket = {
+    id: ticketId,
+    tournament_id: tournamentId,
+    ticket_type_id: ticketTypeId,
+    purchaser_name: purchaserName,
+    purchaser_email: purchaserEmail ?? null,
+    qr_code_hash: hash,
+    qr_payload: payload,
+    status: 'valid',
+    paid_flag: false,
+    paid_amount_cents: tt?.price_cents ?? 0,
+    valid_for_date: tt?.valid_for_date ?? null,
+    match_id: tt?.match_id ?? null,
+    scanned_at: null,
+    scanned_by: null,
+  };
+  store.tickets.push(ticket);
+  return ticket;
+}
+
+export async function loadGateContext(gateToken: string): Promise<GateContext | null> {
+  const resolved = await resolveGateTournament(gateToken);
+  if (!resolved) return null;
+
+  if (demoBundleById(resolved.tournamentId) || (await isDemoActive())) {
+    const store = getDemoTournamentsStore();
+    const stats = ticketStatsForTournament(
+      store.tickets.filter((t) => t.tournament_id === resolved.tournamentId)
+    );
+    return { ...resolved, stats };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data } = await supabase
+    .from('synq_tournament_tickets')
+    .select('status')
+    .eq('tournament_id', resolved.tournamentId);
+  const stats = ticketStatsForTournament(
+    (data ?? []).map((row, index) => ({
+      id: String(index),
+      tournament_id: resolved.tournamentId,
+      ticket_type_id: '',
+      purchaser_name: '',
+      purchaser_email: null,
+      qr_code_hash: '',
+      qr_payload: '',
+      status: row.status as TournamentTicket['status'],
+      paid_flag: false,
+      paid_amount_cents: 0,
+      valid_for_date: null,
+      match_id: null,
+      scanned_at: null,
+      scanned_by: null,
+    }))
+  );
+  return { ...resolved, stats };
+}
+
+export async function getPublicTicketStats(slug: string): Promise<TicketTypeAvailability[] | null> {
+  const bundle = (await loadTournamentBySlug(slug)) ?? demoBundleBySlug(slug);
+  if (!bundle) return null;
+  const activeTypes = bundle.ticketTypes.filter((t) => t.active);
+  if (activeTypes.length === 0) return null;
+  return activeTypes.map((tt) => ticketTypeAvailability(tt, bundle.tickets));
+}
+
+export async function createTicketType(
+  tournamentId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const name = String(formData.get('name') ?? '').trim();
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const ticketScope = (String(formData.get('ticket_scope') ?? 'day') as TournamentTicketType['ticket_scope']) || 'day';
+  const priceCents = Math.round(Number(formData.get('price_eur') ?? 0) * 100);
+  const maxQuantityRaw = String(formData.get('max_quantity') ?? '').trim();
+  const maxQuantity = maxQuantityRaw ? Number(maxQuantityRaw) : null;
+  const validForDate = String(formData.get('valid_for_date') ?? '').trim() || null;
+
+  if (!name) return { ok: false, message: 'Nombre obligatorio' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const id = `demo-tt-${Date.now()}`;
+    store.ticketTypes.push({
+      id,
+      tournament_id: tournamentId,
+      name,
+      description,
+      ticket_scope: ticketScope,
+      price_cents: Math.max(0, priceCents),
+      currency: 'EUR',
+      valid_for_date: validForDate,
+      match_id: null,
+      max_quantity: maxQuantity && maxQuantity > 0 ? maxQuantity : null,
+      active: true,
+      sort_order: store.ticketTypes.filter((t) => t.tournament_id === tournamentId).length,
+    });
+    revalidateTournaments();
+    return { ok: true, id, message: 'Tipo de entrada creado' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_tournament_ticket_types')
+    .insert({
+      tournament_id: tournamentId,
+      name,
+      description,
+      ticket_scope: ticketScope,
+      price_cents: Math.max(0, priceCents),
+      max_quantity: maxQuantity && maxQuantity > 0 ? maxQuantity : null,
+      valid_for_date: validForDate,
+      sort_order: 0,
+    })
+    .select('id')
+    .single();
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, id: String(data.id), message: 'Tipo de entrada creado' };
+}
+
+export async function updateTicketType(
+  ticketTypeId: string,
+  formData: FormData
+): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const patch = {
+    name: String(formData.get('name') ?? '').trim(),
+    description: String(formData.get('description') ?? '').trim() || null,
+    ticket_scope: (String(formData.get('ticket_scope') ?? 'day') as TournamentTicketType['ticket_scope']) || 'day',
+    price_cents: Math.round(Number(formData.get('price_eur') ?? 0) * 100),
+    max_quantity: (() => {
+      const raw = String(formData.get('max_quantity') ?? '').trim();
+      if (!raw) return null;
+      const n = Number(raw);
+      return n > 0 ? n : null;
+    })(),
+    valid_for_date: String(formData.get('valid_for_date') ?? '').trim() || null,
+    active: formData.get('active') === 'on' || formData.get('active') === 'true',
+  };
+
+  if (!patch.name) return { ok: false, message: 'Nombre obligatorio' };
+
+  if (await isDemoActive() || ticketTypeId.startsWith('demo-tt')) {
+    const store = getDemoTournamentsStore();
+    const tt = store.ticketTypes.find((t) => t.id === ticketTypeId);
+    if (!tt) return { ok: false, message: 'Tipo no encontrado' };
+    Object.assign(tt, patch);
+    revalidateTournaments();
+    return { ok: true, message: 'Tipo actualizado' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('synq_tournament_ticket_types').update(patch).eq('id', ticketTypeId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Tipo actualizado' };
+}
+
+export async function deleteTicketType(ticketTypeId: string): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || ticketTypeId.startsWith('demo-tt')) {
+    const store = getDemoTournamentsStore();
+    const idx = store.ticketTypes.findIndex((t) => t.id === ticketTypeId);
+    if (idx < 0) return { ok: false, message: 'Tipo no encontrado' };
+    const hasTickets = store.tickets.some((t) => t.ticket_type_id === ticketTypeId);
+    if (hasTickets) {
+      store.ticketTypes[idx].active = false;
+      revalidateTournaments();
+      return { ok: true, message: 'Tipo desactivado (hay entradas emitidas)' };
+    }
+    store.ticketTypes.splice(idx, 1);
+    revalidateTournaments();
+    return { ok: true, message: 'Tipo eliminado' };
+  }
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from('synq_tournament_tickets')
+    .select('id', { count: 'exact', head: true })
+    .eq('ticket_type_id', ticketTypeId);
+  if ((count ?? 0) > 0) {
+    const { error } = await supabase
+      .from('synq_tournament_ticket_types')
+      .update({ active: false })
+      .eq('id', ticketTypeId);
+    if (error) return { ok: false, message: error.message };
+    revalidateTournaments();
+    return { ok: true, message: 'Tipo desactivado (hay entradas emitidas)' };
+  }
+
+  const { error } = await supabase.from('synq_tournament_ticket_types').delete().eq('id', ticketTypeId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Tipo eliminado' };
 }
 
 export async function inviteTeam(
@@ -1661,70 +1974,261 @@ export async function issueTicket(
   purchaserName: string,
   purchaserEmail?: string
 ): Promise<TournamentActionState & { qrPayload?: string }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const name = purchaserName.trim();
+  if (!name) return { ok: false, message: 'Nombre obligatorio' };
+
   const ticketId = crypto.randomUUID();
   const payload = generateQrPayload(tournamentId, ticketId);
   const hash = generateQrHash(payload);
 
-  if (await isDemoActive()) {
-    const store = getDemoTournamentsStore();
-    const tt = store.ticketTypes.find((t) => t.id === ticketTypeId);
-    store.tickets.push({
-      id: ticketId,
-      tournament_id: tournamentId,
-      ticket_type_id: ticketTypeId,
-      purchaser_name: purchaserName,
-      purchaser_email: purchaserEmail ?? null,
-      qr_code_hash: hash,
-      qr_payload: payload,
-      status: 'valid',
-      paid_flag: false,
-      paid_amount_cents: tt?.price_cents ?? 0,
-      valid_for_date: tt?.valid_for_date ?? null,
-      match_id: tt?.match_id ?? null,
-      scanned_at: null,
-      scanned_by: null,
-    });
-    return { ok: true, id: ticketId, qrPayload: payload };
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const blocked = demoTicketTypeCapacity(tournamentId, ticketTypeId, 1);
+    if (blocked) return blocked;
+    pushDemoTicket(tournamentId, ticketTypeId, ticketId, name, purchaserEmail, payload, hash);
+    revalidateTournaments();
+    return { ok: true, id: ticketId, qrPayload: payload, message: 'Entrada emitida' };
   }
 
   const supabase = await createClient();
+  const { data: tt } = await supabase
+    .from('synq_tournament_ticket_types')
+    .select('*')
+    .eq('id', ticketTypeId)
+    .eq('tournament_id', tournamentId)
+    .maybeSingle();
+  if (!tt) return { ok: false, message: 'Tipo de entrada no encontrado' };
+  if (!tt.active) return { ok: false, message: 'Tipo de entrada desactivado' };
+  if (tt.max_quantity != null) {
+    const { count } = await supabase
+      .from('synq_tournament_tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('ticket_type_id', ticketTypeId)
+      .neq('status', 'cancelled');
+    if ((count ?? 0) >= tt.max_quantity) {
+      return { ok: false, message: `Cupo agotado para ${tt.name}` };
+    }
+  }
+
   const { error } = await supabase.from('synq_tournament_tickets').insert({
     id: ticketId,
     tournament_id: tournamentId,
     ticket_type_id: ticketTypeId,
-    purchaser_name: purchaserName,
+    purchaser_name: name,
     purchaser_email: purchaserEmail ?? null,
     qr_code_hash: hash,
     qr_payload: payload,
+    paid_amount_cents: tt.price_cents ?? 0,
+    valid_for_date: tt.valid_for_date,
+    match_id: tt.match_id,
   });
   if (error) return { ok: false, message: error.message };
-  return { ok: true, id: ticketId, qrPayload: payload };
+  revalidateTournaments();
+  return { ok: true, id: ticketId, qrPayload: payload, message: 'Entrada emitida' };
+}
+
+export async function issueTicketsBatch(
+  tournamentId: string,
+  ticketTypeId: string,
+  entries: { purchaserName: string; purchaserEmail?: string }[]
+): Promise<TournamentActionState & { issued?: IssuedTicketResult[] }> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  const cleaned = entries
+    .map((e) => ({
+      purchaserName: e.purchaserName.trim(),
+      purchaserEmail: e.purchaserEmail?.trim() || undefined,
+    }))
+    .filter((e) => e.purchaserName.length > 0);
+  if (cleaned.length === 0) return { ok: false, message: 'Añade al menos un nombre' };
+
+  if (await isDemoActive() || demoBundleById(tournamentId)) {
+    const blocked = demoTicketTypeCapacity(tournamentId, ticketTypeId, cleaned.length);
+    if (blocked) return blocked;
+    const issued: IssuedTicketResult[] = [];
+    for (const entry of cleaned) {
+      const ticketId = crypto.randomUUID();
+      const payload = generateQrPayload(tournamentId, ticketId);
+      const hash = generateQrHash(payload);
+      pushDemoTicket(
+        tournamentId,
+        ticketTypeId,
+        ticketId,
+        entry.purchaserName,
+        entry.purchaserEmail,
+        payload,
+        hash
+      );
+      issued.push({ id: ticketId, purchaserName: entry.purchaserName, qrPayload: payload });
+    }
+    revalidateTournaments();
+    return { ok: true, issued, message: `${issued.length} entradas emitidas` };
+  }
+
+  const supabase = await createClient();
+  const { data: tt } = await supabase
+    .from('synq_tournament_ticket_types')
+    .select('*')
+    .eq('id', ticketTypeId)
+    .eq('tournament_id', tournamentId)
+    .maybeSingle();
+  if (!tt) return { ok: false, message: 'Tipo de entrada no encontrado' };
+  if (!tt.active) return { ok: false, message: 'Tipo de entrada desactivado' };
+  if (tt.max_quantity != null) {
+    const { count } = await supabase
+      .from('synq_tournament_tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('ticket_type_id', ticketTypeId)
+      .neq('status', 'cancelled');
+    if ((count ?? 0) + cleaned.length > tt.max_quantity) {
+      return { ok: false, message: `Cupo insuficiente para ${tt.name}` };
+    }
+  }
+
+  const issued: IssuedTicketResult[] = [];
+  for (const entry of cleaned) {
+    const ticketId = crypto.randomUUID();
+    const payload = generateQrPayload(tournamentId, ticketId);
+    const hash = generateQrHash(payload);
+    const { error } = await supabase.from('synq_tournament_tickets').insert({
+      id: ticketId,
+      tournament_id: tournamentId,
+      ticket_type_id: ticketTypeId,
+      purchaser_name: entry.purchaserName,
+      purchaser_email: entry.purchaserEmail ?? null,
+      qr_code_hash: hash,
+      qr_payload: payload,
+      paid_amount_cents: tt.price_cents ?? 0,
+      valid_for_date: tt.valid_for_date,
+      match_id: tt.match_id,
+    });
+    if (error) return { ok: false, message: error.message };
+    issued.push({ id: ticketId, purchaserName: entry.purchaserName, qrPayload: payload });
+  }
+  revalidateTournaments();
+  return { ok: true, issued, message: `${issued.length} entradas emitidas` };
+}
+
+export async function cancelTicket(tournamentId: string, ticketId: string): Promise<TournamentActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'No autorizado' };
+
+  if (await isDemoActive() || ticketId.startsWith('demo-') || demoBundleById(tournamentId)) {
+    const store = getDemoTournamentsStore();
+    const ticket = store.tickets.find((t) => t.id === ticketId && t.tournament_id === tournamentId);
+    if (!ticket) return { ok: false, message: 'Entrada no encontrada' };
+    if (ticket.status === 'used') return { ok: false, message: 'No se puede anular una entrada ya validada' };
+    ticket.status = 'cancelled';
+    revalidateTournaments();
+    return { ok: true, message: 'Entrada anulada' };
+  }
+
+  const supabase = await createClient();
+  const { data: ticket } = await supabase
+    .from('synq_tournament_tickets')
+    .select('status')
+    .eq('id', ticketId)
+    .eq('tournament_id', tournamentId)
+    .maybeSingle();
+  if (!ticket) return { ok: false, message: 'Entrada no encontrada' };
+  if (ticket.status === 'used') return { ok: false, message: 'No se puede anular una entrada ya validada' };
+
+  const { error } = await supabase
+    .from('synq_tournament_tickets')
+    .update({ status: 'cancelled' })
+    .eq('id', ticketId);
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return { ok: true, message: 'Entrada anulada' };
+}
+
+export async function searchTicketsAtGate(
+  gateToken: string,
+  query: string
+): Promise<
+  TournamentActionState & {
+    results?: Pick<TournamentTicket, 'id' | 'purchaser_name' | 'status' | 'qr_payload' | 'ticket_type_id'>[];
+  }
+> {
+  const resolved = await resolveGateTournament(gateToken);
+  if (!resolved) return { ok: false, message: 'Token de taquilla inválido' };
+
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return { ok: false, message: 'Escribe al menos 2 caracteres' };
+
+  if (demoBundleById(resolved.tournamentId) || (await isDemoActive())) {
+    const store = getDemoTournamentsStore();
+    const results = store.tickets
+      .filter(
+        (t) =>
+          t.tournament_id === resolved.tournamentId &&
+          t.status !== 'cancelled' &&
+          (t.purchaser_name.toLowerCase().includes(q) || t.qr_payload.toLowerCase().includes(q))
+      )
+      .slice(0, 20)
+      .map((t) => ({
+        id: t.id,
+        purchaser_name: t.purchaser_name,
+        status: t.status,
+        qr_payload: t.qr_payload,
+        ticket_type_id: t.ticket_type_id,
+      }));
+    return { ok: true, results };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data } = await supabase
+    .from('synq_tournament_tickets')
+    .select('id, purchaser_name, status, qr_payload, ticket_type_id')
+    .eq('tournament_id', resolved.tournamentId)
+    .neq('status', 'cancelled')
+    .ilike('purchaser_name', `%${q}%`)
+    .limit(20);
+  const results = (data ?? []) as Pick<
+    TournamentTicket,
+    'id' | 'purchaser_name' | 'status' | 'qr_payload' | 'ticket_type_id'
+  >[];
+  return { ok: true, results };
 }
 
 export async function validateTicketQr(
   gateToken: string,
   qrPayload: string
 ): Promise<TournamentActionState & { ticket?: TournamentTicket }> {
-  {
-    const store = getDemoTournamentsStore();
-    if (gateToken === store.gateToken) {
-      const ticket = store.tickets.find((t) => t.qr_payload === qrPayload);
-      if (!ticket) return { ok: false, message: 'Entrada no válida' };
-      if (ticket.status === 'used') return { ok: false, message: 'Entrada ya utilizada' };
-      ticket.status = 'used';
-      ticket.scanned_at = new Date().toISOString();
-      return { ok: true, ticket, message: `Bienvenido/a, ${ticket.purchaser_name}` };
-    }
+  const resolved = await resolveGateTournament(gateToken);
+  if (!resolved) return { ok: false, message: 'Token de taquilla inválido' };
+
+  const payload = qrPayload.trim();
+  if (!payload.startsWith('synq-ticket:')) {
+    return { ok: false, message: 'Código QR no reconocido' };
   }
 
-  const supabase = await createClient();
-  const hash = generateQrHash(qrPayload);
+  if (demoBundleById(resolved.tournamentId) || (await isDemoActive())) {
+    const store = getDemoTournamentsStore();
+    const ticket = store.tickets.find(
+      (t) => t.qr_payload === payload && t.tournament_id === resolved.tournamentId
+    );
+    if (!ticket) return { ok: false, message: 'Entrada no válida' };
+    if (ticket.status === 'cancelled') return { ok: false, message: 'Entrada anulada' };
+    if (ticket.status === 'used') return { ok: false, message: 'Entrada ya utilizada' };
+    ticket.status = 'used';
+    ticket.scanned_at = new Date().toISOString();
+    return { ok: true, ticket, message: `Bienvenido/a, ${ticket.purchaser_name}` };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const hash = generateQrHash(payload);
   const { data: ticket } = await supabase
     .from('synq_tournament_tickets')
     .select('*')
     .eq('qr_code_hash', hash)
+    .eq('tournament_id', resolved.tournamentId)
     .maybeSingle();
   if (!ticket) return { ok: false, message: 'Entrada no válida' };
+  if (ticket.status === 'cancelled') return { ok: false, message: 'Entrada anulada' };
   if (ticket.status === 'used') return { ok: false, message: 'Entrada ya utilizada' };
 
   await supabase

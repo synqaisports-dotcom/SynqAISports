@@ -6,6 +6,7 @@ import { TournamentEquiposPanel } from '@/components/portal/torneos/TournamentEq
 import { TournamentHeaderActions } from '@/components/portal/torneos/TournamentHeaderActions';
 import { TournamentOperativaInfoButton } from '@/components/portal/torneos/TournamentOperativaInfoButton';
 import { TournamentRevenuePanel } from '@/components/portal/torneos/TournamentRevenuePanel';
+import { TournamentTicketingPanel } from '@/components/portal/torneos/TournamentTicketingPanel';
 import { TournamentSchedulePanel } from '@/components/portal/torneos/TournamentSchedulePanel';
 import { TournamentSignagePreview } from '@/components/portal/torneos/TournamentSignagePreview';
 import { TournamentSummaryPanel } from '@/components/portal/torneos/TournamentSummaryPanel';
@@ -101,7 +102,12 @@ export function TournamentDetailView({ bundle, tournamentId, tab }: Props) {
       {tab === 'horarios' ? <TournamentSchedulePanel bundle={bundle} /> : null}
       {tab === 'clasificacion' ? <TournamentClasificacionPanel bundle={bundle} /> : null}
       {tab === 'patrocinadores' ? <TournamentSponsorsPanel bundle={bundle} /> : null}
-      {tab === 'ingresos' ? <TournamentRevenuePanel bundle={bundle} /> : null}
+      {tab === 'ingresos' ? (
+        <div className="space-y-8">
+          <TournamentTicketingPanel bundle={bundle} />
+          <TournamentRevenuePanel bundle={bundle} />
+        </div>
+      ) : null}
       {tab === 'dossier' ? <TournamentDossierPanel bundle={bundle} tournamentId={tournamentId} /> : null}
       {tab === 'signage' ? <TournamentSignagePreview bundle={bundle} /> : null}
     </div>
