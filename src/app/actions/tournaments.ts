@@ -32,6 +32,7 @@ import {
 } from '@/lib/tournament-mesa-field';
 import { isMesaMatchEditExpired, mesaMatchCanEdit } from '@/lib/tournament-mesa';
 import {
+  gateCashTotalCents,
   ticketStatsForTournament,
   ticketTypeAvailability,
   type TicketStats,
@@ -1601,6 +1602,8 @@ export type GateContext = {
   tournamentId: string;
   tournamentName: string;
   stats: TicketStats;
+  ticketTypes: { id: string; name: string; priceCents: number }[];
+  cashTotalCents: number;
 };
 
 export type IssuedTicketResult = {
@@ -1668,10 +1671,12 @@ function pushDemoTicket(
   purchaserName: string,
   purchaserEmail: string | undefined,
   payload: string,
-  hash: string
+  hash: string,
+  options?: { paid?: boolean; status?: TournamentTicket['status']; scannedAt?: string | null }
 ): TournamentTicket {
   const store = getDemoTournamentsStore();
   const tt = store.ticketTypes.find((t) => t.id === ticketTypeId);
+  const paid = options?.paid ?? false;
   const ticket: TournamentTicket = {
     id: ticketId,
     tournament_id: tournamentId,
@@ -1680,16 +1685,37 @@ function pushDemoTicket(
     purchaser_email: purchaserEmail ?? null,
     qr_code_hash: hash,
     qr_payload: payload,
-    status: 'valid',
-    paid_flag: false,
-    paid_amount_cents: tt?.price_cents ?? 0,
+    status: options?.status ?? 'valid',
+    paid_flag: paid,
+    paid_amount_cents: paid ? (tt?.price_cents ?? 0) : 0,
     valid_for_date: tt?.valid_for_date ?? null,
     match_id: tt?.match_id ?? null,
-    scanned_at: null,
+    scanned_at: options?.scannedAt ?? null,
     scanned_by: null,
   };
   store.tickets.push(ticket);
   return ticket;
+}
+
+function gateTicketTypesForTournament(tournamentId: string): GateContext['ticketTypes'] {
+  const store = getDemoTournamentsStore();
+  return store.ticketTypes
+    .filter((t) => t.tournament_id === tournamentId && t.active)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((t) => ({ id: t.id, name: t.name, priceCents: t.price_cents }));
+}
+
+function buildGateContext(
+  resolved: { tournamentId: string; tournamentName: string },
+  tickets: TournamentTicket[],
+  ticketTypes: GateContext['ticketTypes']
+): GateContext {
+  return {
+    ...resolved,
+    stats: ticketStatsForTournament(tickets),
+    ticketTypes,
+    cashTotalCents: gateCashTotalCents(tickets),
+  };
 }
 
 export async function loadGateContext(gateToken: string): Promise<GateContext | null> {
@@ -1698,36 +1724,112 @@ export async function loadGateContext(gateToken: string): Promise<GateContext | 
 
   if (demoBundleById(resolved.tournamentId) || (await isDemoActive())) {
     const store = getDemoTournamentsStore();
-    const stats = ticketStatsForTournament(
-      store.tickets.filter((t) => t.tournament_id === resolved.tournamentId)
-    );
-    return { ...resolved, stats };
+    const tickets = store.tickets.filter((t) => t.tournament_id === resolved.tournamentId);
+    return buildGateContext(resolved, tickets, gateTicketTypesForTournament(resolved.tournamentId));
   }
 
   const supabase = createServiceClient() ?? (await createClient());
-  const { data } = await supabase
-    .from('synq_tournament_tickets')
-    .select('status')
-    .eq('tournament_id', resolved.tournamentId);
-  const stats = ticketStatsForTournament(
-    (data ?? []).map((row, index) => ({
-      id: String(index),
-      tournament_id: resolved.tournamentId,
-      ticket_type_id: '',
-      purchaser_name: '',
-      purchaser_email: null,
-      qr_code_hash: '',
-      qr_payload: '',
-      status: row.status as TournamentTicket['status'],
-      paid_flag: false,
-      paid_amount_cents: 0,
-      valid_for_date: null,
-      match_id: null,
-      scanned_at: null,
-      scanned_by: null,
-    }))
-  );
-  return { ...resolved, stats };
+  const [{ data: ticketRows }, { data: typeRows }] = await Promise.all([
+    supabase.from('synq_tournament_tickets').select('*').eq('tournament_id', resolved.tournamentId),
+    supabase
+      .from('synq_tournament_ticket_types')
+      .select('id, name, price_cents, active, sort_order')
+      .eq('tournament_id', resolved.tournamentId)
+      .eq('active', true)
+      .order('sort_order'),
+  ]);
+  const tickets = (ticketRows ?? []) as TournamentTicket[];
+  const ticketTypes = (typeRows ?? []).map((t) => ({
+    id: String(t.id),
+    name: String(t.name),
+    priceCents: Number(t.price_cents ?? 0),
+  }));
+  return buildGateContext(resolved, tickets, ticketTypes);
+}
+
+export async function sellTicketAtGate(
+  gateToken: string,
+  ticketTypeId: string,
+  options?: { purchaserName?: string; withQr?: boolean }
+): Promise<TournamentActionState & { qrPayload?: string; priceCents?: number; typeName?: string }> {
+  const resolved = await resolveGateTournament(gateToken);
+  if (!resolved) return { ok: false, message: 'Token de taquilla inválido' };
+
+  const name = (options?.purchaserName?.trim() || 'Taquilla').slice(0, 80);
+  const withQr = options?.withQr ?? false;
+  const now = new Date().toISOString();
+  const ticketId = crypto.randomUUID();
+  const payload = generateQrPayload(resolved.tournamentId, ticketId);
+  const hash = generateQrHash(payload);
+
+  if (demoBundleById(resolved.tournamentId) || (await isDemoActive())) {
+    const blocked = demoTicketTypeCapacity(resolved.tournamentId, ticketTypeId, 1);
+    if (blocked) return blocked;
+    const tt = getDemoTournamentsStore().ticketTypes.find((t) => t.id === ticketTypeId);
+    pushDemoTicket(resolved.tournamentId, ticketTypeId, ticketId, name, undefined, payload, hash, {
+      paid: true,
+      status: withQr ? 'valid' : 'used',
+      scannedAt: withQr ? null : now,
+    });
+    revalidateTournaments();
+    return {
+      ok: true,
+      id: ticketId,
+      qrPayload: withQr ? payload : undefined,
+      priceCents: tt?.price_cents ?? 0,
+      typeName: tt?.name,
+      message: withQr ? `Vendida: ${tt?.name}` : `Entrada registrada · ${formatGatePrice(tt?.price_cents ?? 0)}`,
+    };
+  }
+
+  const supabase = createServiceClient() ?? (await createClient());
+  const { data: tt } = await supabase
+    .from('synq_tournament_ticket_types')
+    .select('*')
+    .eq('id', ticketTypeId)
+    .eq('tournament_id', resolved.tournamentId)
+    .maybeSingle();
+  if (!tt) return { ok: false, message: 'Tipo de entrada no encontrado' };
+  if (!tt.active) return { ok: false, message: 'Tipo no disponible' };
+  if (tt.max_quantity != null) {
+    const { count } = await supabase
+      .from('synq_tournament_tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('ticket_type_id', ticketTypeId)
+      .neq('status', 'cancelled');
+    if ((count ?? 0) >= tt.max_quantity) {
+      return { ok: false, message: `Cupo agotado para ${tt.name}` };
+    }
+  }
+
+  const { error } = await supabase.from('synq_tournament_tickets').insert({
+    id: ticketId,
+    tournament_id: resolved.tournamentId,
+    ticket_type_id: ticketTypeId,
+    purchaser_name: name,
+    qr_code_hash: hash,
+    qr_payload: payload,
+    status: withQr ? 'valid' : 'used',
+    paid_flag: true,
+    paid_amount_cents: tt.price_cents ?? 0,
+    valid_for_date: tt.valid_for_date,
+    match_id: tt.match_id,
+    scanned_at: withQr ? null : now,
+  });
+  if (error) return { ok: false, message: error.message };
+  revalidateTournaments();
+  return {
+    ok: true,
+    id: ticketId,
+    qrPayload: withQr ? payload : undefined,
+    priceCents: tt.price_cents ?? 0,
+    typeName: String(tt.name),
+    message: withQr ? `Vendida: ${tt.name}` : `Entrada registrada · ${formatGatePrice(tt.price_cents ?? 0)}`,
+  };
+}
+
+function formatGatePrice(cents: number): string {
+  return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 }
 
 export async function getPublicTicketStats(slug: string): Promise<TicketTypeAvailability[] | null> {

@@ -1,93 +1,120 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { loadGateContext, searchTicketsAtGate, validateTicketQr } from '@/app/actions/tournaments';
+import {
+  loadGateContext,
+  sellTicketAtGate,
+  validateTicketQr,
+} from '@/app/actions/tournaments';
 import type { GateContext } from '@/app/actions/tournaments';
+import { TicketQrCard } from '@/components/torneo/TicketQrCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   appendGateScanLog,
+  formatTicketPrice,
   loadGateScanLog,
-  TICKET_STATUS_LABELS,
   type GateScanLogEntry,
 } from '@/lib/tournament-ticketing';
 import { cn } from '@/lib/utils';
 import {
+  Banknote,
   BarChart3,
   CheckCircle,
   Loader2,
-  Search,
+  QrCode,
   Video,
   VideoOff,
   XCircle,
 } from 'lucide-react';
 
-type TabId = 'scan' | 'search' | 'summary';
+type TabId = 'sell' | 'scan' | 'summary';
 
 type Props = {
   gateToken: string;
 };
 
 export function GateScanner({ gateToken }: Props) {
-  const [tab, setTab] = useState<TabId>('scan');
+  const [tab, setTab] = useState<TabId>('sell');
   const [context, setContext] = useState<GateContext | null>(null);
   const [loadingContext, setLoadingContext] = useState(true);
   const [pending, startTransition] = useTransition();
   const [manualCode, setManualCode] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<
-    { id: string; purchaser_name: string; status: string; qr_payload: string }[]
-  >([]);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
-  const [scanLog, setScanLog] = useState<GateScanLogEntry[]>([]);
+  const [activityLog, setActivityLog] = useState<GateScanLogEntry[]>([]);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [lastQr, setLastQr] = useState<{ name: string; payload: string } | null>(null);
+  const [withQr, setWithQr] = useState(false);
   const scannerRef = useRef<import('html5-qrcode').Html5Qrcode | null>(null);
   const scannerDivId = 'synq-gate-qr-reader';
 
+  const refreshContext = useCallback(() => {
+    loadGateContext(gateToken).then((ctx) => {
+      if (ctx) setContext(ctx);
+    });
+  }, [gateToken]);
+
   useEffect(() => {
-    setScanLog(loadGateScanLog(gateToken));
+    setActivityLog(loadGateScanLog(gateToken));
     loadGateContext(gateToken).then((ctx) => {
       setContext(ctx);
       setLoadingContext(false);
     });
   }, [gateToken]);
 
-  const recordScan = useCallback(
-    (ok: boolean, message: string, purchaserName?: string) => {
-      setResult({ ok, message });
-      const entry = appendGateScanLog(gateToken, {
+  const recordActivity = useCallback(
+    (entry: Omit<GateScanLogEntry, 'id' | 'at'>) => {
+      setResult({ ok: entry.ok, message: entry.message });
+      const next = appendGateScanLog(gateToken, {
         id: crypto.randomUUID(),
         at: new Date().toISOString(),
-        ok,
-        message,
-        purchaserName,
+        ...entry,
       });
-      setScanLog(entry);
-      if (ok && context) {
-        setContext({
-          ...context,
-          stats: {
-            ...context.stats,
-            used: context.stats.used + 1,
-            pending: Math.max(0, context.stats.pending - 1),
-          },
-        });
-      }
+      setActivityLog(next);
     },
-    [gateToken, context]
+    [gateToken]
   );
 
   const validatePayload = useCallback(
     (payload: string) => {
       startTransition(async () => {
         const res = await validateTicketQr(gateToken, payload);
-        recordScan(res.ok, res.message ?? (res.ok ? 'OK' : 'Error'), res.ticket?.purchaser_name);
-        if (res.ok) setManualCode('');
+        recordActivity({
+          ok: res.ok,
+          message: res.message ?? (res.ok ? 'OK' : 'Error'),
+          purchaserName: res.ticket?.purchaser_name,
+          kind: 'scan',
+        });
+        if (res.ok) {
+          setManualCode('');
+          refreshContext();
+        }
       });
     },
-    [gateToken, recordScan]
+    [gateToken, recordActivity, refreshContext]
   );
+
+  function sell(typeId: string) {
+    startTransition(async () => {
+      const res = await sellTicketAtGate(gateToken, typeId, { withQr });
+      if (res.ok) {
+        recordActivity({
+          ok: true,
+          message: res.message ?? 'Venta registrada',
+          amountCents: res.priceCents,
+          kind: 'sale',
+        });
+        if (res.qrPayload) {
+          setLastQr({ name: res.typeName ?? 'Entrada', payload: res.qrPayload });
+        } else {
+          setLastQr(null);
+        }
+        refreshContext();
+      } else {
+        recordActivity({ ok: false, message: res.message ?? 'Error', kind: 'sale' });
+      }
+    });
+  }
 
   useEffect(() => {
     if (tab !== 'scan' || !cameraOn) return;
@@ -111,7 +138,7 @@ export function GateScanner({ gateToken }: Props) {
         );
       })
       .catch(() => {
-        setCameraError('No se pudo acceder a la cámara. Usa búsqueda o pega el código manualmente.');
+        setCameraError('No se pudo usar la cámara.');
         setCameraOn(false);
       });
 
@@ -119,19 +146,9 @@ export function GateScanner({ gateToken }: Props) {
       mounted = false;
       const scanner = scannerRef.current;
       scannerRef.current = null;
-      if (scanner?.isScanning) {
-        scanner.stop().catch(() => undefined);
-      }
+      if (scanner?.isScanning) scanner.stop().catch(() => undefined);
     };
   }, [tab, cameraOn, validatePayload, pending]);
-
-  function runSearch() {
-    startTransition(async () => {
-      const res = await searchTicketsAtGate(gateToken, searchQuery);
-      setSearchResults(res.results ?? []);
-      if (!res.ok) setResult({ ok: false, message: res.message ?? 'Sin resultados' });
-    });
-  }
 
   if (loadingContext) {
     return (
@@ -147,26 +164,33 @@ export function GateScanner({ gateToken }: Props) {
         <div className="portal-section-surface rounded-xl p-6 text-center">
           <XCircle className="mx-auto size-10 text-red-400" />
           <h1 className="mt-3 text-lg font-semibold">Taquilla no disponible</h1>
-          <p className="mt-2 text-sm text-muted-foreground">El enlace de taquilla no es válido o ha caducado.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Enlace no válido.</p>
         </div>
       </div>
     );
   }
 
+  const sessionCash = activityLog
+    .filter((e) => e.ok && e.kind === 'sale')
+    .reduce((sum, e) => sum + (e.amountCents ?? 0), 0);
+
   return (
     <div className="mx-auto min-h-dvh max-w-md px-4 py-6">
       <div className="portal-section-surface rounded-2xl p-5 text-center">
-        <p className="text-xs uppercase tracking-widest text-cyan-300">Taquilla PWA · SynqAI</p>
+        <p className="text-xs uppercase tracking-widest text-cyan-300">Taquilla · SynqAI</p>
         <h1 className="mt-2 text-lg font-semibold">{context.tournamentName}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Validación de entradas en puerta</p>
+        <p className="mt-2 text-2xl font-bold tabular-nums text-emerald-300">
+          {formatTicketPrice(context.cashTotalCents)}
+        </p>
+        <p className="text-xs text-muted-foreground">Efectivo registrado hoy · {context.stats.used} entradas</p>
       </div>
 
       <div className="mt-4 flex gap-1 rounded-lg border border-border/50 p-1">
         {(
           [
-            { id: 'scan' as TabId, label: 'Escanear', icon: Video },
-            { id: 'search' as TabId, label: 'Buscar', icon: Search },
-            { id: 'summary' as TabId, label: 'Resumen', icon: BarChart3 },
+            { id: 'sell' as TabId, label: 'Vender', icon: Banknote },
+            { id: 'scan' as TabId, label: 'QR', icon: QrCode },
+            { id: 'summary' as TabId, label: 'Día', icon: BarChart3 },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
           <button
@@ -187,14 +211,59 @@ export function GateScanner({ gateToken }: Props) {
         ))}
       </div>
 
+      {tab === 'sell' ? (
+        <div className="mt-4 space-y-3">
+          <p className="text-center text-xs text-muted-foreground">
+            Toca el tipo de entrada cuando cobres en efectivo o datáfono. La persona entra al momento.
+          </p>
+
+          {context.ticketTypes.length === 0 ? (
+            <p className="rounded-xl border border-border/40 p-4 text-center text-sm text-muted-foreground">
+              No hay tipos de entrada configurados. Define precios en el portal del torneo.
+            </p>
+          ) : (
+            <div className="grid gap-2">
+              {context.ticketTypes.map((tt) => (
+                <Button
+                  key={tt.id}
+                  type="button"
+                  size="lg"
+                  className="h-auto flex-col gap-1 py-4"
+                  disabled={pending}
+                  onClick={() => sell(tt.id)}
+                >
+                  <span className="text-base font-semibold">{tt.name}</span>
+                  <span className="text-sm opacity-80">{formatTicketPrice(tt.priceCents)}</span>
+                </Button>
+              ))}
+            </div>
+          )}
+
+          <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={withQr} onChange={(e) => setWithQr(e.target.checked)} />
+            Generar QR (solo si entregas ticket digital)
+          </label>
+
+          {lastQr ? (
+            <TicketQrCard
+              title={lastQr.name}
+              subtitle="Entregar al espectador"
+              qrPayload={lastQr.payload}
+              onClose={() => setLastQr(null)}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
       {tab === 'scan' ? (
         <div className="mt-4 space-y-3">
+          <p className="text-center text-xs text-muted-foreground">
+            Solo si usas entradas con QR impreso o en el móvil del espectador.
+          </p>
           <div className="overflow-hidden rounded-xl border border-border/50 bg-black/40">
-            <div id={scannerDivId} className={cn('min-h-[260px]', !cameraOn && 'hidden')} />
+            <div id={scannerDivId} className={cn('min-h-[220px]', !cameraOn && 'hidden')} />
             {!cameraOn ? (
-              <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 p-6 text-center">
-                <Video className="size-10 text-cyan-300/60" />
-                <p className="text-sm text-muted-foreground">Activa la cámara para escanear códigos QR</p>
+              <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 p-6">
                 <Button type="button" onClick={() => setCameraOn(true)}>
                   <Video className="mr-2 size-4" />
                   Activar cámara
@@ -202,122 +271,36 @@ export function GateScanner({ gateToken }: Props) {
               </div>
             ) : (
               <div className="border-t border-border/40 p-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setCameraOn(false)}
-                >
+                <Button type="button" variant="secondary" size="sm" className="w-full" onClick={() => setCameraOn(false)}>
                   <VideoOff className="mr-2 size-4" />
-                  Detener cámara
+                  Detener
                 </Button>
               </div>
             )}
           </div>
           {cameraError ? <p className="text-sm text-amber-300">{cameraError}</p> : null}
-
-          <div className="portal-section-surface rounded-xl p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Código manual</p>
-            <textarea
-              value={manualCode}
-              onChange={(e) => setManualCode(e.target.value)}
-              placeholder="synq-ticket:..."
-              rows={2}
-              className="mt-2 w-full rounded-xl border border-border bg-background/50 px-3 py-2 text-sm font-mono"
-            />
-            <Button
-              className="mt-2 w-full"
-              onClick={() => validatePayload(manualCode)}
-              disabled={pending || !manualCode.trim()}
-            >
-              Validar código
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {tab === 'search' ? (
-        <div className="mt-4 space-y-3">
-          <div className="portal-section-surface rounded-xl p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Buscar por nombre</p>
-            <div className="mt-2 flex gap-2">
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Nombre del espectador"
-                className="portal-field-surface"
-              />
-              <Button type="button" onClick={runSearch} disabled={pending || searchQuery.trim().length < 2}>
-                Buscar
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {searchResults.map((ticket) => (
-              <div key={ticket.id} className="portal-section-surface rounded-xl p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">{ticket.purchaser_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {TICKET_STATUS_LABELS[ticket.status as keyof typeof TICKET_STATUS_LABELS] ?? ticket.status}
-                    </p>
-                  </div>
-                  {ticket.status === 'valid' ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={pending}
-                      onClick={() => validatePayload(ticket.qr_payload)}
-                    >
-                      Validar
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
+          <textarea
+            value={manualCode}
+            onChange={(e) => setManualCode(e.target.value)}
+            placeholder="Pegar código..."
+            rows={2}
+            className="w-full rounded-xl border border-border bg-background/50 px-3 py-2 text-sm font-mono"
+          />
+          <Button className="w-full" onClick={() => validatePayload(manualCode)} disabled={pending || !manualCode.trim()}>
+            Validar
+          </Button>
         </div>
       ) : null}
 
       {tab === 'summary' ? (
         <div className="mt-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <SummaryCard label="Emitidas" value={context.stats.issued} />
-            <SummaryCard label="Pendientes" value={context.stats.pending} accent="text-amber-300" />
-            <SummaryCard label="Validadas" value={context.stats.used} accent="text-emerald-300" />
-            <SummaryCard label="Anuladas" value={context.stats.cancelled} />
+            <SummaryCard label="Ventas hoy" value={context.stats.used} accent="text-emerald-300" />
+            <SummaryCard label="Efectivo" valueLabel={formatTicketPrice(context.cashTotalCents)} />
+            <SummaryCard label="Esta sesión" valueLabel={formatTicketPrice(sessionCash)} />
+            <SummaryCard label="Con QR pend." value={context.stats.pending} accent="text-amber-300" />
           </div>
-          <div className="portal-section-surface rounded-xl p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Historial de esta sesión</p>
-            {scanLog.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Aún no hay validaciones en esta sesión.</p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm">
-                {scanLog.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className={cn(
-                      'flex items-start gap-2 rounded-lg border px-3 py-2',
-                      entry.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'
-                    )}
-                  >
-                    {entry.ok ? (
-                      <CheckCircle className="mt-0.5 size-4 shrink-0 text-emerald-400" />
-                    ) : (
-                      <XCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
-                    )}
-                    <div className="min-w-0">
-                      <p>{entry.message}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {new Date(entry.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <ActivityList entries={activityLog} />
         </div>
       ) : null}
 
@@ -328,11 +311,7 @@ export function GateScanner({ gateToken }: Props) {
             result.ok ? 'border-green-500/30 bg-green-500/10' : 'border-destructive/30 bg-destructive/10'
           )}
         >
-          {result.ok ? (
-            <CheckCircle className="size-6 shrink-0 text-green-400" />
-          ) : (
-            <XCircle className="size-6 shrink-0 text-destructive" />
-          )}
+          {result.ok ? <CheckCircle className="size-6 text-green-400" /> : <XCircle className="size-6 text-destructive" />}
           <p className="text-sm">{result.message}</p>
         </div>
       ) : null}
@@ -343,16 +322,49 @@ export function GateScanner({ gateToken }: Props) {
 function SummaryCard({
   label,
   value,
+  valueLabel,
   accent = 'text-cyan-300',
 }: {
   label: string;
-  value: number;
+  value?: number;
+  valueLabel?: string;
   accent?: string;
 }) {
   return (
     <div className="portal-section-surface rounded-xl px-4 py-3 text-center">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={cn('mt-1 text-2xl font-semibold tabular-nums', accent)}>{value}</p>
+      <p className={cn('mt-1 text-xl font-semibold tabular-nums', accent)}>
+        {valueLabel ?? value}
+      </p>
+    </div>
+  );
+}
+
+function ActivityList({ entries }: { entries: GateScanLogEntry[] }) {
+  return (
+    <div className="portal-section-surface rounded-xl p-4">
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Actividad de la sesión</p>
+      {entries.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Sin movimientos aún.</p>
+      ) : (
+        <ul className="mt-3 space-y-2 text-sm">
+          {entries.map((entry) => (
+            <li
+              key={entry.id}
+              className={cn(
+                'rounded-lg border px-3 py-2',
+                entry.ok ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-red-500/20 bg-red-500/5'
+              )}
+            >
+              <p>{entry.message}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {new Date(entry.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                {entry.amountCents ? ` · ${formatTicketPrice(entry.amountCents)}` : ''}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

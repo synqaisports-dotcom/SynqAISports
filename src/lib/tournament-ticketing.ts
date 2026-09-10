@@ -98,12 +98,26 @@ export function parseBatchNameLines(raw: string): { purchaserName: string; purch
     .filter((entry) => entry.purchaserName.length > 0);
 }
 
+export type GateTicketTypeOption = {
+  id: string;
+  name: string;
+  priceCents: number;
+};
+
+export function gateCashTotalCents(tickets: TournamentTicket[]): number {
+  return tickets
+    .filter((t) => t.paid_flag && t.status !== 'cancelled')
+    .reduce((sum, t) => sum + t.paid_amount_cents, 0);
+}
+
 export type GateScanLogEntry = {
   id: string;
   at: string;
   ok: boolean;
   message: string;
   purchaserName?: string;
+  amountCents?: number;
+  kind?: 'sale' | 'scan';
 };
 
 const GATE_LOG_KEY = 'synq-gate-scan-log';
