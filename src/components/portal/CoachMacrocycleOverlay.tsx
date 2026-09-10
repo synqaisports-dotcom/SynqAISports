@@ -2,8 +2,12 @@
 
 import { PeriodizationGrid } from '@/components/portal/PeriodizationGrid';
 import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import {
   Sheet,
-  SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
@@ -11,9 +15,6 @@ import {
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import type { MacrocycleBlock, MicrocycleWeek } from '@/lib/periodization';
 import type { MccLink, MccOverride } from '@/lib/periodization-document';
-
-const COACH_SHEET_CLASS =
-  'portal-dashboard dark portal-main-surface inset-0 h-screen w-screen max-w-none overflow-y-auto border-l border-primary/25 p-4 text-foreground sm:max-w-none md:p-6 [&>button]:rounded-lg [&>button]:border [&>button]:border-primary/25 [&>button]:bg-background/40 [&>button]:text-primary hover:[&>button]:bg-primary/10';
 
 type Props = {
   open: boolean;
@@ -40,28 +41,32 @@ export function CoachMacrocycleOverlay({
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className={COACH_SHEET_CLASS}>
-        <SheetHeader className="portal-section-surface rounded-xl p-4 pr-12 text-left">
-          <SheetTitle className="text-primary">Macrociclo</SheetTitle>
-          <SheetDescription>
-            {macro.name} · {macro.startDate} → {macro.endDate}
-            {onSelectMcc ? ' · Pulsa un MCC para ver su microciclo' : null}
-          </SheetDescription>
-        </SheetHeader>
+      <PortalSheetContent maxWidth="full">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-2 text-left">
+            <SheetTitle className="text-xl tracking-tight text-primary">Macrociclo</SheetTitle>
+            <SheetDescription>
+              {macro.name} · {macro.startDate} → {macro.endDate}
+              {onSelectMcc ? ' · Pulsa un MCC para ver su microciclo' : null}
+            </SheetDescription>
+          </SheetHeader>
+        </PortalSheetHeader>
 
-        <div className="portal-section-surface mt-4 overflow-x-auto rounded-xl p-4">
-          <PeriodizationGrid
-            macro={macro}
-            categorySlug={categorySlug}
-            mccLinks={mccLinks}
-            mccOverrides={mccOverrides}
-            excludedMccIds={excludedMccIds}
-            selectedMccId={currentMccId}
-            onSelectMcc={onSelectMcc}
-            readOnly={!onSelectMcc}
-          />
-        </div>
-      </SheetContent>
+        <PortalSheetBody className="p-4 md:p-6">
+          <div className="portal-section-surface overflow-x-auto rounded-xl p-4">
+            <PeriodizationGrid
+              macro={macro}
+              categorySlug={categorySlug}
+              mccLinks={mccLinks}
+              mccOverrides={mccOverrides}
+              excludedMccIds={excludedMccIds}
+              selectedMccId={currentMccId}
+              onSelectMcc={onSelectMcc}
+              readOnly={!onSelectMcc}
+            />
+          </div>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

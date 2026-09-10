@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -58,8 +57,6 @@ export function DemoMicrocycleOverview({ microcycleId }: Props) {
           {micro.category_slug ? <Badge variant="secondary">{micro.category_slug}</Badge> : null}
         </div>
       </div>
-
-      <MethodologySubnav />
 
       <p className="text-sm text-muted-foreground">
         {sessionsCount} sesiones · {sessionStructureSummary(micro.main_tasks_per_session)}

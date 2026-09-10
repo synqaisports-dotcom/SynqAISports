@@ -3,17 +3,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Eye, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Play, Plus, Printer, Trash2 } from 'lucide-react';
 import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
+import { ExerciseAnimationOverlay } from '@/components/methodology/drawing/ExerciseAnimationOverlay';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   drawingDocumentIsEmpty,
+  hasDrawableAnimation,
   parseExerciseDrawing,
 } from '@/lib/exercise-drawing';
 import {
@@ -50,9 +53,6 @@ type Props = {
   activeSport?: ClubPracticedSport;
   practicedSports?: ClubPracticedSport[];
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 const listItemClass = (active: boolean) =>
   cn(
@@ -109,9 +109,11 @@ function ExerciseDetailPanel({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
+  const [animationOpen, setAnimationOpen] = useState(false);
 
   useEffect(() => {
     setStudioOpen(false);
+    setAnimationOpen(false);
   }, [exercise?.id]);
 
   if (!exercise) {
@@ -135,6 +137,7 @@ function ExerciseDetailPanel({
   const taskLabel = TASK_TYPE_LABELS[taskType] ?? 'Tarea principal';
   const drawingDoc = parseExerciseDrawing(exercise.drawing_json);
   const hasDrawing = !drawingDocumentIsEmpty(drawingDoc);
+  const hasAnimation = hasDrawableAnimation(drawingDoc);
 
   const handleDeleteConfirm = async () => {
     if (!exercise) return;
@@ -197,7 +200,7 @@ function ExerciseDetailPanel({
               <button
                 type="button"
                 onClick={() => setStudioOpen(true)}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Modificar dibujo"
                 title="Modificar dibujo"
               >
@@ -206,16 +209,27 @@ function ExerciseDetailPanel({
               <button
                 type="button"
                 onClick={() => setPreviewOpen(true)}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Previsualizar ejercicio"
                 title="Previsualizar"
               >
                 <Eye className="size-4" />
               </button>
+              {hasAnimation ? (
+                <button
+                  type="button"
+                  onClick={() => setAnimationOpen(true)}
+                  className={PORTAL_ACTION_ICON_CLASS}
+                  aria-label="Reproducir animación"
+                  title="Reproducir animación"
+                >
+                  <Play className="size-4" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={handlePrint}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Imprimir o guardar PDF"
                 title="Imprimir / PDF"
               >
@@ -225,7 +239,7 @@ function ExerciseDetailPanel({
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteOpen(true)}
-                className={cn(actionButtonClass, 'hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive')}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'hover:text-destructive')}
                 aria-label="Eliminar ejercicio"
                 title="Eliminar ejercicio"
               >
@@ -258,6 +272,13 @@ function ExerciseDetailPanel({
         exercise={exercise}
         open={previewOpen}
         onOpenChange={setPreviewOpen}
+      />
+
+      <ExerciseAnimationOverlay
+        title={exercise.title}
+        drawingJson={exercise.drawing_json}
+        open={animationOpen}
+        onOpenChange={setAnimationOpen}
       />
 
       <PortalConfirmDialog
@@ -396,7 +417,7 @@ export function ExercisesMasterDetail({
             </div>
             <Link
               href={nuevoHref}
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Nuevo ejercicio"
               title="Nuevo ejercicio"
             >

@@ -98,7 +98,7 @@ export function OrganigramaEditorForm({ clubId, nodes, people, onSaved }: Props)
                   value={row.role}
                   onChange={(e) => updateRow(row.id, { role: e.target.value })}
                   placeholder="Director de cantera"
-                  className="w-full border-primary/30 bg-background/80 focus-visible:ring-primary"
+                  className="w-full portal-field-surface focus-visible:ring-primary"
                 />
               </div>
               <div className="md:col-span-3">

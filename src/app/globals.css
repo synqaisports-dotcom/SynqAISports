@@ -138,6 +138,167 @@ body {
     }
   }
 
+  @keyframes signage-sponsor-wall-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .signage-sponsor-wall-item {
+    animation: signage-sponsor-wall-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes signage-slide-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes signage-slide-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes signage-slide-from-bottom {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes signage-slide-zoom-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .signage-transition-fade {
+    animation: signage-slide-fade-in 0.55s ease-out both;
+  }
+
+  .signage-transition-slide-left {
+    animation: signage-slide-from-right 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .signage-transition-slide-up {
+    animation: signage-slide-from-bottom 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .signage-transition-zoom {
+    animation: signage-slide-zoom-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes signage-wall-in-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes signage-wall-in-up {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes signage-wall-in-scale {
+    from { opacity: 0; transform: scale(0.75); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes signage-wall-in-pop {
+    0% { opacity: 0; transform: scale(0.4); }
+    70% { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes signage-wall-in-wave {
+    from { opacity: 0; transform: translateX(-28px) rotate(-4deg); }
+    to { opacity: 1; transform: translateX(0) rotate(0); }
+  }
+
+  .signage-wall-stagger-fade {
+    animation: signage-wall-in-fade 0.9s ease-out both;
+  }
+
+  .signage-wall-stagger-up {
+    animation: signage-wall-in-up 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .signage-wall-stagger-scale {
+    animation: signage-wall-in-scale 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .signage-wall-pop {
+    animation: signage-wall-in-pop 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .signage-wall-wave {
+    animation: signage-wall-in-wave 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes signage-wall-tech-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.85; }
+  }
+
+  @keyframes signage-wall-tech-dash {
+    to { stroke-dashoffset: -48; }
+  }
+
+  @keyframes signage-wall-tech-scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    15% { opacity: 0.5; }
+    85% { opacity: 0.35; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+
+  @keyframes signage-wall-tech-dot {
+    0%, 100% { r: 8; opacity: 0.12; }
+    50% { r: 11; opacity: 0.28; }
+  }
+
+  .signage-wall-tech-lines {
+    animation: signage-wall-tech-pulse 5s ease-in-out infinite;
+  }
+
+  .signage-wall-tech-dash-h,
+  .signage-wall-tech-dash-v {
+    animation: signage-wall-tech-dash 14s linear infinite;
+  }
+
+  .signage-wall-tech-dash-delay {
+    animation-delay: -7s;
+  }
+
+  .signage-wall-tech-scan {
+    animation: signage-wall-tech-scan 8s ease-in-out infinite;
+  }
+
+  .signage-wall-tech-pulse-dot {
+    animation: signage-wall-tech-dot 3s ease-in-out infinite;
+  }
+
   .synq-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-synq-pitch to-synq-cyan px-6 py-3 text-sm font-semibold text-synq-navy shadow-lg shadow-synq-cyan/25 transition-all hover:shadow-synq-electric/40 hover:brightness-110;
   }
@@ -425,28 +586,72 @@ body {
   }
 
   .portal-search-input {
-    border-color: hsl(183 100% 50% / 0.35);
-    background: linear-gradient(
-      135deg,
-      hsl(205 40% 10% / 0.95) 0%,
-      hsl(205 40% 7% / 0.75) 100%
-    );
-    box-shadow:
-      inset 0 1px 0 0 hsl(183 100% 50% / 0.14),
-      0 0 18px hsl(183 100% 50% / 0.06);
+    @apply portal-field-surface;
   }
 
-  .portal-search-input:focus-visible {
-    border-color: hsl(183 100% 50% / 0.55);
+  .portal-field-surface {
+    border-color: hsl(183 100% 50% / 0.35) !important;
     background: linear-gradient(
       135deg,
-      hsl(205 40% 11% / 0.98) 0%,
-      hsl(205 40% 8% / 0.85) 100%
-    );
+      hsl(205 44% 11% / 0.92) 0%,
+      hsl(210 42% 8% / 0.78) 100%
+    ) !important;
+    box-shadow:
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.14),
+      inset 0 -1px 0 0 hsl(183 100% 50% / 0.06),
+      0 0 16px hsl(183 100% 50% / 0.05);
+  }
+
+  .portal-field-surface:focus-visible {
+    border-color: hsl(183 100% 50% / 0.55) !important;
+    background: linear-gradient(
+      135deg,
+      hsl(205 44% 12% / 0.96) 0%,
+      hsl(210 42% 9% / 0.88) 100%
+    ) !important;
     box-shadow:
       inset 0 1px 0 0 hsl(183 100% 50% / 0.2),
-      0 0 0 1px hsl(183 100% 50% / 0.2),
+      0 0 0 1px hsl(183 100% 50% / 0.18),
       0 0 24px hsl(183 100% 50% / 0.1);
+    outline: none;
+  }
+
+  .portal-field-surface:hover:not(:focus-visible):not(:disabled) {
+    border-color: hsl(183 100% 50% / 0.45) !important;
+    background: linear-gradient(
+      135deg,
+      hsl(205 44% 11.5% / 0.94) 0%,
+      hsl(210 42% 8.5% / 0.82) 100%
+    ) !important;
+  }
+
+  .portal-field-surface[data-state='open'] {
+    border-color: hsl(183 100% 50% / 0.55) !important;
+    background: linear-gradient(
+      135deg,
+      hsl(205 44% 12% / 0.96) 0%,
+      hsl(210 42% 9% / 0.88) 100%
+    ) !important;
+  }
+
+  .portal-dropdown-surface {
+    border-color: hsl(183 100% 50% / 0.35) !important;
+    background: linear-gradient(
+      145deg,
+      hsl(205 44% 11% / 0.98) 0%,
+      hsl(212 42% 6% / 0.96) 100%
+    ) !important;
+    box-shadow:
+      0 8px 32px hsl(183 100% 50% / 0.12),
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.12);
+    backdrop-filter: blur(12px);
+  }
+
+  .portal-dashboard
+    :is(input, textarea, select):not([type='checkbox']):not([type='radio']):not([type='file']):not(
+      [type='hidden']
+    ):not([type='button']):not([type='submit']):not([type='reset']) {
+    @apply portal-field-surface;
   }
 
   .portal-subnav-divider {

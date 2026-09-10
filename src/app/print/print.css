@@ -27,6 +27,26 @@
     padding: 0 !important;
     box-shadow: none !important;
   }
+
+  .training-schedule-print-section {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .dossier-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .dossier-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .dossier-cover {
+    break-after: page;
+    page-break-after: always;
+  }
 }
 
 @media screen {

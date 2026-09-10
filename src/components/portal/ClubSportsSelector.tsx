@@ -57,7 +57,7 @@ export function ClubSportsSelector({
                 'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
                 active
                   ? 'border-primary bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25)]'
-                  : 'border-primary/25 bg-background/80 text-muted-foreground hover:border-primary/45 hover:bg-primary/5',
+                  : 'border-primary/25 portal-field-surface text-muted-foreground hover:border-primary/45 hover:bg-primary/5',
                 disabled && 'cursor-not-allowed opacity-60'
               )}
             >

@@ -1,9 +1,9 @@
 'use client';
 
 import { UserPlus, X } from 'lucide-react';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import type { PlayerGuardian } from '@/lib/player-guardians';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 type Props = {
   tutor1: PlayerGuardian;
@@ -13,7 +13,7 @@ type Props = {
   onRemoveSecond: () => void;
 };
 
-const inputClass = 'border-primary/30 bg-background/80';
+const inputClass = 'portal-field-surface';
 
 function GuardianFields({
   index,
@@ -103,10 +103,7 @@ export function PlayerGuardiansForm({
             <button
               type="button"
               onClick={onAddSecond}
-              className={cn(
-                'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-                'hover:border-primary/30 hover:bg-primary/10 hover:text-primary'
-              )}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Añadir tutor 2"
               title="Añadir tutor 2"
             >
@@ -125,10 +122,7 @@ export function PlayerGuardiansForm({
             <button
               type="button"
               onClick={onRemoveSecond}
-              className={cn(
-                'inline-flex size-8 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-                'hover:border-primary/30 hover:bg-primary/10 hover:text-primary'
-              )}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Quitar tutor 2"
               title="Quitar tutor 2"
             >

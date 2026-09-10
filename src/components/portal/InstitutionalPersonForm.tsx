@@ -56,7 +56,7 @@ export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
               defaultValue={person?.full_name ?? ''}
               required
               placeholder="Ana García"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -68,7 +68,7 @@ export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
               defaultValue={person?.institutional_role ?? ''}
               required
               placeholder="Presidenta"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -95,7 +95,7 @@ export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
               type="email"
               defaultValue={person?.email ?? ''}
               placeholder="contacto@club.es"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -106,7 +106,7 @@ export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
               name="phone"
               defaultValue={person?.phone ?? ''}
               placeholder="+34 600 000 000"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div className="md:col-span-2">
@@ -117,7 +117,7 @@ export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
               name="notes"
               defaultValue={person?.notes ?? ''}
               placeholder="Observaciones internas"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
         </CardContent>

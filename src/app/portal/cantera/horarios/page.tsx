@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { getTeamTrainingSlots } from '@/app/actions/cantera';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { TrainingCalendarView } from '@/components/portal/TrainingCalendarView';
@@ -10,8 +8,6 @@ import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { buildTrainingCalendarEvents } from '@/lib/training-calendar';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function PortalCanteraHorariosPage() {
   const supabase = await createClient();
@@ -56,25 +52,6 @@ export default async function PortalCanteraHorariosPage() {
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-          <CardTitle className="text-base">Horarios de entrenamiento</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/cantera">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-        </CardHeader>
-      </Card>
-
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Calendario con datos de demo: equipos, franjas y campos configurados en cada ficha de
-          equipo. Los cambios se reflejan aquí al editar el entrenamiento.
-        </p>
-      ) : null}
-
       <TrainingCalendarView
         events={events}
         facilities={facilities.map((facility) => ({ id: facility.id, name: facility.name }))}

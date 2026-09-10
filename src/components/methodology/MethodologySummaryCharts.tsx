@@ -16,6 +16,14 @@ import {
   YAxis,
 } from 'recharts';
 import type { ChartBarRow, MicroWeekRow, SummaryPanelStats } from '@/lib/methodology-summary-stats';
+import {
+  SYNQ_CHART_ACTIVE_BAR,
+  SYNQ_CHART_CURSOR,
+  SYNQ_CHART_CURSOR_LINE,
+  ChartTooltipWrapper,
+  SynqChartTooltip,
+  renderSynqPieActiveShape,
+} from '@/components/portal/SynqChartPrimitives';
 import { cn } from '@/lib/utils';
 
 const COLOR_CONFIRMED = 'hsl(174, 72%, 46%)';
@@ -25,28 +33,6 @@ const GRID_STROKE = 'hsl(var(--primary) / 0.12)';
 
 const sectionTitleClass =
   'text-[10px] font-semibold uppercase tracking-wider text-primary';
-
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: { name: string; value: number; color: string }[];
-  label?: string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-primary/25 bg-background/95 px-3 py-2 text-xs shadow-lg backdrop-blur">
-      {label ? <p className="mb-1 font-semibold text-foreground">{label}</p> : null}
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: <span className="font-semibold">{entry.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-}
 
 function StatColumn({
   confirmLabel,
@@ -135,9 +121,27 @@ export function MacroHistoryChart({
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip content={<ChartTooltip />} />
-            <Bar dataKey="confirmados" stackId="macro" fill={COLOR_CONFIRMED} name="Confirmados" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="pendientes" stackId="macro" fill={COLOR_PENDING} name="Pendientes" radius={[0, 4, 4, 0]} />
+            <Tooltip
+              cursor={SYNQ_CHART_CURSOR}
+              content={<SynqChartTooltip />}
+              wrapperStyle={{ outline: 'none' }}
+            />
+            <Bar
+              dataKey="confirmados"
+              stackId="macro"
+              fill={COLOR_CONFIRMED}
+              name="Confirmados"
+              radius={[0, 0, 0, 0]}
+              activeBar={SYNQ_CHART_ACTIVE_BAR}
+            />
+            <Bar
+              dataKey="pendientes"
+              stackId="macro"
+              fill={COLOR_PENDING}
+              name="Pendientes"
+              radius={[0, 4, 4, 0]}
+              activeBar={SYNQ_CHART_ACTIVE_BAR}
+            />
           </BarChart>
         </ResponsiveContainer>
       }
@@ -159,9 +163,26 @@ export function MesoHistoryChart({ data, stats }: { data: ChartBarRow[]; stats: 
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="name" tick={AXIS_TICK} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" height={48} />
             <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={28} />
-            <Tooltip content={<ChartTooltip />} />
-            <Bar dataKey="confirmados" stackId="meso" fill={COLOR_CONFIRMED} name="Confirmados" />
-            <Bar dataKey="pendientes" stackId="meso" fill={COLOR_PENDING} name="Pendientes" radius={[4, 4, 0, 0]} />
+            <Tooltip
+              cursor={SYNQ_CHART_CURSOR}
+              content={<SynqChartTooltip />}
+              wrapperStyle={{ outline: 'none' }}
+            />
+            <Bar
+              dataKey="confirmados"
+              stackId="meso"
+              fill={COLOR_CONFIRMED}
+              name="Confirmados"
+              activeBar={SYNQ_CHART_ACTIVE_BAR}
+            />
+            <Bar
+              dataKey="pendientes"
+              stackId="meso"
+              fill={COLOR_PENDING}
+              name="Pendientes"
+              radius={[4, 4, 0, 0]}
+              activeBar={SYNQ_CHART_ACTIVE_BAR}
+            />
           </BarChart>
         </ResponsiveContainer>
       }
@@ -197,18 +218,20 @@ export function MicroHistoryChart({ data, stats }: { data: MicroWeekRow[]; stats
             />
             <YAxis hide domain={[0, 1]} />
             <Tooltip
+              cursor={SYNQ_CHART_CURSOR_LINE}
               content={({ active, payload }) => {
                 if (!active || !payload?.[0]) return null;
                 const row = payload[0].payload as MicroWeekRow;
                 return (
-                  <div className="rounded-lg border border-primary/25 bg-background/95 px-3 py-2 text-xs shadow-lg">
-                    <p className="font-semibold">{row.name}</p>
+                  <ChartTooltipWrapper>
+                    <p className="font-semibold text-foreground">{row.name}</p>
                     <p className={row.confirmados ? 'text-emerald-300' : 'text-amber-200'}>
                       {row.confirmados ? 'Confirmado' : 'Pendiente'}
                     </p>
-                  </div>
+                  </ChartTooltipWrapper>
                 );
               }}
+              wrapperStyle={{ outline: 'none' }}
             />
             <Area
               type="stepAfter"
@@ -217,6 +240,13 @@ export function MicroHistoryChart({ data, stats }: { data: MicroWeekRow[]; stats
               fill="url(#microConfirmed)"
               strokeWidth={2}
               name="Estado"
+              activeDot={{
+                r: 5,
+                stroke: 'hsl(183, 100%, 65%)',
+                strokeWidth: 2,
+                fill: COLOR_CONFIRMED,
+                style: { filter: 'drop-shadow(0 0 8px hsl(183 100% 50% / 0.65))' },
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -251,15 +281,21 @@ export function SessionHistoryChart({
               outerRadius={72}
               paddingAngle={3}
               stroke="transparent"
+              activeShape={renderSynqPieActiveShape}
             >
               {data.map((entry, index) => (
                 <Cell
                   key={entry.key}
                   fill={entry.key === 'confirmados' ? colors[0] : colors[1]}
+                  stroke="transparent"
                 />
               ))}
             </Pie>
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip
+              cursor={false}
+              content={<SynqChartTooltip />}
+              wrapperStyle={{ outline: 'none' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       }

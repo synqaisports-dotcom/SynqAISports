@@ -10,13 +10,19 @@ import { cn } from '@/lib/utils';
 type Props = {
   clubId: string;
   playerId: string;
+  hiddenInputName: string;
+  title: string;
+  description: string;
   initialDocumentUrl?: string | null;
   className?: string;
 };
 
-export function PlayerMedicalDocumentField({
+export function PlayerDocumentField({
   clubId,
   playerId,
+  hiddenInputName,
+  title,
+  description,
   initialDocumentUrl,
   className,
 }: Props) {
@@ -48,9 +54,9 @@ export function PlayerMedicalDocumentField({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <input type="hidden" name="medicalDocumentUrl" value={documentUrl} readOnly />
+      <input type="hidden" name={hiddenInputName} value={documentUrl} readOnly />
       <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-muted/5 p-3">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-background/80">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-primary/25 portal-field-surface">
           {pending ? (
             <Loader2 className="size-5 animate-spin text-primary" />
           ) : (
@@ -58,17 +64,15 @@ export function PlayerMedicalDocumentField({
           )}
         </div>
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-medium text-foreground">Documento del reconocimiento</p>
-          <p className="text-xs text-muted-foreground">
-            Sube el justificante en PDF o imagen, o pega una URL del archivo.
-          </p>
+          <p className="text-sm font-medium text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               type="url"
               placeholder="https://…"
               value={documentUrl}
               onChange={(event) => setDocumentUrl(event.target.value)}
-              className="min-w-0 flex-1 border-primary/30 bg-background/80"
+              className="min-w-0 flex-1 portal-field-surface"
             />
             <input
               ref={inputRef}

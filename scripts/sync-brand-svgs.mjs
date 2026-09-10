@@ -23,9 +23,9 @@ const ICON_PATHS = `    <path d="M50 8 84.64 28V72L50 92 15.36 72V28L50 8Z" stro
     <path d="M38 72 Q52 58 70 64" stroke="#00E5FF" stroke-width="1.3" fill="none" stroke-linecap="round"/>
     <g stroke="#00E5FF" stroke-width="1.3" stroke-linecap="round">
       <path d="M72 34 l3.5 3.5M75.5 34 l-3.5 3.5"/>
-      <path d="M24 74 l3 3M27 74 l-3 3"/>
+      <path d="M28 66 l3.5 3.5M31.5 66 l-3.5 3.5"/>
     </g>
-    <circle cx="74" cy="70" r="2.6" stroke="#00E5FF" stroke-width="1.3" fill="none"/>`;
+    <circle cx="72" cy="67" r="2.6" stroke="#00E5FF" stroke-width="1.3" fill="none"/>`;
 
 function pathLines(items, fill, opacity = 1) {
   return items

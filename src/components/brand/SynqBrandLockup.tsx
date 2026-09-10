@@ -12,6 +12,7 @@ type Props = {
   subtitle?: string;
   subtitleClassName?: string;
   showSportsSuffix?: boolean;
+  tone?: 'on-dark' | 'on-light';
   className?: string;
 };
 
@@ -23,6 +24,7 @@ export function SynqBrandLockup({
   subtitle,
   subtitleClassName,
   showSportsSuffix = false,
+  tone = 'on-dark',
   className,
 }: Props) {
   const markSize = wordmarkSize ?? (iconSize >= 40 ? 'lg' : iconSize >= 34 ? 'md' : 'sm');
@@ -45,6 +47,7 @@ export function SynqBrandLockup({
           showSportsSuffix={showSportsSuffix}
           subtitle={subtitle}
           subtitleClassName={subtitleClassName}
+          tone={tone}
           className="mt-3"
         />
       </div>
@@ -62,6 +65,7 @@ export function SynqBrandLockup({
         showSportsSuffix={showSportsSuffix}
         subtitle={subtitle}
         subtitleClassName={subtitleClassName}
+        tone={tone}
         className="min-w-0"
       />
     </div>
