@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SynqAI Sports — Plataforma 360 para clubes',
+  title: 'SynqAI Sports — Plataforma para clubes de base',
   description:
-    'Ecosistema digital para clubes deportivos: entrenadores, familias, pantallas y gestión. El club cobra 12–24 €/año por niño; SynqAI desde 0,50 €/usuario/mes.',
+    'Pizarra, cantera, metodología y comunicación para clubes de base. El entrenador empieza con lo esencial; el club abre el portal completo.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

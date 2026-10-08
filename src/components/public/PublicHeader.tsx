@@ -46,11 +46,8 @@ export function PublicHeader({
             <span className="sm:hidden">Portal</span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm text-synq-muted lg:flex">
-            <a href="#modelo" className="transition-colors hover:text-white">
-              {dict.nav.model}
-            </a>
-            <a href="#calculadora" className="transition-colors hover:text-white">
-              {dict.nav.calculator}
+            <a href="#plataforma" className="transition-colors hover:text-white">
+              {dict.nav.platform}
             </a>
             <a href="#modulos" className="transition-colors hover:text-white">
               {dict.nav.modules}
