@@ -11,8 +11,12 @@ import {
 } from '@/app/actions/change-requests';
 import { Button } from '@/components/ui/button';
 import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import {
   Sheet,
-  SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
@@ -144,49 +148,53 @@ export function ChangeRequestsBell({ role, demoMode }: Props) {
       </Button>
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-full border-primary/20 sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Solicitudes</SheetTitle>
-            <SheetDescription>
-              {role === 'coach'
-                ? 'Tus peticiones de cambio en la planificación.'
-                : 'Avisos para metodología y cantera desde la app del entrenador.'}
-            </SheetDescription>
-          </SheetHeader>
+        <PortalSheetContent maxWidth="md">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Solicitudes</SheetTitle>
+              <SheetDescription>
+                {role === 'coach'
+                  ? 'Tus peticiones de cambio en la planificación.'
+                  : 'Avisos para metodología y cantera desde la app del entrenador.'}
+              </SheetDescription>
+            </SheetHeader>
+          </PortalSheetHeader>
 
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">
-              {pendingItems.length} pendiente{pendingItems.length === 1 ? '' : 's'}
-            </p>
-            {canViewChangeRequestInbox(role) ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/portal/metodologia/solicitudes" onClick={() => setOpen(false)}>
-                  Gestionar todas
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-
-          <div className="mt-4 space-y-3 overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 10rem)' }}>
-            {loading && items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Cargando…</p>
-            ) : null}
-            {!loading && items.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                No hay solicitudes todavía.
+          <PortalSheetBody>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {pendingItems.length} pendiente{pendingItems.length === 1 ? '' : 's'}
               </p>
-            ) : null}
-            {items.map((item) => (
-              <ChangeRequestCard
-                key={item.id}
-                item={item}
-                canApprove={canApproveChangeRequest(role, item.request_type)}
-                compact
-                onResolve={(status, note) => void handleResolve(item.id, status, note)}
-              />
-            ))}
-          </div>
-        </SheetContent>
+              {canViewChangeRequestInbox(role) ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/portal/metodologia/solicitudes" onClick={() => setOpen(false)}>
+                    Gestionar todas
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="space-y-3">
+              {loading && items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Cargando…</p>
+              ) : null}
+              {!loading && items.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                  No hay solicitudes todavía.
+                </p>
+              ) : null}
+              {items.map((item) => (
+                <ChangeRequestCard
+                  key={item.id}
+                  item={item}
+                  canApprove={canApproveChangeRequest(role, item.request_type)}
+                  compact
+                  onResolve={(status, note) => void handleResolve(item.id, status, note)}
+                />
+              ))}
+            </div>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </>
   );

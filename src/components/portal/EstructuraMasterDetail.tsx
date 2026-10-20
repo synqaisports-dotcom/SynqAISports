@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Network, Pencil, Phone, Plus, Trash2, User } from 'lucide-react';
 import { deleteInstitutionalPerson } from '@/app/actions/club-people';
 import { InstitutionalPersonForm } from '@/components/portal/InstitutionalPersonForm';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
@@ -14,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   ACCESS_PROFILE_LABELS,
   accessProfileOptions,
@@ -37,9 +38,6 @@ type Props = {
   initialEditOpen?: boolean;
   demoMode?: boolean;
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 function comparePeople(a: ClubPerson, b: ClubPerson, sort: EstructuraListSortMode): number {
   const cmp = a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' });
@@ -123,7 +121,7 @@ function EstructuraDetailPanel({
           <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Modificar ficha"
               title="Modificar ficha"
               onClick={() => setEditOpen(true)}
@@ -132,7 +130,7 @@ function EstructuraDetailPanel({
             </button>
             <Link
               href="/portal/club/organigrama"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Ver organigrama"
               title="Ver organigrama del club"
             >
@@ -140,7 +138,7 @@ function EstructuraDetailPanel({
             </Link>
             <button
               type="button"
-              className={cn(actionButtonClass, 'hover:text-destructive')}
+              className={cn(PORTAL_ACTION_ICON_CLASS, 'hover:text-destructive')}
               aria-label="Eliminar ficha"
               title="Eliminar ficha"
               onClick={() => setDeleteOpen(true)}
@@ -222,11 +220,13 @@ function EstructuraDetailPanel({
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>Modificar ficha</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Modificar ficha</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <InstitutionalPersonForm
               key={person.id}
               clubId={clubId}
@@ -237,8 +237,8 @@ function EstructuraDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <PortalConfirmDialog
@@ -354,7 +354,7 @@ export function EstructuraMasterDetail({
             </div>
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Nueva ficha"
               title="Nueva ficha institucional"
               onClick={() => setCreateOpen(true)}
@@ -455,14 +455,16 @@ export function EstructuraMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>Nueva ficha institucional</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nueva ficha institucional</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <InstitutionalPersonForm clubId={clubId} onSaved={handlePersonSaved} />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

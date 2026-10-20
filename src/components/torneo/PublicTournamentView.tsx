@@ -1,0 +1,15 @@
+import { PublicTournamentHub } from '@/components/torneo/public/PublicTournamentHub';
+import { parsePublicTournamentTab } from '@/lib/public-tournament-tabs';
+import type { TournamentBundle } from '@/lib/tournaments';
+
+type Props = {
+  bundle: TournamentBundle;
+  slug: string;
+  tab?: string;
+};
+
+export function PublicTournamentView({ bundle, slug, tab }: Props) {
+  const initialTab = parsePublicTournamentTab(tab);
+
+  return <PublicTournamentHub bundle={bundle} slug={slug} initialTab={initialTab} />;
+}

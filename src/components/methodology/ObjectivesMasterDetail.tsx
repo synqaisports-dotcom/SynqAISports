@@ -9,11 +9,11 @@ import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   CANTERA_CATEGORIES,
   getCanteraCategory,
@@ -28,6 +28,7 @@ import {
 import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import { CLUB_PRACTICED_SPORT_SHORT } from '@/lib/club-practiced-sports';
 import { appendSportParam, clubIsMultisport } from '@/lib/sport-context';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { cn } from '@/lib/utils';
 
 type StageFilter = 'all' | (typeof METHODOLOGY_STAGES)[number]['id'];
@@ -41,9 +42,6 @@ type Props = {
   activeSport?: ClubPracticedSport;
   practicedSports?: ClubPracticedSport[];
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 const STAGE_FILTER_OPTIONS: { value: StageFilter; label: string }[] = [
   { value: 'all', label: 'Todas las etapas' },
@@ -175,7 +173,7 @@ function ObjectivesDetailPanel({
             {canEdit ? (
               <button
                 type="button"
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Modificar objetivos"
                 title="Modificar objetivos"
                 onClick={() => setEditOpen(true)}
@@ -185,7 +183,7 @@ function ObjectivesDetailPanel({
             ) : null}
             <Link
               href="/portal/metodologia/ciclos"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Ver ciclos"
               title="Ver ciclos y microciclos"
             >
@@ -208,11 +206,13 @@ function ObjectivesDetailPanel({
 
       {canEdit ? (
         <Sheet open={editOpen} onOpenChange={setEditOpen}>
-          <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-            <SheetHeader>
-              <SheetTitle>Modificar — {category.name}</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
+          <PortalSheetContent maxWidth="xl">
+            <PortalSheetHeader>
+              <SheetHeader className="space-y-2 text-left">
+                <SheetTitle className="text-xl tracking-tight">Modificar — {category.name}</SheetTitle>
+              </SheetHeader>
+            </PortalSheetHeader>
+            <PortalSheetBody>
               <CategoryObjectivesForm
                 key={categorySlug}
                 categorySlug={categorySlug}
@@ -229,8 +229,8 @@ function ObjectivesDetailPanel({
                   router.refresh();
                 }}
               />
-            </div>
-          </SheetContent>
+            </PortalSheetBody>
+          </PortalSheetContent>
         </Sheet>
       ) : null}
     </Card>

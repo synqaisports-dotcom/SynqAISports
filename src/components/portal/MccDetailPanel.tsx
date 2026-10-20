@@ -140,7 +140,7 @@ export function MccDetailPanel({
             onChange={(event) => onLabelChange(event.target.value)}
             placeholder={micro.label}
             disabled={readOnly}
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
 
@@ -153,7 +153,7 @@ export function MccDetailPanel({
             onChange={(event) => onNoteChange(event.target.value)}
             placeholder="Opcional"
             disabled={readOnly}
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
 

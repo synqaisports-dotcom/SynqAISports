@@ -79,7 +79,7 @@ export function CategoryObjectivesForm({
                 <Input
                   name={`${dimension.key}Label`}
                   defaultValue={cell.itemLabel}
-                  className="border-primary/30 bg-background/80"
+                  className="portal-field-surface"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -89,7 +89,7 @@ export function CategoryObjectivesForm({
                   rows={3}
                   defaultValue={cell.content}
                   className={cn(
-                    'w-full rounded-md border border-primary/30 bg-background/80 px-3 py-2 text-sm text-foreground',
+                    'w-full rounded-md border portal-field-surface px-3 py-2 text-sm text-foreground',
                     'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary'
                   )}
                 />

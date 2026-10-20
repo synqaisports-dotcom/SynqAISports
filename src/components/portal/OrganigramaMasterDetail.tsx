@@ -10,11 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { peopleById, type ClubPerson } from '@/lib/club-people';
 import {
   findOrganigramaNodeView,
@@ -175,11 +175,13 @@ export function OrganigramaMasterDetail({
       </div>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>Modificar organigrama</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Modificar organigrama</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <OrganigramaEditorForm
               clubId={clubId}
               nodes={nodes}
@@ -195,8 +197,8 @@ export function OrganigramaMasterDetail({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </>
   );

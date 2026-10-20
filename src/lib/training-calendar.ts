@@ -177,6 +177,25 @@ export function buildTrainingCalendarEvents(
   );
 }
 
+export function countWeeklyTrainingSessions(slots: TeamTrainingSlot[]): number {
+  let count = 0;
+
+  for (const slot of slots) {
+    if (!slot.training_days.trim() || !slot.training_start || !slot.training_end) continue;
+
+    const startMinutes = parseTimeToMinutes(slot.training_start);
+    const endMinutes = parseTimeToMinutes(slot.training_end);
+    if (startMinutes == null || endMinutes == null || endMinutes <= startMinutes) continue;
+
+    count += slot.training_days
+      .split(',')
+      .map((day) => day.trim())
+      .filter(Boolean).length;
+  }
+
+  return count;
+}
+
 export function computeCalendarTimeGrid(
   events: TrainingCalendarEvent[],
   slotMinutes = CALENDAR_SLOT_MINUTES
@@ -250,4 +269,25 @@ export function durationToGridHeight(
   slotMinutes: number
 ): number {
   return ((endMinutes - startMinutes) / slotMinutes) * CALENDAR_ROW_HEIGHT_PX;
+}
+
+export function groupEventsByFacility(
+  events: TrainingCalendarEvent[],
+  facilities: TrainingCalendarFacility[]
+): { facility: TrainingCalendarFacility; events: TrainingCalendarEvent[] }[] {
+  const eventsByFacility = new Map<string, TrainingCalendarEvent[]>();
+
+  for (const event of events) {
+    const list = eventsByFacility.get(event.facilityId) ?? [];
+    list.push(event);
+    eventsByFacility.set(event.facilityId, list);
+  }
+
+  return facilities
+    .map((facility) => ({
+      facility,
+      events: eventsByFacility.get(facility.id) ?? [],
+    }))
+    .filter((section) => section.events.length > 0)
+    .sort((a, b) => a.facility.name.localeCompare(b.facility.name, 'es'));
 }

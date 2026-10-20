@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import type { PortalNavNode } from '@/config/portal-nav';
+import { usePortalSidebar } from '@/components/portal/portal-sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -32,9 +33,52 @@ function NavIcon({ icon: Icon, small }: { icon: PortalNavNode['icon']; small?: b
   );
 }
 
-function RailNavItem({ node, active }: { node: PortalNavNode; active: boolean }) {
+function RailNavItem({
+  node,
+  active,
+  hasChildren,
+}: {
+  node: PortalNavNode;
+  active: boolean;
+  hasChildren: boolean;
+}) {
+  const { expand, collapse } = usePortalSidebar();
+
   if (!node.href || !node.icon) return null;
   const Icon = node.icon;
+
+  if (hasChildren) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className={cn('portal-sidebar-rail-btn', active && 'portal-sidebar-rail-btn-active')}
+            aria-label={`Abrir ${node.title}`}
+            aria-expanded={false}
+            onPointerUp={(e) => {
+              if (e.button !== 0) return;
+              expand(e.pointerType !== 'mouse');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                expand(true);
+              }
+            }}
+          >
+            <Icon className="size-[18px] shrink-0" strokeWidth={active ? 2.25 : 2} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="right"
+          className="border-primary/25 bg-popover/95 font-medium shadow-lg backdrop-blur-md"
+        >
+          {node.title}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip>
@@ -43,6 +87,7 @@ function RailNavItem({ node, active }: { node: PortalNavNode; active: boolean })
           href={node.href}
           className={cn('portal-sidebar-rail-btn', active && 'portal-sidebar-rail-btn-active')}
           aria-current={active ? 'page' : undefined}
+          onClick={() => collapse()}
         >
           <Icon className="size-[18px] shrink-0" strokeWidth={active ? 2.25 : 2} />
         </Link>
@@ -66,6 +111,8 @@ function ExpandedNavLeaf({
   active: boolean;
   sub?: boolean;
 }) {
+  const { collapse } = usePortalSidebar();
+
   if (!node.href) return null;
 
   return (
@@ -76,6 +123,7 @@ function ExpandedNavLeaf({
         active && (sub ? 'portal-nav-subitem-active' : 'portal-nav-item-active')
       )}
       aria-current={active ? 'page' : undefined}
+      onClick={() => collapse()}
     >
       <NavIcon icon={node.icon} small={sub} />
       <span className="truncate">{node.title}</span>
@@ -84,6 +132,7 @@ function ExpandedNavLeaf({
 }
 
 function ExpandedNavBranch({ node, pathname }: { node: PortalNavNode; pathname: string }) {
+  const { collapse } = usePortalSidebar();
   const hasChildren = Boolean(node.children?.length);
   const active = isActive(pathname, node.href, node.exact);
   const childActive = branchChildActive(pathname, node);
@@ -105,6 +154,7 @@ function ExpandedNavBranch({ node, pathname }: { node: PortalNavNode; pathname: 
             (active || childActive) && 'portal-nav-item-active'
           )}
           aria-current={active ? 'page' : undefined}
+          onClick={() => collapse()}
         >
           <NavIcon icon={node.icon} />
           <span className="truncate">{node.title}</span>
@@ -142,9 +192,10 @@ function NavBranch({
   expanded: boolean;
 }) {
   const active = isActive(pathname, node.href, node.exact);
+  const hasChildren = Boolean(node.children?.length);
 
   if (!expanded) {
-    return <RailNavItem node={node} active={active || branchChildActive(pathname, node)} />;
+    return <RailNavItem node={node} active={active || branchChildActive(pathname, node)} hasChildren={hasChildren} />;
   }
 
   return <ExpandedNavBranch node={node} pathname={pathname} />;

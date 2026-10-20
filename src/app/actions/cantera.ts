@@ -12,6 +12,11 @@ import { buildInitialPlayerHistory, buildTeamMoveHistoryEvent, parsePlayerHistor
 import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
+import {
+  isDemoCanteraEntityId,
+  setDemoPlayerActive,
+  setDemoTeamActive,
+} from '@/lib/demo-cantera-pause';
 import { getCanteraCategory } from '@/lib/cantera-categories';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import {
@@ -403,7 +408,7 @@ export async function movePlayerTeam(
   return { ok: true, playerId };
 }
 
-export async function updatePlayerMedical(
+export async function updatePlayerDocuments(
   playerId: string,
   _prev: ActionState,
   formData: FormData
@@ -413,8 +418,14 @@ export async function updatePlayerMedical(
 
   const medicalUntil = String(formData.get('medicalUntil') ?? '').trim();
   const medicalDocumentUrl = String(formData.get('medicalDocumentUrl') ?? '').trim();
+  const federationUntil = String(formData.get('federationUntil') ?? '').trim();
+  const federationDocumentUrl = String(formData.get('federationDocumentUrl') ?? '').trim();
 
   if (!medicalUntil || !isValidMedicalDate(medicalUntil)) {
+    return { ok: false, message: 'validation' };
+  }
+
+  if (federationUntil && !isValidMedicalDate(federationUntil)) {
     return { ok: false, message: 'validation' };
   }
 
@@ -430,12 +441,14 @@ export async function updatePlayerMedical(
     .update({
       medical_until: medicalUntil,
       medical_document_url: medicalDocumentUrl || null,
+      federation_until: federationUntil || null,
+      federation_document_url: federationDocumentUrl || null,
     })
     .eq('id', playerId)
     .eq('club_id', clubId);
 
   if (error) {
-    console.error('updatePlayerMedical', error);
+    console.error('updatePlayerDocuments', error);
     return { ok: false, message: 'error' };
   }
 
@@ -682,6 +695,13 @@ export async function toggleTeamActive(teamId: string, active: boolean): Promise
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
+  if ((await isDemoActive()) && isDemoCanteraEntityId(teamId)) {
+    await setDemoTeamActive(teamId, active);
+    revalidatePath('/portal/cantera');
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true };
+  }
+
   const supabase = await createClient();
   const { data: team } = await supabase
     .from('synq_teams')
@@ -818,6 +838,13 @@ export async function togglePlayerActive(playerId: string, active: boolean): Pro
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
+  if ((await isDemoActive()) && isDemoCanteraEntityId(playerId)) {
+    await setDemoPlayerActive(playerId, active);
+    revalidatePath('/portal/cantera');
+    revalidatePath('/portal/cantera/jugadores');
+    return { ok: true };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from('synq_players')
@@ -828,6 +855,7 @@ export async function togglePlayerActive(playerId: string, active: boolean): Pro
   if (error) return { ok: false, message: 'error' };
 
   revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/jugadores');
   revalidatePath('/portal');
   return { ok: true };
 }

@@ -21,6 +21,7 @@ export type TeamProfile = {
   players: TeamViewPlayer[];
   history: TeamClubHistoryEvent[];
   is_demo: boolean;
+  created_at: string | null;
 };
 
 export type TeamListSortMode = 'category' | 'name-asc' | 'name-desc';

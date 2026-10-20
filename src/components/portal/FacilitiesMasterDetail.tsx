@@ -8,17 +8,18 @@ import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionO
 import { FacilityForm } from '@/components/portal/FacilityForm';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
 import { FacilityReservationsPanel } from '@/components/portal/FacilityReservationsPanel';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
@@ -55,9 +56,6 @@ type Props = {
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 function compareFacilities(a: ClubFacility, b: ClubFacility, sort: FacilityListSortMode): number {
   const cmp = a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
@@ -166,7 +164,7 @@ function FacilityDetailPanel({
           <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Modificar instalación"
               title="Modificar instalación"
               onClick={() => {
@@ -178,7 +176,7 @@ function FacilityDetailPanel({
             </button>
             <Link
               href="/portal/cantera/horarios"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Ver horarios del club"
               title="Ver horarios del club"
             >
@@ -253,11 +251,13 @@ function FacilityDetailPanel({
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Modificar — {facility.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Modificar — {facility.name}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <FacilityForm
               facility={facility}
               practicedSports={practicedSports}
@@ -269,8 +269,8 @@ function FacilityDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -394,7 +394,7 @@ export function FacilitiesMasterDetail({
             </div>
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Nueva instalación"
               title="Nueva instalación"
               onClick={() => setCreateOpen(true)}
@@ -515,14 +515,16 @@ export function FacilitiesMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Nueva instalación</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nueva instalación</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <FacilityForm practicedSports={practicedSports} onSaved={handleFacilitySaved} />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

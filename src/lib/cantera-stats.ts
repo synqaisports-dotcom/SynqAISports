@@ -1,0 +1,202 @@
+import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
+import { isDemoActive } from '@/lib/demo';
+import { DEMO_TEAM_SETUP, type TeamTrainingSlot } from '@/lib/team-setup';
+import { countWeeklyTrainingSessions } from '@/lib/training-calendar';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+export type CanteraWeeklyAbsenceDay = {
+  label: string;
+  confirmed: number;
+};
+
+export type CanteraStats = {
+  totalTeams: number;
+  activeTeams: number;
+  inactiveTeams: number;
+  totalPlayers: number;
+  avgPlayersPerTeam: number | null;
+  injuredPlayers: number;
+  activePlayers: number;
+  inactivePlayers: number;
+  weeklyAbsences: CanteraWeeklyAbsenceDay[];
+  weeklyConfirmedAbsences: number;
+  totalSchedules: number;
+};
+
+function currentWeekAbsenceDays(): CanteraWeeklyAbsenceDay[] {
+  const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const today = new Date();
+  const mondayOffset = (today.getDay() + 6) % 7;
+  const monday = new Date(today);
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(today.getDate() - mondayOffset);
+
+  return labels.map((label, index) => {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + index);
+    const isFuture = day > today;
+    return { label, confirmed: isFuture ? 0 : 0 };
+  });
+}
+
+const DEMO_INJURED_PLAYER_IDS = new Set(['demo-pl-ben-1']);
+
+function demoTrainingSlots(): TeamTrainingSlot[] {
+  const slots: TeamTrainingSlot[] = [];
+
+  for (const team of DEMO_CANTERA_TEAMS) {
+    const setup = DEMO_TEAM_SETUP[team.id];
+    if (!setup?.training_facility_id) continue;
+    slots.push({
+      teamId: team.id,
+      teamName: team.name,
+      training_facility_id: setup.training_facility_id,
+      training_division: setup.training_division,
+      training_days: setup.training_days,
+      training_start: setup.training_start,
+      training_end: setup.training_end,
+    });
+  }
+
+  return slots;
+}
+
+function trainingSlotsFromRows(
+  rows: {
+    id: string;
+    name: string;
+    training_facility_id: string | null;
+    training_division: string | null;
+    training_days: string | null;
+    training_start: string | null;
+    training_end: string | null;
+  }[]
+): TeamTrainingSlot[] {
+  const slots: TeamTrainingSlot[] = [];
+
+  for (const row of rows) {
+    if (!row.training_facility_id) continue;
+    slots.push({
+      teamId: row.id,
+      teamName: row.name,
+      training_facility_id: row.training_facility_id,
+      training_division: row.training_division as TeamTrainingSlot['training_division'],
+      training_days: row.training_days ?? '',
+      training_start: row.training_start ? String(row.training_start).slice(0, 5) : '',
+      training_end: row.training_end ? String(row.training_end).slice(0, 5) : '',
+    });
+  }
+
+  return slots;
+}
+
+export function demoCanteraStats(): CanteraStats {
+  const activeTeams = DEMO_CANTERA_TEAMS.filter((team) => team.active).length;
+  const inactiveTeams = DEMO_CANTERA_TEAMS.filter((team) => !team.active).length;
+  const totalTeams = activeTeams + inactiveTeams;
+  const totalPlayers = DEMO_TEAM_PLAYERS.length;
+  const injuredPlayers = DEMO_TEAM_PLAYERS.filter((player) =>
+    DEMO_INJURED_PLAYER_IDS.has(player.id)
+  ).length;
+  const inactivePlayers = 0;
+  const activePlayers = totalPlayers - inactivePlayers;
+
+  const weeklyAbsences = currentWeekAbsenceDays();
+  weeklyAbsences[1] = { ...weeklyAbsences[1], confirmed: 1 };
+  weeklyAbsences[3] = { ...weeklyAbsences[3], confirmed: 1 };
+  const weeklyConfirmedAbsences = weeklyAbsences.reduce((sum, day) => sum + day.confirmed, 0);
+  const totalSchedules = countWeeklyTrainingSessions(demoTrainingSlots());
+
+  return {
+    totalTeams,
+    activeTeams,
+    inactiveTeams,
+    totalPlayers,
+    avgPlayersPerTeam: activeTeams > 0 ? activePlayers / activeTeams : null,
+    injuredPlayers,
+    activePlayers,
+    inactivePlayers,
+    weeklyAbsences,
+    weeklyConfirmedAbsences,
+    totalSchedules,
+  };
+}
+
+export async function loadCanteraStats(
+  supabase: SupabaseClient,
+  clubId: string
+): Promise<CanteraStats> {
+  if (await isDemoActive()) return demoCanteraStats();
+
+  const [activeTeamsRes, inactiveTeamsRes, allPlayersRes, activePlayersRes, inactivePlayersRes, injuredRes, trainingTeamsRes] =
+    await Promise.all([
+      supabase
+        .from('synq_teams')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('active', true),
+      supabase
+        .from('synq_teams')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('active', false),
+      supabase
+        .from('synq_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId),
+      supabase
+        .from('synq_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('active', true),
+      supabase
+        .from('synq_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('active', false),
+      supabase
+        .from('synq_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('injured', true)
+        .eq('active', true),
+      supabase
+        .from('synq_teams')
+        .select(
+          'id, name, training_facility_id, training_division, training_days, training_start, training_end'
+        )
+        .eq('club_id', clubId)
+        .not('training_facility_id', 'is', null),
+    ]);
+
+  const activeTeams = activeTeamsRes.count ?? 0;
+  const inactiveTeams = inactiveTeamsRes.count ?? 0;
+  const totalTeams = activeTeams + inactiveTeams;
+  const totalPlayers = allPlayersRes.count ?? 0;
+  const activePlayers = activePlayersRes.count ?? 0;
+  const inactivePlayers = inactivePlayersRes.count ?? 0;
+  const injuredPlayers = injuredRes.count ?? 0;
+  const weeklyAbsences = currentWeekAbsenceDays();
+  const totalSchedules = countWeeklyTrainingSessions(
+    trainingSlotsFromRows(trainingTeamsRes.data ?? [])
+  );
+
+  return {
+    totalTeams,
+    activeTeams,
+    inactiveTeams,
+    totalPlayers,
+    avgPlayersPerTeam: activeTeams > 0 ? activePlayers / activeTeams : null,
+    injuredPlayers,
+    activePlayers,
+    inactivePlayers,
+    weeklyAbsences,
+    weeklyConfirmedAbsences: 0,
+    totalSchedules,
+  };
+}
+
+export function formatCanteraAverage(value: number | null) {
+  if (value == null) return '—';
+  return value.toLocaleString('es-ES', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+}

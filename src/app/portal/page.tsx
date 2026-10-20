@@ -55,7 +55,7 @@ export default async function PortalHomePage() {
 
   const quickLinks = [
     { href: '/portal/cantera', title: 'Cantera', text: 'Equipos, jugadores y categorías.' },
-    { href: '/portal/metodologia', title: 'Metodología', text: 'Ejercicios, microciclos y PDF.' },
+    { href: '/portal/metodologia/resumen', title: 'Metodología', text: 'Ejercicios, microciclos y PDF.' },
     { href: '/portal/club', title: 'Datos del club', text: 'Perfil, contacto y tarifas.' },
   ];
 

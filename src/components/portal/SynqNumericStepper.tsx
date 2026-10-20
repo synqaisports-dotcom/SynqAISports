@@ -1,6 +1,7 @@
 'use client';
 
 import { Minus, Plus } from 'lucide-react';
+import { PORTAL_FIELD_CLASS } from '@/lib/portal-field-styles';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -46,7 +47,8 @@ export function SynqNumericStepper({
   return (
     <div
       className={cn(
-        'flex items-stretch overflow-hidden rounded-md border border-primary/30 bg-background/80 shadow-[0_0_0_1px_hsl(183_100%_50%_/_0.04)]',
+        'flex items-stretch overflow-hidden rounded-md border',
+        PORTAL_FIELD_CLASS,
         className
       )}
     >

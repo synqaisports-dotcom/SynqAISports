@@ -5,6 +5,7 @@ import {
   type CanteraCategorySlug,
 } from '@/lib/cantera-categories';
 import type { PlayerGuardian } from '@/lib/player-guardians';
+import type { PlayerFederationInfo } from '@/lib/player-federation';
 import type { PlayerMedicalInfo } from '@/lib/player-medical';
 import type { PlayerClubHistoryEvent } from '@/lib/player-club-history';
 import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
@@ -31,7 +32,7 @@ export type PlayerProfile = {
   guardians: PlayerGuardian[];
   created_at: string | null;
   history: PlayerClubHistoryEvent[];
-} & PlayerMedicalInfo;
+} & PlayerMedicalInfo & PlayerFederationInfo;
 
 export function playerFullName(player: Pick<PlayerProfile, 'first_name' | 'last_name' | 'display_name'>) {
   return playerDisplayName(player.first_name, player.last_name, player.display_name);

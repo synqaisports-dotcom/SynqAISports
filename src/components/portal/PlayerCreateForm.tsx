@@ -66,13 +66,13 @@ export function PlayerCreateForm({ teams, fixedTeamId, demoMode, onCreated }: Pr
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Nombre
           </label>
-          <Input name="firstName" required className="border-primary/30 bg-background/80" />
+          <Input name="firstName" required className="portal-field-surface" />
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Apellidos
           </label>
-          <Input name="lastName" className="border-primary/30 bg-background/80" />
+          <Input name="lastName" className="portal-field-surface" />
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">

@@ -68,7 +68,7 @@ export function ScheduleBlockFields({
             value={start}
             onChange={(event) => onStartChange(event.target.value)}
             disabled={disabled}
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
         <div>
@@ -81,7 +81,7 @@ export function ScheduleBlockFields({
             value={end}
             onChange={(event) => onEndChange(event.target.value)}
             disabled={disabled}
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
       </div>

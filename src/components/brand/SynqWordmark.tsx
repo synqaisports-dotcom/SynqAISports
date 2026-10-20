@@ -3,6 +3,7 @@ import { WORDMARK_DATA, WORDMARK_VIEWBOX } from '@/components/brand/wordmark-dat
 import { cn } from '@/lib/utils';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type Tone = 'on-dark' | 'on-light';
 
 const wordmarkHeight: Record<Size, number> = {
   xs: 12,
@@ -18,10 +19,22 @@ type Props = {
   subtitle?: string;
   subtitleClassName?: string;
   showSportsSuffix?: boolean;
+  tone?: Tone;
   className?: string;
 };
 
-function WordmarkSvg({ height, showTagline }: { height: number; showTagline: boolean }) {
+function WordmarkSvg({
+  height,
+  showTagline,
+  tone,
+}: {
+  height: number;
+  showTagline: boolean;
+  tone: Tone;
+}) {
+  const synqFill = tone === 'on-light' ? SYNQ_BRAND.cyan : SYNQ_BRAND.white;
+  const taglineFill = tone === 'on-light' ? SYNQ_BRAND.cyan : SYNQ_BRAND.white;
+
   const wordmarkOnlyHeight = WORDMARK_DATA.wordmark.baselineY + 2;
   const viewHeight = showTagline ? WORDMARK_VIEWBOX.height : wordmarkOnlyHeight;
   const aspect = WORDMARK_VIEWBOX.width / viewHeight;
@@ -40,14 +53,14 @@ function WordmarkSvg({ height, showTagline }: { height: number; showTagline: boo
       preserveAspectRatio="xMinYMid meet"
     >
       {WORDMARK_DATA.wordmark.synq.map((p) => (
-        <path key={`s-${p.char}`} d={p.d} fill={SYNQ_BRAND.white} />
+        <path key={`s-${p.char}`} d={p.d} fill={synqFill} />
       ))}
       {WORDMARK_DATA.wordmark.ai.map((p) => (
         <path key={`a-${p.char}`} d={p.d} fill={SYNQ_BRAND.cyan} />
       ))}
       {showTagline
         ? WORDMARK_DATA.tagline.paths.map((p, i) =>
-            p.d ? <path key={`t-${i}`} d={p.d} fill={SYNQ_BRAND.white} opacity={0.92} /> : null
+            p.d ? <path key={`t-${i}`} d={p.d} fill={taglineFill} opacity={0.92} /> : null
           )
         : null}
     </svg>
@@ -60,6 +73,7 @@ export function SynqWordmark({
   subtitle,
   subtitleClassName,
   showSportsSuffix = false,
+  tone = 'on-dark',
   className,
 }: Props) {
   const h = wordmarkHeight[size];
@@ -67,9 +81,16 @@ export function SynqWordmark({
   return (
     <div className={cn('min-w-0', className)}>
       <div className="flex min-w-0 items-end gap-1.5">
-        <WordmarkSvg height={h} showTagline={showTagline} />
+        <WordmarkSvg height={h} showTagline={showTagline} tone={tone} />
         {showSportsSuffix ? (
-          <span className="mb-0.5 shrink-0 text-[0.62em] font-medium tracking-wide text-white/80">Sports</span>
+          <span
+            className={cn(
+              'mb-0.5 shrink-0 text-[0.62em] font-medium tracking-wide',
+              tone === 'on-light' ? 'text-[#00E5FF]' : 'text-white/80'
+            )}
+          >
+            Sports
+          </span>
         ) : null}
       </div>
       {subtitle ? (

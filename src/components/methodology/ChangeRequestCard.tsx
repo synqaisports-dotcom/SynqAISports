@@ -87,7 +87,7 @@ export function ChangeRequestCard({ item, canApprove, compact, onResolve }: Prop
             onChange={(event) => setNote(event.target.value)}
             rows={2}
             placeholder="Nota opcional para el entrenador…"
-            className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-primary/25 portal-field-surface px-3 py-2 text-sm"
           />
           <div className="flex flex-wrap gap-2">
             <Button

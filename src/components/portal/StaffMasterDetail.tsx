@@ -7,17 +7,18 @@ import { useRouter } from 'next/navigation';
 import { Mail, Pencil, Phone, Plus, User, UserCog, FileStack } from 'lucide-react';
 import { SportPersonForm } from '@/components/portal/SportPersonForm';
 import { StaffDocumentsSheet } from '@/components/portal/StaffDocumentsSheet';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ACCESS_PROFILE_LABELS, sportAccessProfileOptions } from '@/lib/club-people';
 import type { TeamOption } from '@/lib/person-assignments';
 import { medicalStatus } from '@/lib/profile-row';
@@ -99,8 +100,6 @@ function StaffDetailPanel({
     }
     setDocumentCount(countPersonDocuments(data));
   }, [person?.id, person?.documents_json, demoMode, docsOpen]);
-  const actionButtonClass =
-    'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
   const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
   useEffect(() => {
@@ -141,7 +140,7 @@ function StaffDetailPanel({
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
-              className={cn(actionButtonClass, 'relative')}
+              className={cn(PORTAL_ACTION_ICON_CLASS, 'relative')}
               aria-label="Documentación"
               title="Documentación"
               onClick={() => setDocsOpen(true)}
@@ -155,7 +154,7 @@ function StaffDetailPanel({
             </button>
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Modificar ficha"
               title="Modificar ficha"
               onClick={() => setEditOpen(true)}
@@ -258,14 +257,13 @@ function StaffDetailPanel({
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent
-          side="right"
-          className="portal-dashboard dark portal-main-surface w-full overflow-y-auto border-l border-primary/25 p-4 sm:max-w-2xl sm:p-6"
-        >
-          <SheetHeader>
-            <SheetTitle>Modificar ficha</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Modificar ficha</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <SportPersonForm
               key={person.id}
               clubId={clubId}
@@ -277,8 +275,8 @@ function StaffDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <StaffDocumentsSheet
@@ -414,7 +412,7 @@ export function StaffMasterDetail({
             </div>
             <button
               type="button"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+              className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
               aria-label="Nueva ficha"
               title="Nueva ficha de staff"
               onClick={() => setCreateOpen(true)}
@@ -518,21 +516,20 @@ export function StaffMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent
-          side="right"
-          className="portal-dashboard dark portal-main-surface w-full overflow-y-auto border-l border-primary/25 p-4 sm:max-w-2xl sm:p-6"
-        >
-          <SheetHeader>
-            <SheetTitle>Nueva ficha de staff</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nueva ficha de staff</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <SportPersonForm
               clubId={clubId}
               teams={teams}
               onSaved={handlePersonSaved}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

@@ -1,5 +1,4 @@
 import { ExerciseEditor } from '@/components/methodology/ExerciseEditor';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import type { TaskType } from '@/lib/exercise-sheet';
 import { parseSportFromSearchParams, resolveActiveSport } from '@/lib/sport-context';
@@ -30,7 +29,6 @@ export default async function NuevoEjercicioPage({ searchParams }: Props) {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <MethodologySubnav />
         <ExerciseEditor
           defaultTaskType={taskType}
           categorySlug={categorySlug}
