@@ -2,7 +2,6 @@
 
 import { useFormState } from 'react-dom';
 import { submitFoundingLead, type FoundingFormState } from '@/app/actions/founding';
-import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries';
 
 const initial: FoundingFormState = { ok: false, message: '' };
@@ -11,15 +10,6 @@ type Props = { dict: Dictionary };
 
 export function FoundingForm({ dict }: Props) {
   const [state, action, pending] = useFormState(submitFoundingLead, initial);
-  const configured = isSupabaseConfigured();
-
-  if (!configured) {
-    return (
-      <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-        {dict.founding.notConfigured}
-      </p>
-    );
-  }
 
   if (state.ok) {
     return (
@@ -45,7 +35,7 @@ export function FoundingForm({ dict }: Props) {
           className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
         />
       </div>
-      {state.message === 'error' && (
+      {(state.message === 'error' || state.message === 'validation') && (
         <p className="sm:col-span-2 text-sm text-red-400">{dict.founding.error}</p>
       )}
       <button
