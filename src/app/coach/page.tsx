@@ -5,12 +5,12 @@ import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
 
 const points = [
-  'Pizarra para dibujar el ejercicio y otra para la formación del equipo.',
-  'Fútbol 7 y fútbol sala.',
-  'Hasta 20 ejercicios para dos meses de ciclos.',
+  'Pizarra de partido, ejercicios, equipo y temporada.',
+  'Fútbol y fútbol sala usan la pizarra de la plataforma.',
+  'Baloncesto, balonmano, voleibol y waterpolo ya se eligen; su campo llega después.',
+  'Hasta 20 ejercicios para dos meses.',
   'Jugadores con nombre, dorsal y posición.',
-  'Una temporada para anotar los resultados.',
-  'Los datos de la pizarra se quedan en tu aparato. El alta sí queda registrada en SynqAI.',
+  'Los dibujos se quedan en tu aparato. El alta sí queda registrada en SynqAI.',
 ];
 
 export default async function CoachFreeInfoPage() {
