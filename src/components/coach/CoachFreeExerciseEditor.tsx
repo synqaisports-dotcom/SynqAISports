@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionState } from '@/app/actions/methodology';
 import { ExerciseEditor, type ExerciseRow } from '@/components/methodology/ExerciseEditor';
 import { CLUB_PRACTICED_SPORT_LABELS } from '@/lib/club-practiced-sports';
 import {
+  COACH_FREE_MAX_EXERCISES,
   loadExercises,
   saveExercise,
   type CoachFreeExercise,
@@ -72,14 +74,30 @@ export function CoachFreeExerciseEditor({ exerciseId }: { exerciseId?: string })
     );
   }
 
+  if (!exerciseId && loadExercises(sport).length >= COACH_FREE_MAX_EXERCISES) {
+    return (
+      <div className="portal-dashboard dark min-h-screen">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+          <p className="text-sm text-foreground">
+            Has llegado a {COACH_FREE_MAX_EXERCISES} ejercicios. Borra uno del catálogo para crear otro.
+          </p>
+          <Link href={CATALOG} className="mt-3 inline-block text-sm text-primary">
+            Volver al catálogo
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="dark bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="portal-dashboard dark min-h-screen">
+      <div className="synq-portal-content mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <ExerciseEditor
           exercise={exercise ?? undefined}
           sport={sport}
           submit={submit}
           catalogHref={CATALOG}
+          printHref={exercise ? `${CATALOG}/${exercise.id}/imprimir` : undefined}
         />
       </div>
     </div>

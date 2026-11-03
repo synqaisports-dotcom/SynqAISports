@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen synq-mesh-bg text-white">{children}</div>;
+  return <div className="min-h-screen synq-mesh-bg text-white print:bg-white print:text-black">{children}</div>;
 }

@@ -2,7 +2,10 @@ import { redirect } from 'next/navigation';
 import { currentCoachFree } from '@/app/actions/coach-free';
 import { CoachFreeExercises } from '@/components/coach/CoachFreeExercises';
 
-export default async function CoachFreeExercisesPage() {
+type Props = { searchParams: Promise<{ exercise?: string }> };
+
+export default async function CoachFreeExercisesPage({ searchParams }: Props) {
   if (!(await currentCoachFree())) redirect('/coach/acceso');
-  return <CoachFreeExercises />;
+  const { exercise } = await searchParams;
+  return <CoachFreeExercises initialExerciseId={exercise} />;
 }

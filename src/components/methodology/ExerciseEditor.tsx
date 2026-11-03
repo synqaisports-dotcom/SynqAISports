@@ -44,6 +44,8 @@ type Props = {
   submit?: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   /** Vuelta al listado. En la plataforma es el catálogo del portal. */
   catalogHref?: string;
+  /** Impresión propia. En la plataforma se usa la ficha del club. */
+  printHref?: string;
 };
 
 function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
@@ -71,6 +73,7 @@ export function ExerciseEditor({
   sport = 'football',
   submit,
   catalogHref,
+  printHref,
 }: Props) {
   const isEdit = Boolean(exercise);
   const bound = submit ?? (isEdit ? updateExercise.bind(null, exercise!.id) : createExercise);
@@ -184,9 +187,9 @@ export function ExerciseEditor({
           >
             <ArrowLeft className="size-4" />
           </Link>
-          {isEdit && exercise && !catalogHref ? (
+          {isEdit && exercise && (printHref || !catalogHref) ? (
             <Link
-              href={`/print/ficha/ejercicio/${exercise.id}`}
+              href={printHref ?? `/print/ficha/ejercicio/${exercise.id}`}
               className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
               aria-label="Imprimir ficha"
               title="Imprimir ficha"

@@ -52,6 +52,22 @@ type Props = {
   demoMode?: boolean;
   activeSport?: ClubPracticedSport;
   practicedSports?: ClubPracticedSport[];
+  /** Listado. En la plataforma es el catálogo del portal. */
+  libraryHref?: string;
+  /** Alta de ficha. En la plataforma es la ruta del portal. */
+  nuevoHref?: string;
+  /** Borrado propio. Si no llega, se borra del catálogo del club. */
+  onDelete?: (id: string) => void | Promise<void>;
+  /** Dibujo propio. Si no llega, se guarda en el club. */
+  onSaveDrawing?: (id: string, drawingJson: string) => void;
+  /** Tope del listado. El icono de añadir se apaga al llegar. */
+  maxExercises?: number;
+  /** Deportes del aparato. Si llega, los chips no cambian la URL del portal. */
+  onSportChange?: (sport: ClubPracticedSport) => void;
+  /** Impresión propia. Si no llega, abre la ficha del club. */
+  printHref?: (exerciseId: string) => string;
+  /** Formulario de la ficha. En la plataforma esa ruta no sale del listado. */
+  fichaHref?: (exerciseId: string) => string;
 };
 
 const listItemClass = (active: boolean) =>
@@ -99,10 +115,16 @@ function ExerciseDetailPanel({
   exercise,
   onDeleted,
   onDrawingSave,
+  onDelete,
+  printHref,
+  fichaHref,
 }: {
   exercise: ExerciseListRecord | null;
   onDeleted: () => void;
   onDrawingSave: (json: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
+  printHref?: (exerciseId: string) => string;
+  fichaHref?: (exerciseId: string) => string;
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -142,22 +164,26 @@ function ExerciseDetailPanel({
   const handleDeleteConfirm = async () => {
     if (!exercise) return;
     setDeleting(true);
-    await deleteExercise(exercise.id);
+    if (onDelete) await onDelete(exercise.id);
+    else {
+      await deleteExercise(exercise.id);
+      router.refresh();
+    }
     setDeleting(false);
     setDeleteOpen(false);
     onDeleted();
-    router.refresh();
   };
 
   const handlePrint = () => {
     if (!exercise) return;
-    if (isDemoExerciseId(exercise.id) && typeof window !== 'undefined') {
+    if (!printHref && isDemoExerciseId(exercise.id) && typeof window !== 'undefined') {
       sessionStorage.setItem(
         `synq-print-drawing-${exercise.id}`,
         JSON.stringify(exercise.drawing_json ?? null)
       );
     }
-    window.open(`/print/ficha/ejercicio/${exercise.id}`, '_blank', 'noopener,noreferrer');
+    const href = printHref ? printHref(exercise.id) : `/print/ficha/ejercicio/${exercise.id}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -166,7 +192,15 @@ function ExerciseDetailPanel({
         <div className="exercise-detail-panel flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">{exercise.title}</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                {fichaHref ? (
+                  <Link href={fichaHref(exercise.id)} className="hover:text-primary" title="Abrir ficha">
+                    {exercise.title}
+                  </Link>
+                ) : (
+                  exercise.title
+                )}
+              </h2>
               <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
                 {taskLabel}
               </Badge>
@@ -285,7 +319,11 @@ function ExerciseDetailPanel({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Eliminar ejercicio"
-        description={`¿Eliminar el ejercicio «${exercise.title}»? Se quitará del catálogo del club y no podrás recuperarlo.`}
+        description={
+          onDelete
+            ? `¿Eliminar el ejercicio «${exercise.title}»? Se quitará de este aparato y no podrás recuperarlo.`
+            : `¿Eliminar el ejercicio «${exercise.title}»? Se quitará del catálogo del club y no podrás recuperarlo.`
+        }
         confirmLabel="Eliminar"
         destructive
         pending={deleting}
@@ -311,6 +349,14 @@ export function ExercisesMasterDetail({
   demoMode = false,
   activeSport = 'football',
   practicedSports = ['football'],
+  libraryHref = '/portal/metodologia/ejercicios',
+  nuevoHref,
+  onDelete,
+  onSaveDrawing,
+  maxExercises,
+  onSportChange,
+  printHref,
+  fichaHref,
 }: Props) {
   const router = useRouter();
   const [drawingOverrides, setDrawingOverrides] = useState<Record<string, unknown>>({});
@@ -333,6 +379,10 @@ export function ExercisesMasterDetail({
   const handleDrawingSave = (exerciseId: string, json: string) => {
     const parsed = JSON.parse(json) as unknown;
     setDrawingOverrides((current) => ({ ...current, [exerciseId]: parsed }));
+    if (onSaveDrawing) {
+      onSaveDrawing(exerciseId, json);
+      return;
+    }
     if (isDemoExerciseId(exerciseId)) {
       updateDemoExerciseDrawing(exerciseId, parsed);
       return;
@@ -397,11 +447,12 @@ export function ExercisesMasterDetail({
 
   const handleSelect = (exerciseId: string) => {
     setSelectedId(exerciseId);
-    const path = appendSportParam(`/portal/metodologia/ejercicios?exercise=${exerciseId}`, activeSport);
-    router.replace(path, { scroll: false });
+    const path = `${libraryHref}?exercise=${exerciseId}`;
+    router.replace(onSportChange ? path : appendSportParam(path, activeSport), { scroll: false });
   };
 
-  const nuevoHref = appendSportParam('/portal/metodologia/ejercicios/nuevo', activeSport);
+  const createHref = nuevoHref ?? appendSportParam('/portal/metodologia/ejercicios/nuevo', activeSport);
+  const atCap = maxExercises != null && resolvedExercises.length >= maxExercises;
   const showSportFilter = clubIsMultisport(practicedSports);
 
   return (
@@ -413,29 +464,51 @@ export function ExercisesMasterDetail({
               <CardTitle className="text-base">Biblioteca</CardTitle>
               <CardDescription>
                 {filteredExercises.length} de {resolvedExercises.length} ejercicios
+                {maxExercises != null ? ` · máximo ${maxExercises}` : ''}
               </CardDescription>
             </div>
-            <Link
-              href={nuevoHref}
-              className={PORTAL_ACTION_ICON_CLASS}
-              aria-label="Nuevo ejercicio"
-              title="Nuevo ejercicio"
-            >
-              <Plus className="size-4" />
-            </Link>
+            {atCap ? (
+              <span
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'cursor-not-allowed opacity-40')}
+                aria-label={`Máximo ${maxExercises} ejercicios`}
+                title={`Máximo ${maxExercises} ejercicios`}
+              >
+                <Plus className="size-4" />
+              </span>
+            ) : (
+              <Link
+                href={createHref}
+                className={PORTAL_ACTION_ICON_CLASS}
+                aria-label="Nuevo ejercicio"
+                title="Nuevo ejercicio"
+              >
+                <Plus className="size-4" />
+              </Link>
+            )}
           </div>
           <div className="space-y-2">
             {showSportFilter ? (
               <div className="flex flex-wrap gap-1.5">
-                {practicedSports.map((sport) => (
-                  <Link
-                    key={sport}
-                    href={appendSportParam('/portal/metodologia/ejercicios', sport)}
-                    className={filterButtonClass(activeSport === sport)}
-                  >
-                    {CLUB_PRACTICED_SPORT_SHORT[sport]}
-                  </Link>
-                ))}
+                {practicedSports.map((sport) =>
+                  onSportChange ? (
+                    <button
+                      key={sport}
+                      type="button"
+                      onClick={() => onSportChange(sport)}
+                      className={filterButtonClass(activeSport === sport)}
+                    >
+                      {CLUB_PRACTICED_SPORT_SHORT[sport]}
+                    </button>
+                  ) : (
+                    <Link
+                      key={sport}
+                      href={appendSportParam(libraryHref, sport)}
+                      className={filterButtonClass(activeSport === sport)}
+                    >
+                      {CLUB_PRACTICED_SPORT_SHORT[sport]}
+                    </Link>
+                  )
+                )}
               </div>
             ) : null}
             <PortalSearchField
@@ -500,9 +573,15 @@ export function ExercisesMasterDetail({
 
       <ExerciseDetailPanel
         exercise={selectedExercise}
+        onDelete={onDelete}
+        printHref={printHref}
+        fichaHref={fichaHref}
         onDeleted={() => {
           setSelectedId(null);
-          router.replace('/portal/metodologia/ejercicios', { scroll: false });
+          router.replace(
+            onSportChange ? libraryHref : appendSportParam(libraryHref, activeSport),
+            { scroll: false }
+          );
         }}
         onDrawingSave={(json) => {
           if (selectedExercise) handleDrawingSave(selectedExercise.id, json);
