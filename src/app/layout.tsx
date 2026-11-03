@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: '%s · SynqAI',
   },
   description:
-    'Ecosistema digital para clubes deportivos: entrenadores, familias, pantallas y gestión. El club cobra 12–24 €/año por niño; SynqAI desde 0,50 €/usuario/mes.',
+    'Pizarra, cantera, metodología, torneos y comunicación para clubes de base. El entrenador empieza con lo esencial; el club abre el portal completo.',
   icons: {
     icon: [{ url: '/brand/synqai-icon.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/brand/synqai-icon.svg', type: 'image/svg+xml' }],

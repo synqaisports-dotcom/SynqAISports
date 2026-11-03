@@ -5,8 +5,7 @@ export const defaultLocale: Locale = 'es';
 
 export type Dictionary = {
   nav: {
-    model: string;
-    calculator: string;
+    platform: string;
     modules: string;
     founding: string;
     about: string;
@@ -16,7 +15,6 @@ export type Dictionary = {
     tag: string;
     title: string;
     body: string;
-    ctaCalc: string;
     ctaFounding: string;
     ctaPortal: string;
   };
@@ -53,18 +51,16 @@ export type Dictionary = {
 
 const es: Dictionary = {
   nav: {
-    model: 'Modelo',
-    calculator: 'Calculadora',
+    platform: 'Plataforma',
     modules: 'Módulos',
     founding: 'Founding',
     about: 'Nosotros',
     login: 'Acceso club',
   },
   hero: {
-    tag: 'Plataforma 360 para clubes',
-    title: 'El club cobra a las familias. SynqAI cobra al club. Todos ganan.',
-    body: 'Ecosistema digital para fútbol base y multi-deporte: entrenadores, padres, pantallas y gestión. El club fija el precio familiar — 12 € o 24 € al año por niño — y retiene el margen sobre la cuota SynqAI desde 0,50 €/usuario/mes.',
-    ctaCalc: 'Simular ingresos del club',
+    tag: 'Plataforma para clubes de base',
+    title: 'El club, sus entrenadores y las familias, en un solo sitio.',
+    body: 'Pizarra, cantera, metodología, torneos y comunicación. El entrenador puede empezar con lo esencial; cuando el club entra, abre el portal completo.',
     ctaFounding: 'Solicitar founding club',
     ctaPortal: 'Entrar al portal del club',
   },
@@ -101,18 +97,16 @@ const es: Dictionary = {
 
 const en: Dictionary = {
   nav: {
-    model: 'Model',
-    calculator: 'Calculator',
+    platform: 'Platform',
     modules: 'Modules',
     founding: 'Founding',
     about: 'About',
     login: 'Club login',
   },
   hero: {
-    tag: '360 platform for clubs',
-    title: 'Families pay the club. The club pays SynqAI. Everyone wins.',
-    body: 'Digital ecosystem for grassroots football and multi-sport: coaches, parents, screens and management. The club sets the family fee — €12 or €24 per child per year — and keeps margin over SynqAI from €0.50/user/month.',
-    ctaCalc: 'Simulate club revenue',
+    tag: 'Platform for grassroots clubs',
+    title: 'The club, its coaches and families, in one place.',
+    body: 'Board, academy, methodology, tournaments and communication. A coach can start with the essentials; when the club joins, the full portal opens.',
     ctaFounding: 'Apply for founding club',
     ctaPortal: 'Open club portal',
   },

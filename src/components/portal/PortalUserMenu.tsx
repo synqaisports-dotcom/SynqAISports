@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, LogOut } from 'lucide-react';
+import { Home, LogOut, Shield } from 'lucide-react';
 import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 import { PortalSignOutMenuItem } from '@/components/portal/PortalSignOutMenuItem';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -55,6 +55,14 @@ export function PortalUserMenu({ clubName, role, demoMode = false }: Props) {
             Web pública
           </Link>
         </DropdownMenuItem>
+        {demoMode ? (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <Shield className="mr-2 h-4 w-4" />
+              SynqAI Admin
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         {demoMode ? (
           <DropdownMenuItem asChild>
             <Link href={DEMO_ENTRY_PATH}>
