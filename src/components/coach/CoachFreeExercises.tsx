@@ -1,161 +1,90 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CLUB_PRACTICED_SPORT_LABELS } from '@/lib/club-practiced-sports';
 import {
   COACH_FREE_MAX_EXERCISES,
-  blankCoachFreeDrawing,
-  coachFreeBoardReady,
   deleteExercise,
   loadExercises,
-  saveExercise,
   type CoachFreeExercise,
 } from '@/lib/coach-free-device';
-import { CoachFreeSection } from '@/components/coach/CoachFreeSection';
-import { CoachFreeSoon } from '@/components/coach/CoachFreeSoon';
+import { TASK_TYPE_LABELS, type TaskType } from '@/lib/exercise-sheet';
 import { useCoachFreeSport } from '@/components/coach/use-coach-free-sport';
-
-const ExerciseDrawingStudio = dynamic(
-  () =>
-    import('@/components/methodology/drawing/ExerciseDrawingStudio').then(
-      (mod) => mod.ExerciseDrawingStudio
-    ),
-  { ssr: false }
-);
-
-const fieldClass = 'rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white';
 
 export function CoachFreeExercises() {
   const { sport, ready } = useCoachFreeSport();
   const [items, setItems] = useState<CoachFreeExercise[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [title, setTitle] = useState('');
-  const [editing, setEditing] = useState<CoachFreeExercise | null>(null);
-  const [message, setMessage] = useState('');
 
-  if (ready && !loaded) {
+  useEffect(() => {
+    if (!ready) return;
     setItems(loadExercises(sport));
-    setLoaded(true);
-  }
-
-  const initialData = useMemo(() => {
-    if (!editing) return null;
-    return editing.drawing ?? blankCoachFreeDrawing(sport);
-  }, [editing, sport]);
+  }, [ready, sport]);
 
   if (!ready) return null;
-  if (!coachFreeBoardReady(sport)) return <CoachFreeSoon sport={sport} title="Ejercicios" />;
-
-  function refresh(next: CoachFreeExercise[]) {
-    setItems(next);
-  }
-
-  function openNew() {
-    const name = title.trim();
-    if (name.length < 2) {
-      setMessage('Pon un nombre al ejercicio.');
-      return;
-    }
-    if (items.length >= COACH_FREE_MAX_EXERCISES) {
-      setMessage(`Has llegado a ${COACH_FREE_MAX_EXERCISES} ejercicios en dos meses.`);
-      return;
-    }
-    setMessage('');
-    setEditing({
-      id: crypto.randomUUID(),
-      title: name,
-      updatedAt: new Date().toISOString(),
-      drawing: blankCoachFreeDrawing(sport),
-    });
-  }
 
   return (
-    <>
-      <CoachFreeSection
-        title="Ejercicios"
-        text={`${CLUB_PRACTICED_SPORT_LABELS[sport]} · ${items.length} de ${COACH_FREE_MAX_EXERCISES}. La pizarra es la de la plataforma y el dibujo se queda en este aparato.`}
-      >
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            openNew();
-          }}
-        >
-          <label className="grid min-w-56 flex-1 gap-1 text-xs text-synq-muted">
-            Nombre
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className={fieldClass} />
-          </label>
-          <button type="submit" className="synq-btn-primary">
-            Dibujar ejercicio
-          </button>
-        </form>
-        {message ? <p className="mt-3 text-sm text-red-300">{message}</p> : null}
-
-        <div className="mt-6 grid gap-3">
-          {items.length === 0 ? (
-            <p className="text-sm text-synq-muted">Todavía no hay ejercicios en este deporte.</p>
-          ) : (
-            items.map((item) => (
-              <article key={item.id} className="synq-card flex flex-wrap items-center justify-between gap-3 p-4">
-                <div>
-                  <h2 className="font-semibold text-white">{item.title}</h2>
-                  <p className="text-xs text-synq-muted">
-                    {new Intl.DateTimeFormat('es-ES', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                      timeZone: 'Europe/Madrid',
-                    }).format(new Date(item.updatedAt))}{' '}
-                    (Madrid)
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" className="synq-btn-ghost" onClick={() => setEditing(item)}>
-                    Abrir
-                  </button>
-                  <button
-                    type="button"
-                    className="synq-btn-ghost"
-                    onClick={() => {
-                      deleteExercise(sport, item.id);
-                      refresh(loadExercises(sport));
-                    }}
-                  >
-                    Quitar
-                  </button>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
-      </CoachFreeSection>
-
-      {editing && initialData ? (
-        <ExerciseDrawingStudio
-          open
-          initialData={initialData}
-          onClose={() => setEditing(null)}
-          onSave={(json) => {
-            let drawing: unknown = json;
-            try {
-              drawing = JSON.parse(json);
-            } catch {
-              drawing = json;
-            }
-            const error = saveExercise(sport, {
-              ...editing,
-              drawing,
-              updatedAt: new Date().toISOString(),
-            });
-            setMessage(error ?? '');
-            if (!error) {
-              setTitle('');
-              refresh(loadExercises(sport));
-            }
-          }}
-        />
-      ) : null}
-    </>
+    <div className="dark min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+        <Link href="/coach/app" className="text-sm text-primary">
+          Inicio
+        </Link>
+        <Card className="mt-4 border border-primary/25">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle>Biblioteca</CardTitle>
+                <CardDescription>
+                  {CLUB_PRACTICED_SPORT_LABELS[sport]} · {items.length} de {COACH_FREE_MAX_EXERCISES}. La ficha es la
+                  de la plataforma y se guarda en este aparato.
+                </CardDescription>
+              </div>
+              <Link
+                href="/coach/app/ejercicios/nuevo"
+                className={PORTAL_ACTION_ICON_CLASS}
+                aria-label="Nuevo ejercicio"
+                title="Nuevo ejercicio"
+              >
+                <Plus className="size-4" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            {items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todavía no hay ejercicios. Crea la ficha con el icono de añadir.</p>
+            ) : (
+              items.map((item) => {
+                const task = item.task_type;
+                const taskLabel =
+                  task === 'warmup' || task === 'main' || task === 'cooldown'
+                    ? TASK_TYPE_LABELS[task as TaskType]
+                    : 'Tarea';
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 px-3 py-2.5">
+                    <Link href={`/coach/app/ejercicios/${item.id}`} className="min-w-0">
+                      <p className="truncate font-medium">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{taskLabel}</p>
+                    </Link>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        deleteExercise(sport, item.id);
+                        setItems(loadExercises(sport));
+                      }}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

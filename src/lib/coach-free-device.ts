@@ -13,6 +13,9 @@ export type CoachFreeExercise = {
   title: string;
   updatedAt: string;
   drawing: unknown;
+  sheet?: unknown;
+  objectives?: string;
+  task_type?: string;
 };
 
 export type CoachFreePlayer = {

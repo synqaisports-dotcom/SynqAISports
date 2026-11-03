@@ -40,6 +40,10 @@ type Props = {
   categorySlug?: string;
   returnTo?: string;
   sport?: ClubPracticedSport;
+  /** Guardado propio. Si no llega, la ficha se guarda en el club. */
+  submit?: (prev: ActionState, formData: FormData) => Promise<ActionState>;
+  /** Vuelta al listado. En la plataforma es el catálogo del portal. */
+  catalogHref?: string;
 };
 
 function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
@@ -65,11 +69,11 @@ export function ExerciseEditor({
   categorySlug,
   returnTo,
   sport = 'football',
+  submit,
+  catalogHref,
 }: Props) {
   const isEdit = Boolean(exercise);
-  const bound = isEdit
-    ? updateExercise.bind(null, exercise!.id)
-    : createExercise;
+  const bound = submit ?? (isEdit ? updateExercise.bind(null, exercise!.id) : createExercise);
   const [state, action, pending] = useFormState(bound, initial);
   const sheet = resolveSheet(exercise);
   if (defaultTaskType && !sheet.title) {
@@ -77,19 +81,32 @@ export function ExerciseEditor({
   }
 
   if (!isEdit && state.ok && state.id) {
-    const redirectTo =
-      returnTo && returnTo.startsWith('/portal/') ? returnTo : `/portal/metodologia/ejercicios/${state.id}`;
+    const listHref = catalogHref ?? '/portal/metodologia/ejercicios';
+    const openHref = catalogHref
+      ? `${catalogHref}/${state.id}`
+      : returnTo && returnTo.startsWith('/portal/')
+        ? returnTo
+        : `/portal/metodologia/ejercicios/${state.id}`;
     return (
       <Card className="border border-primary/25">
         <CardContent className="p-6">
           <p className="text-sm text-primary">
             Ejercicio creado.{' '}
-            <Link href={redirectTo} className="font-medium underline">
-              {returnTo ? 'Volver a la sesión' : 'Ver ficha'}
-            </Link>{' '}
-            ·{' '}
-            <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="font-medium underline">
-              Abrir ejercicio
+            <Link href={openHref} className="font-medium underline">
+              {returnTo && !catalogHref ? 'Volver a la sesión' : 'Ver ficha'}
+            </Link>
+            {catalogHref ? null : (
+              <>
+                {' '}
+                ·{' '}
+                <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="font-medium underline">
+                  Abrir ejercicio
+                </Link>
+              </>
+            )}
+            {' · '}
+            <Link href={listHref} className="font-medium underline">
+              Volver al catálogo
             </Link>
           </p>
         </CardContent>
@@ -102,7 +119,7 @@ export function ExerciseEditor({
   }
 
   const backHref =
-    returnTo && returnTo.startsWith('/portal/') ? returnTo : '/portal/metodologia/ejercicios';
+    catalogHref ?? (returnTo && returnTo.startsWith('/portal/') ? returnTo : '/portal/metodologia/ejercicios');
   const headerLabel = isEdit
     ? TASK_TYPE_LABELS[sheet.taskType]
     : defaultTaskType
@@ -139,8 +156,13 @@ export function ExerciseEditor({
             ) : null}
           </h1>
           {state.ok && isEdit ? <p className="mt-1 text-sm text-emerald-400">Ficha guardada.</p> : null}
-          {state.message === 'error' ? (
-            <p className="mt-1 text-sm text-destructive">Error al guardar.</p>
+          {state.message === 'validation' ? (
+            <p className="mt-1 text-sm text-destructive">Pon un título al ejercicio.</p>
+          ) : null}
+          {state.message && state.message !== 'validation' && !state.ok ? (
+            <p className="mt-1 text-sm text-destructive">
+              {state.message === 'error' ? 'Error al guardar.' : state.message}
+            </p>
           ) : null}
         </div>
 
@@ -162,7 +184,7 @@ export function ExerciseEditor({
           >
             <ArrowLeft className="size-4" />
           </Link>
-          {isEdit && exercise ? (
+          {isEdit && exercise && !catalogHref ? (
             <Link
               href={`/print/ficha/ejercicio/${exercise.id}`}
               className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}

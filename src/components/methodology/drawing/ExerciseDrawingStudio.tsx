@@ -166,17 +166,8 @@ function lerpAngle(from: number, to: number, t: number): number {
   return from + delta * t;
 }
 
-/**
- * Hueco de las columnas del club: 1rem de borde + botón de 6.25rem + 1rem de aire.
- * En pantallas estrechas el campo conserva un margen pequeño para seguir siendo usable.
- */
-const SIDE_CHROME_PX = 16 + 100 + 16;
-const FIELD_EDGE_PX = 12;
-
-function fieldInsetsForStage(stageWidth: number) {
-  const side = stageWidth >= SIDE_CHROME_PX * 2 + 320 ? SIDE_CHROME_PX : FIELD_EDGE_PX;
-  return { top: FIELD_EDGE_PX, bottom: 104, left: side, right: side };
-}
+/** Campo a ancho completo, pegado arriba; controles flotan encima */
+const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
 
 export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -272,7 +263,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   }, [open]);
 
   const targetRect = useMemo(
-    () => computeFieldRect(size.width, size.height, doc.field, 0, fieldInsetsForStage(size.width), 'fill-width-top'),
+    () => computeFieldRect(size.width, size.height, doc.field, 0, FIELD_INSETS, 'fill-width-top'),
     [size, doc.field]
   );
   const { displayRect, outgoing, blend } = useFieldTransition(doc.field, targetRect);
