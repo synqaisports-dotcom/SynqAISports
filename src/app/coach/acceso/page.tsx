@@ -20,6 +20,10 @@ export default async function CoachFreeAccessPage() {
             el siguiente acceso abre directamente tu pizarra.
           </p>
           <p className="mt-4 text-sm text-synq-muted">
+            <Link href="/coach/app" className="text-synq-accent">
+              Abrir la pizarra
+            </Link>
+            <span className="mx-2 text-white/20">·</span>
             <Link href="/coach" className="text-synq-accent">
               Volver a la información del módulo
             </Link>

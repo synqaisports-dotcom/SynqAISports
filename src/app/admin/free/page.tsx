@@ -1,5 +1,5 @@
-import { listCoachFreeAccounts } from '@/lib/demo-coach-free-store';
 import { countryName } from '@/lib/coach-free-countries';
+import { listCoachFreeDirectory } from '@/lib/coach-free-directory';
 
 function formatWhen(iso: string) {
   return new Intl.DateTimeFormat('es-ES', {
@@ -9,8 +9,8 @@ function formatWhen(iso: string) {
   }).format(new Date(iso));
 }
 
-export default function AdminCoachFreePage() {
-  const accounts = listCoachFreeAccounts();
+export default async function AdminCoachFreePage() {
+  const accounts = await listCoachFreeDirectory();
   const byCountry = new Map<string, number>();
   for (const account of accounts) {
     byCountry.set(account.countryCode, (byCountry.get(account.countryCode) ?? 0) + 1);
