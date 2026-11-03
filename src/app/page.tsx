@@ -16,13 +16,21 @@ import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
 
-const modules = [
+const modules: {
+  icon: typeof Smartphone;
+  title: string;
+  titleEn: string;
+  text: string;
+  textEn: string;
+  href?: string;
+}[] = [
   {
     icon: Smartphone,
-    title: 'App entrenadores',
-    titleEn: 'Coach app',
-    text: 'Pizarra, plantilla y planificación para el entrenador. Versión gratuita en el móvil y entorno completo cuando el club está en la plataforma.',
-    textEn: 'Board, squad and planning for the coach. A free mobile version, and the full environment when the club is on the platform.',
+    title: 'SynqAI Coach Touch Free',
+    titleEn: 'SynqAI Coach Touch Free',
+    href: '/coach',
+    text: 'Pizarra gratuita para el entrenador sin club. Se abre en el navegador o se instala como PWA.',
+    textEn: 'Free board for a coach without a club. Open it in the browser or install the PWA.',
   },
   {
     icon: Users,
@@ -186,7 +194,7 @@ export default async function SynqHomePage() {
               {isEn ? 'Ecosystem' : 'Ecosistema'}
             </h2>
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              {modules.map(({ icon: Icon, title, titleEn, text, textEn }) => (
+              {modules.map(({ icon: Icon, title, titleEn, text, textEn, href }) => (
                 <article key={title} className="synq-card-hover group p-6">
                   <div className="mb-4 inline-flex rounded-xl bg-synq-pitch/15 p-3 transition-colors group-hover:bg-synq-pitch/25">
                     <Icon className="h-7 w-7 text-synq-accent" />
@@ -195,6 +203,11 @@ export default async function SynqHomePage() {
                   <p className="mt-2 text-sm text-synq-muted leading-relaxed">
                     {isEn ? textEn : text}
                   </p>
+                  {href ? (
+                    <Link href={href} className="mt-4 inline-flex text-sm text-synq-accent">
+                      Ver módulo
+                    </Link>
+                  ) : null}
                 </article>
               ))}
             </div>

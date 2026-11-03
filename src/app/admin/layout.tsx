@@ -14,6 +14,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <p className="text-lg font-semibold">Admin</p>
           </div>
           <nav className="flex items-center gap-4 text-sm text-synq-muted">
+            <Link href="/admin/free" className="hover:text-white">
+              Coach Free
+            </Link>
+            <Link href="/admin" className="hover:text-white">
+              Founding
+            </Link>
             <Link href="/portal" className="hover:text-white">
               Portal del club
             </Link>

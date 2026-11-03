@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { SynqBrandLockup } from '@/components/brand/SynqBrandLockup';
+import { ModulesMenu } from '@/components/public/ModulesMenu';
 import type { Dictionary, Locale } from '@/lib/i18n/dictionaries';
 import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 
@@ -50,9 +51,7 @@ export function PublicHeader({
             <a href="#plataforma" className="transition-colors hover:text-white">
               {dict.nav.platform}
             </a>
-            <a href="#modulos" className="transition-colors hover:text-white">
-              {dict.nav.modules}
-            </a>
+            <ModulesMenu label={dict.nav.modules} />
             <a href="#founding" className="transition-colors hover:text-white">
               {dict.nav.founding}
             </a>
